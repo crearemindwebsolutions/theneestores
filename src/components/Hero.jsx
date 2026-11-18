@@ -24,59 +24,73 @@ const Hero = ({ onOpenAccount }) => {
   const next = () => setIndex((index + 1) % len)
 
   // Flies the currently active bottle down out of the hero and into its
-  // matching card slot as the user scrolls
+  // matching card slot as the user scrolls (Desktop only)
   useLayoutEffect(() => {
-    let ctx
     let cancelled = false
     let rafId
+    const mm = gsap.matchMedia()
 
-    const initFlight = () => {
-      const flyEl = bottleFlyRefs.current[current.id]
-      const cardImg = document.querySelector(
-        `.bs-card-img[data-perfume-id="${current.id}"]`
-      )
-      const card = cardImg?.closest('.bs-card')
-
-      if (!flyEl || !cardImg || !card) {
-        // Retry in next frame if DOM nodes aren't ready yet
-        rafId = requestAnimationFrame(() => {
-          if (!cancelled) initFlight()
-        })
-        return
-      }
-
+    // On mobile / tablet (<= 860px): Keep bottle static inside hero and cards fully visible.
+    // Bottle flight on mobile causes layout reflow thrashing, blocking viewport, and severe lag.
+    mm.add('(max-width: 860px)', () => {
       document.querySelectorAll('.bs-card-img').forEach((img) => {
-        img.style.opacity = ''
+        img.style.opacity = '1'
       })
-      cardImg.style.opacity = '0'
-
-      const heroImg = flyEl.querySelector('.hero-bottle-img')
-
-      const waitForImg = (img) => {
-        if (!img) return Promise.resolve()
-        if (img.complete && img.naturalWidth > 0) return Promise.resolve()
-        return new Promise((resolve) => {
-          const onDone = () => {
-            img.removeEventListener('load', onDone)
-            img.removeEventListener('error', onDone)
-            resolve()
-          }
-          img.addEventListener('load', onDone)
-          img.addEventListener('error', onDone)
-        })
+      const flyEl = bottleFlyRefs.current[current.id]
+      if (flyEl) {
+        gsap.set(flyEl, { clearProps: 'all' })
       }
+      if (heroRef.current) heroRef.current.style.zIndex = ''
+    })
 
-      Promise.all([
-        new Promise((resolve) => setTimeout(resolve, 300)),
-        document.fonts?.ready ?? Promise.resolve(),
-        waitForImg(cardImg),
-        waitForImg(heroImg),
-      ]).then(() => {
-        if (cancelled) return
+    // On desktop (> 860px): Smoothly fly bottle from hero into BestSellers card slot
+    mm.add('(min-width: 861px)', () => {
+      const initFlight = () => {
+        const flyEl = bottleFlyRefs.current[current.id]
+        const cardImg = document.querySelector(
+          `.bs-card-img[data-perfume-id="${current.id}"]`
+        )
+        const card = cardImg?.closest('.bs-card')
 
-        ScrollTrigger.refresh()
+        if (!flyEl || !cardImg || !card) {
+          rafId = requestAnimationFrame(() => {
+            if (!cancelled) initFlight()
+          })
+          return
+        }
 
-        ctx = gsap.context(() => {
+        document.querySelectorAll('.bs-card-img').forEach((img) => {
+          img.style.opacity = ''
+        })
+        cardImg.style.opacity = '0'
+
+        const heroImg = flyEl.querySelector('.hero-bottle-img')
+
+        const waitForImg = (img) => {
+          if (!img) return Promise.resolve()
+          if (img.complete && img.naturalWidth > 0) return Promise.resolve()
+          return new Promise((resolve) => {
+            const onDone = () => {
+              img.removeEventListener('load', onDone)
+              img.removeEventListener('error', onDone)
+              resolve()
+            }
+            img.addEventListener('load', onDone)
+            img.addEventListener('error', onDone)
+          })
+        }
+
+        Promise.all([
+          new Promise((resolve) => setTimeout(resolve, 300)),
+          document.fonts?.ready ?? Promise.resolve(),
+          waitForImg(cardImg),
+          waitForImg(heroImg),
+        ]).then(() => {
+          if (cancelled) return
+
+          ScrollTrigger.refresh()
+
+          let cachedTransform = null
           const calcTransform = () => {
             const dstRect = cardImg.getBoundingClientRect()
             const srcRect = heroImg ? heroImg.getBoundingClientRect() : flyEl.getBoundingClientRect()
@@ -97,21 +111,24 @@ const Hero = ({ onOpenAccount }) => {
             return { x, y, scale }
           }
 
-          const initial = calcTransform()
+          cachedTransform = calcTransform()
           gsap.set(flyEl, { zIndex: 300, opacity: 1 })
 
           gsap.to(flyEl, {
-            x: () => calcTransform().x,
-            y: () => calcTransform().y,
-            scale: () => calcTransform().scale,
+            x: () => (cachedTransform ? cachedTransform.x : 0),
+            y: () => (cachedTransform ? cachedTransform.y : 0),
+            scale: () => (cachedTransform ? cachedTransform.scale : 1),
             ease: 'none',
             scrollTrigger: {
               trigger: heroRef.current,
               start: 'top top',
               endTrigger: card,
-              end: window.innerWidth < 768 ? 'top 100px' : 'top 140px',
+              end: 'top 140px',
               scrub: true,
               invalidateOnRefresh: true,
+              onRefresh: () => {
+                cachedTransform = calcTransform()
+              },
               onUpdate: (self) => {
                 heroRef.current.style.zIndex = self.progress > 0 && self.progress < 1 ? '30' : '10'
               },
@@ -127,16 +144,16 @@ const Hero = ({ onOpenAccount }) => {
               },
             },
           })
-        }, heroRef)
-      })
-    }
+        })
+      }
 
-    initFlight()
+      initFlight()
+    })
 
     return () => {
       cancelled = true
       if (rafId) cancelAnimationFrame(rafId)
-      ctx?.revert()
+      mm.revert()
       const flyEl = bottleFlyRefs.current[current.id]
       const cardImg = document.querySelector(
         `.bs-card-img[data-perfume-id="${current.id}"]`
@@ -179,11 +196,6 @@ const Hero = ({ onOpenAccount }) => {
             animate={{ color: current.textColor }}
             transition={BG_TRANSITION}
           >
-            <div className="hero-kicker-badge">
-              <span className="hero-kicker-dot" />
-              <span>Crafted by Rural Women • Rooted in Nature</span>
-            </div>
-
             <h1>
               <span className="hero-title-word">
                 THENEE
@@ -220,12 +232,6 @@ const Hero = ({ onOpenAccount }) => {
                 }}
               >
                 Add to Cart • ₹{current.price}
-              </button>
-              <button
-                className="btn btn-outline"
-                onClick={() => setSelectedProduct(current)}
-              >
-                Quick View & Benefits
               </button>
             </div>
 

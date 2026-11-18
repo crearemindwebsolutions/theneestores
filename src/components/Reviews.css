@@ -101,6 +101,12 @@
   margin-top: 2px;
 }
 
+@media (max-width: 860px) {
+  .reviews {
+    display: none !important;
+  }
+}
+
 @media (max-width: 900px) {
   .reviews-grid {
     grid-template-columns: repeat(2, 1fr);

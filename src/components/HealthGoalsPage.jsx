@@ -159,12 +159,6 @@ const HealthGoalsPage = ({ onOpenAccount }) => {
                     <span className="matched-price">₹{item.price}</span>
                     <div className="matched-btn-row">
                       <button
-                        className="btn-matched-view"
-                        onClick={() => setSelectedProduct(item)}
-                      >
-                        Quick View
-                      </button>
-                      <button
                         className="btn-matched-add"
                         onClick={() => {
                           addToCart(item)

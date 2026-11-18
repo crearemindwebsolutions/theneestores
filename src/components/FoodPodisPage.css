@@ -274,32 +274,17 @@
 }
 
 .podi-btn-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
-}
-
-.btn-podi-quick {
-  background: #FFFFFF;
-  border: 1.5px solid #DCE6D9;
-  color: #31543A;
-  padding: 8px;
-  border-radius: 12px;
-  font-size: 0.8rem;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.btn-podi-quick:hover {
-  background: #F4F7F2;
+  display: flex;
+  width: 100%;
 }
 
 .btn-podi-cart {
+  width: 100%;
+  text-align: center;
   background: var(--color-primary, #31543A);
   border: 1.5px solid var(--color-primary, #31543A);
   color: #FFFFFF;
-  padding: 8px;
+  padding: 9px;
   border-radius: 12px;
   font-size: 0.8rem;
   font-weight: 700;
@@ -424,13 +409,12 @@
   }
 
   .podi-btn-row {
-    grid-template-columns: 1fr;
-    gap: 6px;
+    width: 100%;
   }
 
-  .btn-podi-quick,
   .btn-podi-cart {
-    padding: 7px;
+    width: 100%;
+    padding: 8px 10px;
     font-size: 0.74rem;
   }
 

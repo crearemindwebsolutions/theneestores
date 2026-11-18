@@ -40,6 +40,7 @@ export default function useReveal(groups, sharedOptions = {}) {
           scrollTrigger: {
             trigger: ref.current,
             start: g.start ?? (isMobile ? 'top 90%' : 'top 80%'),
+            once: true,
           },
         })
       })

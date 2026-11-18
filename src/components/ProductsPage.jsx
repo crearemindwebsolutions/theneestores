@@ -165,12 +165,6 @@ const ProductsPage = ({ onOpenAccount }) => {
 
                 <div className="prod-card-buttons">
                   <button
-                    className="btn-prod-quickview"
-                    onClick={() => setSelectedProduct(item)}
-                  >
-                    Quick View
-                  </button>
-                  <button
                     className="btn-prod-add"
                     onClick={() => {
                       addToCart(item)

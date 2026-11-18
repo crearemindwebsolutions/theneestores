@@ -154,12 +154,6 @@ const FoodPodisPage = ({ onOpenAccount }) => {
 
                 <div className="podi-btn-row">
                   <button
-                    className="btn-podi-quick"
-                    onClick={() => setSelectedProduct(podi)}
-                  >
-                    Quick View
-                  </button>
-                  <button
                     className="btn-podi-cart"
                     onClick={() => {
                       addToCart({

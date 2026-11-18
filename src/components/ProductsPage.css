@@ -223,33 +223,17 @@
 }
 
 .prod-card-buttons {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
-}
-
-.btn-prod-quickview {
-  background: #FFFFFF;
-  border: 1.5px solid #DCE6D9;
-  color: #31543A;
-  padding: 9px;
-  border-radius: 12px;
-  font-size: 0.8rem;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.btn-prod-quickview:hover {
-  background: #F4F7F2;
-  border-color: #31543A;
+  display: flex;
+  width: 100%;
 }
 
 .btn-prod-add {
+  width: 100%;
+  text-align: center;
   background: var(--color-primary, #31543A);
   border: 1.5px solid var(--color-primary, #31543A);
   color: #FFFFFF;
-  padding: 9px;
+  padding: 10px;
   border-radius: 12px;
   font-size: 0.8rem;
   font-weight: 700;
@@ -353,13 +337,12 @@
   }
 
   .prod-card-buttons {
-    grid-template-columns: 1fr;
-    gap: 6px;
+    width: 100%;
   }
 
-  .btn-prod-quickview,
   .btn-prod-add {
-    padding: 7px;
+    width: 100%;
+    padding: 8px 10px;
     font-size: 0.74rem;
   }
 

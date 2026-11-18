@@ -199,27 +199,18 @@
 
 .matched-btn-row {
   display: flex;
-  gap: 8px;
-}
-
-.btn-matched-view {
-  background: #FFFFFF;
-  border: 1px solid #DCE6D9;
-  color: #31543A;
-  font-size: 0.74rem;
-  font-weight: 700;
-  padding: 6px 12px;
-  border-radius: 8px;
-  cursor: pointer;
+  width: 100%;
 }
 
 .btn-matched-add {
+  width: 100%;
+  text-align: center;
   background: var(--color-primary, #31543A);
   border: none;
   color: #FFFFFF;
   font-size: 0.74rem;
   font-weight: 700;
-  padding: 6px 14px;
+  padding: 8px 14px;
   border-radius: 8px;
   cursor: pointer;
 }

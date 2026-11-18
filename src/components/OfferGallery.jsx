@@ -40,9 +40,9 @@ const RIGHT_CARDS = [
     sub: 'The Roots Enterprises Heritage',
   },
   {
-    image: '/images/custom_thenee/whatsapp-order-qr.svg',
-    offer: 'Order via WhatsApp',
-    sub: 'Direct support & custom combos',
+    image: '/images/custom_thenee/food-podis-product.jpg',
+    offer: 'Pure & Chemical-Free',
+    sub: 'Stone-Ground in Tenkasi by Rural Artisans',
   },
 ]
 

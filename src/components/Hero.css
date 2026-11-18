@@ -269,7 +269,7 @@
   box-shadow: 0 14px 30px rgba(49, 84, 58, 0.32);
 }
 
-/* Quick View button: minimal outline button with green text */
+/* Outline button */
 .btn-outline {
   background: transparent;
   color: var(--color-primary);
@@ -478,6 +478,8 @@
 
   .hero-bottle-img {
     max-height: 205px;
+    animation: none; /* Disable infinite bottle floating animation on mobile to save GPU battery & improve scroll performance */
+    filter: drop-shadow(0 10px 18px rgba(49, 84, 58, 0.14));
   }
 
   /* 3. Thenee Herbal Tea main heading */
@@ -592,31 +594,9 @@
     font-size: 0.68rem;
   }
 
-  /* 8. Trust badges at bottom */
+  /* 8. Trust badges hidden in mobile view */
   .hero-badges {
-    order: 9;
-    flex-direction: row;
-    gap: 8px;
-    margin-top: 14px;
-    justify-content: center;
-  }
-
-  .hero-badge {
-    width: 58px;
-    height: 58px;
-    padding: 4px;
-    font-size: 0.55rem;
-    gap: 3px;
-  }
-
-  .hero-badge span {
-    font-size: 0.52rem;
-    line-height: 1.15;
-  }
-
-  .hero-badge svg {
-    width: 12px;
-    height: 12px;
+    display: none !important;
   }
 }
 

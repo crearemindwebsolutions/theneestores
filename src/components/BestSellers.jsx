@@ -57,8 +57,6 @@ const BestSellers = () => {
       <div className="bestsellers-grid">
         {filteredProducts.map((p) => (
           <div className="bs-card" key={p.id}>
-            {p.badge && <span className="bs-card-badge">{p.badge}</span>}
-
             <div
               className="bs-card-media"
               onClick={() => setSelectedProduct(p)}
@@ -92,12 +90,6 @@ const BestSellers = () => {
 
               <div className="bs-card-actions">
                 <button
-                  className="bs-card-quickview"
-                  onClick={() => setSelectedProduct(p)}
-                >
-                  Quick View
-                </button>
-                <button
                   className="bs-card-add"
                   onClick={() => {
                     addToCart(p)
@@ -124,8 +116,6 @@ const BestSellers = () => {
       <div className="bestsellers-grid">
         {individualPodis.map((podi) => (
           <div className="bs-card" key={podi.id}>
-            {podi.badge && <span className="bs-card-badge">{podi.badge}</span>}
-
             <div
               className="bs-card-media"
               onClick={() => setSelectedProduct(podi)}
@@ -158,12 +148,6 @@ const BestSellers = () => {
 
               <div className="bs-card-actions">
                 <button
-                  className="bs-card-quickview"
-                  onClick={() => setSelectedProduct(podi)}
-                >
-                  Quick View
-                </button>
-                <button
                   className="bs-card-add"
                   onClick={() => {
                     addToCart(podi)
@@ -176,6 +160,23 @@ const BestSellers = () => {
             </div>
           </div>
         ))}
+      </div>
+
+      {/* View All Products Button */}
+      <div className="bestsellers-view-all-wrap">
+        <a
+          href="#products"
+          className="btn-bestsellers-all"
+          onClick={() => {
+            window.location.hash = 'products'
+            window.scrollTo({ top: 0, behavior: 'instant' })
+          }}
+        >
+          <span>View All Products</span>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M5 12h14M12 5l7 7-7 7" />
+          </svg>
+        </a>
       </div>
     </section>
   )
