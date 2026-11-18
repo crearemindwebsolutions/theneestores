@@ -9,6 +9,9 @@ import { useCart } from '../context/CartContext'
 import './Hero.css'
 
 gsap.registerPlugin(ScrollTrigger)
+if (typeof ScrollTrigger !== 'undefined' && ScrollTrigger.config) {
+  ScrollTrigger.config({ ignoreMobileResize: true })
+}
 
 const BG_TRANSITION = { duration: 0.6, ease: 'easeInOut' }
 
@@ -16,6 +19,9 @@ const Hero = ({ onOpenAccount }) => {
   const [index, setIndex] = useState(0)
   const heroRef = useRef(null)
   const bottleFlyRefs = useRef({})
+  const touchStartX = useRef(null)
+  const touchStartY = useRef(null)
+  const touchStartTime = useRef(0)
   const len = products.length
   const current = products[index]
   const { addToCart, setSelectedProduct, openCart } = useCart()
@@ -23,131 +29,176 @@ const Hero = ({ onOpenAccount }) => {
   const prev = () => setIndex((index - 1 + len) % len)
   const next = () => setIndex((index + 1) % len)
 
+  const handleTouchStart = (e) => {
+    if (!e.touches || e.touches.length === 0) return
+    touchStartX.current = e.touches[0].clientX
+    touchStartY.current = e.touches[0].clientY
+    touchStartTime.current = Date.now()
+  }
+
+  const handleTouchEnd = (e) => {
+    if (touchStartX.current === null || touchStartY.current === null) return
+    const touch = e.changedTouches?.[0]
+    if (!touch) return
+
+    const deltaX = touch.clientX - touchStartX.current
+    const deltaY = touch.clientY - touchStartY.current
+    const elapsedTime = Date.now() - touchStartTime.current
+
+    // Trigger swipe if horizontal movement is at least 35px, dominates vertical, and within 600ms
+    if (
+      Math.abs(deltaX) > 35 &&
+      Math.abs(deltaX) > Math.abs(deltaY) * 1.2 &&
+      elapsedTime < 600
+    ) {
+      if (deltaX < 0) {
+        next()
+      } else {
+        prev()
+      }
+    }
+    touchStartX.current = null
+    touchStartY.current = null
+  }
+
   // Flies the currently active bottle down out of the hero and into its
-  // matching card slot as the user scrolls (Desktop only)
+  // matching card slot as the user scrolls (Both Desktop & Mobile)
   useLayoutEffect(() => {
     let cancelled = false
     let rafId
     const mm = gsap.matchMedia()
 
-    // On mobile / tablet (<= 860px): Keep bottle static inside hero and cards fully visible.
-    // Bottle flight on mobile causes layout reflow thrashing, blocking viewport, and severe lag.
-    mm.add('(max-width: 860px)', () => {
-      document.querySelectorAll('.bs-card-img').forEach((img) => {
-        img.style.opacity = '1'
-      })
+    const setupFlight = (isMobile) => {
       const flyEl = bottleFlyRefs.current[current.id]
-      if (flyEl) {
-        gsap.set(flyEl, { clearProps: 'all' })
-      }
-      if (heroRef.current) heroRef.current.style.zIndex = ''
-    })
+      const cardImg = document.querySelector(
+        `.bs-card-img[data-perfume-id="${current.id}"]`
+      )
+      const card = cardImg?.closest('.bs-card')
 
-    // On desktop (> 860px): Smoothly fly bottle from hero into BestSellers card slot
-    mm.add('(min-width: 861px)', () => {
-      const initFlight = () => {
-        const flyEl = bottleFlyRefs.current[current.id]
-        const cardImg = document.querySelector(
-          `.bs-card-img[data-perfume-id="${current.id}"]`
-        )
-        const card = cardImg?.closest('.bs-card')
-
-        if (!flyEl || !cardImg || !card) {
-          rafId = requestAnimationFrame(() => {
-            if (!cancelled) initFlight()
-          })
-          return
-        }
-
-        document.querySelectorAll('.bs-card-img').forEach((img) => {
-          img.style.opacity = ''
+      if (!flyEl || !cardImg || !card) {
+        rafId = requestAnimationFrame(() => {
+          if (!cancelled) setupFlight(isMobile)
         })
-        cardImg.style.opacity = '0'
+        return
+      }
 
-        const heroImg = flyEl.querySelector('.hero-bottle-img')
+      document.querySelectorAll('.bs-card-img').forEach((img) => {
+        img.style.opacity = ''
+      })
+      cardImg.style.opacity = '0'
 
-        const waitForImg = (img) => {
-          if (!img) return Promise.resolve()
-          if (img.complete && img.naturalWidth > 0) return Promise.resolve()
-          return new Promise((resolve) => {
-            const onDone = () => {
-              img.removeEventListener('load', onDone)
-              img.removeEventListener('error', onDone)
-              resolve()
-            }
-            img.addEventListener('load', onDone)
-            img.addEventListener('error', onDone)
-          })
+      const heroImg = flyEl.querySelector('.hero-bottle-img')
+      const visualEl = flyEl.closest('.hero-visual') || heroRef.current
+
+      const waitForImg = (img) => {
+        if (!img) return Promise.resolve()
+        if (img.complete && img.naturalWidth > 0) return Promise.resolve()
+        return new Promise((resolve) => {
+          const onDone = () => {
+            img.removeEventListener('load', onDone)
+            img.removeEventListener('error', onDone)
+            resolve()
+          }
+          img.addEventListener('load', onDone)
+          img.addEventListener('error', onDone)
+        })
+      }
+
+      Promise.all([
+        new Promise((resolve) => setTimeout(resolve, 150)),
+        document.fonts?.ready ?? Promise.resolve(),
+        waitForImg(cardImg),
+        waitForImg(heroImg),
+      ]).then(() => {
+        if (cancelled) return
+
+        ScrollTrigger.refresh()
+
+        let cachedTransform = null
+        const calcTransform = () => {
+          const vRect = visualEl.getBoundingClientRect()
+          const cRect = cardImg.getBoundingClientRect()
+
+          if (!vRect.width || !cRect.width) return { x: 0, y: 0, scale: 1 }
+
+          // Compute centers in page coordinates (invariant to current scroll position)
+          const vCenterX = vRect.left + window.scrollX + vRect.width / 2
+          const vCenterY = vRect.top + window.scrollY + vRect.height / 2
+
+          const cCenterX = cRect.left + window.scrollX + cRect.width / 2
+          const cCenterY = cRect.top + window.scrollY + cRect.height / 2
+
+          const targetX = cCenterX - vCenterX
+          const targetY = cCenterY - vCenterY
+
+          const heroH = heroImg?.offsetHeight || vRect.height * 0.9
+          const cardH = cardImg.offsetHeight || cRect.height
+          const targetScale = heroH > 0 && cardH > 0 ? cardH / heroH : 0.5
+
+          return { x: targetX, y: targetY, scale: targetScale }
         }
 
-        Promise.all([
-          new Promise((resolve) => setTimeout(resolve, 300)),
-          document.fonts?.ready ?? Promise.resolve(),
-          waitForImg(cardImg),
-          waitForImg(heroImg),
-        ]).then(() => {
-          if (cancelled) return
+        cachedTransform = calcTransform()
+        gsap.set(flyEl, {
+          zIndex: 300,
+          opacity: 1,
+          transformOrigin: '50% 50%',
+          willChange: 'transform',
+        })
 
-          ScrollTrigger.refresh()
+        gsap.to(flyEl, {
+          x: () => (cachedTransform ? cachedTransform.x : 0),
+          y: () => (cachedTransform ? cachedTransform.y : 0),
+          scale: () => (cachedTransform ? cachedTransform.scale : 1),
+          ease: 'none',
+          scrollTrigger: {
+            trigger: heroRef.current,
+            start: isMobile ? 'top 10px' : 'top top',
+            endTrigger: card,
+            end: isMobile ? 'top 80px' : 'top 140px',
+            scrub: isMobile ? 0.15 : true,
+            invalidateOnRefresh: true,
+            onRefresh: () => {
+              cachedTransform = calcTransform()
+            },
+            onUpdate: (self) => {
+              const isMidFlight = self.progress > 0 && self.progress < 1
+              heroRef.current.style.zIndex = isMidFlight ? '30' : '10'
 
-          let cachedTransform = null
-          const calcTransform = () => {
-            const dstRect = cardImg.getBoundingClientRect()
-            const srcRect = heroImg ? heroImg.getBoundingClientRect() : flyEl.getBoundingClientRect()
-            const flyElRect = flyEl.getBoundingClientRect()
+              if (heroImg && !isMobile) {
+                heroImg.style.animationPlayState =
+                  self.progress > 0 ? 'paused' : 'running'
+              }
 
-            if (!srcRect.width || !dstRect.width) return { x: 0, y: 0, scale: 1 }
-
-            const srcCx = srcRect.left + srcRect.width / 2
-            const srcCy = srcRect.top + srcRect.height / 2
-            const dstCx = dstRect.left + dstRect.width / 2
-            const dstCy = dstRect.top + dstRect.height / 2
-            const wCx = flyElRect.left + flyElRect.width / 2
-            const wCy = flyElRect.top + flyElRect.height / 2
-            const scale = dstRect.width / srcRect.width
-
-            const x = dstCx - wCx - scale * (srcCx - wCx)
-            const y = dstCy - wCy - scale * (srcCy - wCy)
-            return { x, y, scale }
-          }
-
-          cachedTransform = calcTransform()
-          gsap.set(flyEl, { zIndex: 300, opacity: 1 })
-
-          gsap.to(flyEl, {
-            x: () => (cachedTransform ? cachedTransform.x : 0),
-            y: () => (cachedTransform ? cachedTransform.y : 0),
-            scale: () => (cachedTransform ? cachedTransform.scale : 1),
-            ease: 'none',
-            scrollTrigger: {
-              trigger: heroRef.current,
-              start: 'top top',
-              endTrigger: card,
-              end: 'top 140px',
-              scrub: true,
-              invalidateOnRefresh: true,
-              onRefresh: () => {
-                cachedTransform = calcTransform()
-              },
-              onUpdate: (self) => {
-                heroRef.current.style.zIndex = self.progress > 0 && self.progress < 1 ? '30' : '10'
-              },
-              onLeave: () => {
+              if (self.progress >= 1) {
                 cardImg.style.opacity = '1'
                 flyEl.style.opacity = '0'
-                heroRef.current.style.zIndex = '10'
-              },
-              onEnterBack: () => {
+              } else {
                 cardImg.style.opacity = '0'
                 flyEl.style.opacity = '1'
-                heroRef.current.style.zIndex = '30'
-              },
+              }
             },
-          })
+            onLeave: () => {
+              cardImg.style.opacity = '1'
+              flyEl.style.opacity = '0'
+              heroRef.current.style.zIndex = '10'
+            },
+            onEnterBack: () => {
+              cardImg.style.opacity = '0'
+              flyEl.style.opacity = '1'
+              heroRef.current.style.zIndex = '30'
+            },
+          },
         })
-      }
+      })
+    }
 
-      initFlight()
+    mm.add('(max-width: 860px)', () => {
+      setupFlight(true)
+    })
+
+    mm.add('(min-width: 861px)', () => {
+      setupFlight(false)
     })
 
     return () => {
@@ -161,7 +212,7 @@ const Hero = ({ onOpenAccount }) => {
       if (cardImg) cardImg.style.opacity = ''
       if (flyEl) {
         flyEl.style.opacity = ''
-        gsap.set(flyEl, { zIndex: '', x: 0, y: 0, scale: 1 })
+        gsap.set(flyEl, { zIndex: '', x: 0, y: 0, scale: 1, willChange: '' })
       }
       if (heroRef.current) heroRef.current.style.zIndex = ''
     }
@@ -256,7 +307,13 @@ const Hero = ({ onOpenAccount }) => {
           </motion.div>
 
           <div className="hero-right">
-            <div className="hero-visual">
+            <div
+              className="hero-visual"
+              onTouchStart={handleTouchStart}
+              onTouchEnd={handleTouchEnd}
+              role="region"
+              aria-label="Product image carousel - swipe left or right"
+            >
               <div className="hero-visual-bottle-layer">
                 {products.map((p, i) => (
                   <div
@@ -296,9 +353,9 @@ const Hero = ({ onOpenAccount }) => {
                   />
                 </svg>
                 <span>
-                  Crafted by
+                  Handmade
                   <br />
-                  Rural Women
+                  With Love
                 </span>
               </div>
             </div>

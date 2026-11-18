@@ -330,6 +330,9 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  touch-action: pan-y;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 .hero-visual-bottle-layer {
@@ -337,11 +340,17 @@
   inset: 0;
   overflow: visible;
   z-index: 20;
+  pointer-events: none;
 }
 
 .hero-bottle-fly {
   position: absolute;
   inset: 0;
+  pointer-events: none;
+  transform-origin: 50% 50%;
+  will-change: transform;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
 }
 
 .hero-bottle-img {
@@ -355,6 +364,9 @@
   height: auto;
   object-fit: contain;
   will-change: transform, opacity;
+  user-select: none;
+  -webkit-user-drag: none;
+  pointer-events: none;
   /* Subtle, realistic shadows to the product bottle using CSS */
   filter: drop-shadow(0 20px 30px rgba(49, 84, 58, 0.16)) drop-shadow(0 8px 14px rgba(0, 0, 0, 0.08));
   -webkit-clip-path: none;
@@ -474,12 +486,18 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    touch-action: pan-y;
+    user-select: none;
+    -webkit-user-select: none;
   }
 
   .hero-bottle-img {
     max-height: 205px;
     animation: none; /* Disable infinite bottle floating animation on mobile to save GPU battery & improve scroll performance */
     filter: drop-shadow(0 10px 18px rgba(49, 84, 58, 0.14));
+    user-select: none;
+    -webkit-user-drag: none;
+    pointer-events: none;
   }
 
   /* 3. Thenee Herbal Tea main heading */

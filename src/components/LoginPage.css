@@ -2,7 +2,7 @@
    THENEE PROFESSIONAL MINIMALIST LOGIN PAGE
    ========================================================================== */
 
-.pro-login-page {
+.pro-login-wrapper {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
@@ -16,15 +16,10 @@
 .pro-login-header {
   background: #FFFFFF;
   border-bottom: 1px solid #E8EDE4;
-  padding: 14px 24px;
+  padding: 12px 24px;
   position: sticky;
   top: 0;
   z-index: 40;
-}
-
-.pro-login-header-inner {
-  max-width: 1080px;
-  margin: 0 auto;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -40,9 +35,10 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 6px 10px;
-  border-radius: 6px;
+  padding: 6px 12px;
+  border-radius: 8px;
   transition: all 0.2s ease;
+  font-family: inherit;
 }
 
 .pro-back-btn:hover {
@@ -50,19 +46,35 @@
   background: #F2F5ED;
 }
 
-.pro-brand {
+.pro-brand-lockup {
   display: flex;
-  flex-direction: column;
   align-items: center;
+  gap: 10px;
   text-decoration: none;
   cursor: pointer;
 }
 
+.pro-brand-logo {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1px solid #E2E8DC;
+  flex-shrink: 0;
+  box-shadow: 0 2px 6px rgba(49, 84, 58, 0.08);
+}
+
+.pro-brand-text {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
 .pro-brand-name {
-  font-size: 1.15rem;
-  font-weight: 700;
+  font-size: 1.12rem;
+  font-weight: 800;
   color: #234330;
-  letter-spacing: 0.16em;
+  letter-spacing: 0.14em;
   line-height: 1.1;
 }
 
@@ -70,21 +82,12 @@
   font-size: 0.58rem;
   font-weight: 600;
   color: #79966F;
-  letter-spacing: 0.14em;
-  margin-top: 2px;
+  letter-spacing: 0.12em;
+  margin-top: 1px;
 }
 
-.pro-secure-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  font-size: 0.72rem;
-  font-weight: 600;
-  color: #31543A;
-  background: #EFF6EE;
-  border: 1px solid #D1E5D0;
-  padding: 4px 10px;
-  border-radius: 999px;
+.pro-header-spacer {
+  width: 90px;
 }
 
 /* MAIN BODY */
@@ -93,78 +96,111 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 40px 18px 50px;
+  padding: 36px 18px 48px;
 }
 
-.pro-login-card {
+.pro-card {
   background: #FFFFFF;
   border: 1px solid #E2E8DC;
-  border-radius: 16px;
-  box-shadow: 0 14px 38px -10px rgba(32, 45, 34, 0.07), 0 2px 6px rgba(0, 0, 0, 0.02);
+  border-radius: 20px;
+  box-shadow: 0 14px 38px -10px rgba(32, 45, 34, 0.08), 0 2px 6px rgba(0, 0, 0, 0.02);
   width: 100%;
-  max-width: 410px;
+  max-width: 430px;
   padding: 32px 30px 28px;
+  box-sizing: border-box;
 }
 
-/* CARD HEADER */
-.pro-card-header {
+/* CARD HERO */
+.pro-card-hero {
   text-align: center;
   margin-bottom: 22px;
 }
 
-.pro-checkout-alert-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  background: #EFF6EE;
-  border: 1px solid #CDE2CB;
-  color: #2D5A3D;
-  font-size: 0.74rem;
-  font-weight: 600;
-  padding: 4px 12px;
-  border-radius: 999px;
-  margin-bottom: 12px;
-  box-shadow: 0 2px 6px rgba(45, 90, 61, 0.05);
-}
-
-.pro-leaf-icon {
-  width: 40px;
-  height: 40px;
+.pro-hero-icon-bubble {
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
   background: #EFF5ED;
   border: 1px solid #D4E3CF;
+  color: #31543A;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   margin-bottom: 12px;
+  box-shadow: 0 4px 12px rgba(49, 84, 58, 0.06);
 }
 
-.pro-card-header h1 {
-  font-family: var(--font-body, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif) !important;
+.pro-card-hero h2 {
+  font-family: var(--font-body, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif);
   font-size: 1.35rem;
   font-weight: 700;
   color: #1E392A;
   letter-spacing: -0.01em;
   margin: 0 0 6px;
+  font-style: normal;
 }
 
-.pro-card-header p {
+.pro-card-subtitle {
   font-size: 0.82rem;
   color: #657065;
   line-height: 1.45;
   margin: 0;
 }
 
-/* METHOD TOGGLE (SEGMENTED CONTROL) */
-.pro-method-toggle {
-  display: flex;
-  background: #F0F4EC;
+/* ALERTS & NOTICES */
+.pro-db-notice {
+  background: #FFFBEB;
+  border: 1px solid #FDE68A;
+  color: #92400E;
+  padding: 8px 12px;
   border-radius: 8px;
-  padding: 3px;
-  margin-bottom: 20px;
+  font-size: 0.74rem;
+  font-weight: 500;
+  margin-bottom: 16px;
+  line-height: 1.35;
 }
 
-.pro-method-btn {
+.pro-alert-error {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #FDF2F2;
+  border: 1px solid #F5C6CB;
+  color: #A92634;
+  padding: 9px 12px;
+  border-radius: 8px;
+  font-size: 0.78rem;
+  font-weight: 500;
+  margin-bottom: 16px;
+  line-height: 1.35;
+}
+
+.pro-alert-success {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #EFF6EE;
+  border: 1px solid #CDE2CB;
+  color: #2D5A3D;
+  padding: 9px 12px;
+  border-radius: 8px;
+  font-size: 0.78rem;
+  font-weight: 500;
+  margin-bottom: 16px;
+  line-height: 1.35;
+}
+
+/* TABS (EMAIL VS MOBILE OTP) */
+.pro-tabs {
+  display: flex;
+  background: #F0F4EC;
+  border-radius: 10px;
+  padding: 4px;
+  margin-bottom: 20px;
+  gap: 4px;
+}
+
+.pro-tab {
   flex: 1;
   border: none;
   background: transparent;
@@ -172,32 +208,22 @@
   font-size: 0.82rem;
   font-weight: 600;
   color: #657065;
-  border-radius: 6px;
+  border-radius: 7px;
   cursor: pointer;
   transition: all 0.18s ease;
   font-family: inherit;
+  text-align: center;
 }
 
-.pro-method-btn.is-active {
+.pro-tab:hover {
+  color: #1E392A;
+}
+
+.pro-tab.is-active {
   background: #FFFFFF;
   color: #1E392A;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
-}
-
-/* ERROR MESSAGE */
-.pro-error-msg {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background: #FDF2F2;
-  border: 1px solid #F5C6CB;
-  color: #A92634;
-  padding: 8px 12px;
-  border-radius: 8px;
-  font-size: 0.78rem;
-  font-weight: 500;
-  margin-bottom: 16px;
-  line-height: 1.35;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+  font-weight: 700;
 }
 
 /* FORMS & INPUTS */
@@ -251,11 +277,12 @@
   height: 44px;
   padding: 0 14px;
   border: 1px solid #D5DDD0;
-  border-radius: 8px;
+  border-radius: 10px;
   font-size: 0.88rem;
   color: #202820;
   background: #FFFFFF;
   outline: none;
+  box-sizing: border-box;
   font-family: inherit;
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
@@ -270,10 +297,11 @@
   display: flex;
   align-items: center;
   border: 1px solid #D5DDD0;
-  border-radius: 8px;
+  border-radius: 10px;
   background: #FFFFFF;
   overflow: hidden;
   height: 44px;
+  box-sizing: border-box;
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
@@ -282,7 +310,7 @@
   box-shadow: 0 0 0 3px rgba(46, 77, 56, 0.12);
 }
 
-.pro-prefix {
+.pro-phone-prefix {
   padding: 0 12px;
   font-size: 0.86rem;
   font-weight: 600;
@@ -305,6 +333,7 @@
   background: transparent;
   outline: none;
   font-family: inherit;
+  box-sizing: border-box;
 }
 
 .pro-field-hint {
@@ -318,10 +347,11 @@
   display: flex;
   align-items: center;
   border: 1px solid #D5DDD0;
-  border-radius: 8px;
+  border-radius: 10px;
   background: #FFFFFF;
   overflow: hidden;
   height: 44px;
+  box-sizing: border-box;
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
@@ -340,12 +370,13 @@
   background: transparent;
   outline: none;
   font-family: inherit;
+  box-sizing: border-box;
 }
 
 .pro-show-btn {
   background: none;
   border: none;
-  padding: 0 12px;
+  padding: 0 14px;
   font-size: 0.74rem;
   font-weight: 600;
   color: #5A6D5E;
@@ -366,17 +397,9 @@
   color: #4C5E4F;
   background: #F5F9F3;
   border: 1px solid #D8E5D5;
-  border-radius: 8px;
+  border-radius: 10px;
   padding: 8px 12px;
 }
-
-.pro-otp-label-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-
 
 .pro-otp-input {
   text-align: center;
@@ -391,9 +414,9 @@
   background: #234330;
   color: #FFFFFF;
   border: none;
-  border-radius: 8px;
+  border-radius: 10px;
   font-size: 0.88rem;
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: 0.02em;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -402,12 +425,13 @@
   justify-content: center;
   font-family: inherit;
   margin-top: 4px;
+  box-shadow: 0 4px 14px rgba(35, 67, 48, 0.15);
 }
 
 .pro-submit-btn:hover:not(:disabled) {
   background: #183122;
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(35, 67, 48, 0.2);
+  box-shadow: 0 6px 16px rgba(35, 67, 48, 0.25);
 }
 
 .pro-submit-btn:disabled {
@@ -442,7 +466,7 @@
 /* GOOGLE SIGN IN BUTTON */
 .pro-google-btn {
   width: 100%;
-  height: 42px;
+  height: 44px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -452,12 +476,11 @@
   color: #3C4043;
   font-weight: 600;
   font-size: 0.85rem;
-  border-radius: 8px;
+  border-radius: 10px;
   cursor: pointer;
   transition: all 0.2s ease;
   font-family: inherit;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
-  margin-bottom: 10px;
 }
 
 .pro-google-btn:hover:not(:disabled) {
@@ -473,21 +496,6 @@
 
 .pro-google-btn svg {
   flex-shrink: 0;
-}
-
-
-
-/* BONUS NOTE IN SIGNUP */
-.pro-bonus-note {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  background: #EFF6EE;
-  border: 1px solid #CCE1CB;
-  color: #2D5A3D;
-  font-size: 0.76rem;
-  padding: 8px 12px;
-  border-radius: 8px;
 }
 
 /* CARD FOOTER SWITCHER */
@@ -515,8 +523,8 @@
   color: #0E1D14;
 }
 
-/* MICRO TRUST LINE */
-.pro-micro-trust {
+/* TRUST FOOTER */
+.pro-trust-footer {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -527,36 +535,7 @@
   margin-top: 22px;
   padding-top: 14px;
   border-top: 1px solid #EDF2EA;
-}
-
-/* BOTTOM FOOTER */
-.pro-login-footer {
-  text-align: center;
-  padding: 20px 16px 28px;
-  font-size: 0.75rem;
-  color: #79867A;
-  line-height: 1.6;
-}
-
-.pro-crearemind-link {
-  display: inline-block;
-  margin-top: 5px;
-  color: #8C998D;
-  text-decoration: none;
-  font-size: 0.7rem;
-  letter-spacing: 0.05em;
-  opacity: 0.65;
-  transition: opacity 0.2s ease, color 0.2s ease;
-}
-
-.pro-crearemind-link:hover {
-  opacity: 1;
-  color: #234330;
-}
-
-.pro-crearemind-link strong {
-  font-weight: 700;
-  letter-spacing: 0.08em;
+  flex-wrap: wrap;
 }
 
 /* ==========================================================================
@@ -567,20 +546,22 @@
     padding: 10px 14px;
   }
 
-  .pro-login-header-inner {
-    gap: 8px;
+  .pro-brand-logo {
+    width: 32px;
+    height: 32px;
   }
 
   .pro-brand-name {
-    font-size: 1.02rem;
+    font-size: 0.98rem;
+    letter-spacing: 0.12em;
   }
 
   .pro-brand-tag {
-    font-size: 0.52rem;
+    font-size: 0.5rem;
   }
 
   .pro-back-btn {
-    font-size: 0.76rem;
+    font-size: 0.74rem;
     padding: 4px 6px;
   }
 
@@ -588,26 +569,50 @@
     display: none;
   }
 
+  .pro-header-spacer {
+    width: 28px;
+  }
+
   .pro-login-main {
-    padding: 20px 12px 30px;
+    padding: 16px 12px 28px;
   }
 
-  .pro-login-card {
-    padding: 24px 18px 20px;
-    border-radius: 14px;
+  .pro-card {
+    padding: 22px 16px 20px;
+    border-radius: 16px;
+    border: 1px solid #E2E8DC;
+    box-shadow: 0 4px 16px rgba(32, 45, 34, 0.05);
   }
 
-  .pro-card-header h1 {
-    font-size: 1.25rem;
+  .pro-card-hero {
+    margin-bottom: 18px;
   }
 
-  .pro-card-header p {
+  .pro-hero-icon-bubble {
+    width: 38px;
+    height: 38px;
+    margin-bottom: 8px;
+  }
+
+  .pro-card-hero h2 {
+    font-size: 1.22rem;
+  }
+
+  .pro-card-subtitle {
+    font-size: 0.76rem;
+  }
+
+  .pro-tabs {
+    margin-bottom: 16px;
+  }
+
+  .pro-tab {
+    padding: 7px 10px;
     font-size: 0.78rem;
   }
 
-  .pro-micro-trust {
+  .pro-trust-footer {
     font-size: 0.62rem;
-    gap: 5px;
-    flex-wrap: wrap;
+    gap: 4px;
   }
 }

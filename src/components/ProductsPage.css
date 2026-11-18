@@ -14,7 +14,7 @@
 .products-cat-pills {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   flex-wrap: wrap;
 }
 
@@ -22,8 +22,8 @@
   background: #FFFFFF;
   border: 1.5px solid #E0E8DC;
   border-radius: 999px;
-  padding: 8px 18px;
-  font-size: 0.84rem;
+  padding: 6px 14px;
+  font-size: 0.78rem;
   font-weight: 600;
   color: #4A5B4E;
   cursor: pointer;
@@ -181,6 +181,7 @@
 .rating-count {
   font-size: 0.72rem;
   color: #64748B;
+  white-space: nowrap;
 }
 
 .prod-short-benefit {
@@ -200,11 +201,16 @@
   border-top: 1px solid #F0F4EE;
 }
 
+.prod-price-values {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
 .prod-current-price {
   font-size: 1.25rem;
   font-weight: 800;
   color: #1F3827;
-  margin-right: 8px;
 }
 
 .prod-mrp-price {
@@ -220,6 +226,7 @@
   padding: 3px 8px;
   border-radius: 999px;
   font-weight: 600;
+  white-space: nowrap;
 }
 
 .prod-card-buttons {
@@ -302,10 +309,31 @@
 }
 
 /* Mobile */
-@media (max-width: 768px) {
+@media (max-width: 860px) {
+  .prod-discount-tag {
+    display: none !important;
+  }
+
   .products-controls-bar {
     flex-direction: column;
     align-items: stretch;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+
+  .products-cat-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    width: 100%;
+  }
+
+  .prod-filter-btn {
+    padding: 4px 9px;
+    font-size: 0.67rem;
+    font-weight: 600;
+    line-height: 1.3;
+    border-radius: 999px;
   }
 
   .products-search-box {
@@ -326,14 +354,93 @@
 
   .prod-card-body {
     padding: 12px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
   }
 
   .prod-card-title {
     font-size: 0.88rem;
+    line-height: 1.25;
+    margin: 0 0 4px;
+  }
+
+  .prod-rating-strip {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-bottom: 4px;
+    flex-wrap: nowrap;
+    white-space: nowrap;
+  }
+
+  .stars {
+    font-size: 0.64rem;
+    letter-spacing: -0.5px;
+    line-height: 1;
+    flex-shrink: 0;
+  }
+
+  .rating-count {
+    font-size: 0.58rem;
+    color: #64748B;
+    line-height: 1;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .prod-short-benefit {
+    font-size: 0.72rem;
+    line-height: 1.35;
+    margin: 0 0 8px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  /* Price strip & compact volume badge below price in mobile */
+  .prod-price-strip {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+    margin-bottom: 10px;
+    padding-top: 8px;
+    border-top: 1px solid #F0F4EE;
+    width: 100%;
+  }
+
+  .prod-price-values {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    width: 100%;
   }
 
   .prod-current-price {
-    font-size: 1rem;
+    font-size: 1.05rem;
+    font-weight: 800;
+    margin-right: 0;
+    line-height: 1;
+  }
+
+  .prod-mrp-price {
+    font-size: 0.76rem;
+    line-height: 1;
+  }
+
+  .prod-volume-badge {
+    font-size: 0.62rem;
+    line-height: 1.2;
+    padding: 2px 7px;
+    border-radius: 999px;
+    background: #F1F5F0;
+    color: #4A5B4E;
+    font-weight: 600;
+    display: inline-block;
+    width: fit-content;
+    white-space: nowrap;
   }
 
   .prod-card-buttons {

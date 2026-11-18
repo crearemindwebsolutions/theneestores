@@ -154,7 +154,7 @@ const ProductsPage = ({ onOpenAccount }) => {
                 </p>
 
                 <div className="prod-price-strip">
-                  <div>
+                  <div className="prod-price-values">
                     <span className="prod-current-price">₹{item.price}</span>
                     {item.originalPrice > item.price && (
                       <span className="prod-mrp-price">₹{item.originalPrice}</span>

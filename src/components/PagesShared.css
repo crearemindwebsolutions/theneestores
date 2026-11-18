@@ -159,6 +159,11 @@
     font-size: 0.82rem;
   }
 
+  /* Hide trust pills on mobile view */
+  .page-trust-strip {
+    display: none !important;
+  }
+
   .page-main-content {
     padding: 20px 14px 60px;
   }
