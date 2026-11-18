@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 300" width="300" height="300">
+  <rect width="300" height="300" rx="24" fill="#ffffff" stroke="#25D366" stroke-width="4"/>
+  
+  <!-- Corner Position Targets -->
+  <!-- Top Left -->
+  <rect x="30" y="30" width="60" height="60" rx="8" fill="#1b4332"/>
+  <rect x="42" y="42" width="36" height="36" rx="4" fill="#ffffff"/>
+  <rect x="50" y="50" width="20" height="20" rx="3" fill="#25D366"/>
+
+  <!-- Top Right -->
+  <rect x="210" y="30" width="60" height="60" rx="8" fill="#1b4332"/>
+  <rect x="222" y="42" width="36" height="36" rx="4" fill="#ffffff"/>
+  <rect x="230" y="50" width="20" height="20" rx="3" fill="#25D366"/>
+
+  <!-- Bottom Left -->
+  <rect x="30" y="210" width="60" height="60" rx="8" fill="#1b4332"/>
+  <rect x="42" y="222" width="36" height="36" rx="4" fill="#ffffff"/>
+  <rect x="50" y="230" width="20" height="20" rx="3" fill="#25D366"/>
+
+  <!-- Matrix Elements Simulation -->
+  <g fill="#1b4332">
+    <rect x="105" y="35" width="12" height="12"/>
+    <rect x="135" y="35" width="24" height="12"/>
+    <rect x="175" y="35" width="14" height="14"/>
+    <rect x="105" y="60" width="30" height="14"/>
+    <rect x="155" y="60" width="16" height="16"/>
+    <rect x="110" y="85" width="16" height="16"/>
+    <rect x="140" y="85" width="18" height="18"/>
+    <rect x="170" y="85" width="22" height="14"/>
+    
+    <rect x="35" y="105" width="16" height="16"/>
+    <rect x="65" y="105" width="20" height="14"/>
+    <rect x="35" y="135" width="25" height="14"/>
+    <rect x="75" y="135" width="14" height="20"/>
+    <rect x="40" y="170" width="20" height="20"/>
+    <rect x="70" y="170" width="16" height="14"/>
+
+    <rect x="215" y="105" width="18" height="16"/>
+    <rect x="245" y="105" width="20" height="16"/>
+    <rect x="215" y="135" width="14" height="24"/>
+    <rect x="245" y="135" width="22" height="14"/>
+    <rect x="220" y="170" width="24" height="16"/>
+    <rect x="250" y="170" width="14" height="22"/>
+
+    <rect x="105" y="215" width="16" height="16"/>
+    <rect x="135" y="215" width="22" height="14"/>
+    <rect x="170" y="215" width="18" height="20"/>
+    <rect x="105" y="245" width="24" height="16"/>
+    <rect x="145" y="245" width="18" height="16"/>
+    <rect x="175" y="245" width="20" height="18"/>
+
+    <rect x="215" y="215" width="18" height="18"/>
+    <rect x="245" y="215" width="20" height="16"/>
+    <rect x="220" y="245" width="18" height="16"/>
+    <rect x="245" y="245" width="20" height="20"/>
+  </g>
+
+  <!-- Center Badge: WhatsApp Icon -->
+  <circle cx="150" cy="150" r="32" fill="#25D366" stroke="#ffffff" stroke-width="4"/>
+  <path d="M150 130 C138.95 130 130 138.95 130 150 C130 153.8 131.05 157.35 132.9 160.4 L131 169 L139.85 167.15 C142.85 168.85 146.3 169.8 150 169.8 C161.05 169.8 170 160.85 170 149.8 C170 138.75 161.05 130 150 130 Z" fill="#ffffff"/>
+  <path d="M144.5 141.5 C143.8 140 143 140 142.3 140 C141.7 140 141 140 140.4 140.7 C139.8 141.4 138.1 143 138.1 146.4 C138.1 149.8 140.5 153 140.8 153.5 C141.2 154 145.5 160.7 152.1 163.5 C157.6 165.8 158.7 165.4 159.9 165.3 C161.1 165.2 163.8 163.7 164.4 162 C165 160.3 165 158.8 164.8 158.5 C164.6 158.2 164.1 158 163.4 157.6 C162.7 157.2 159.3 155.5 158.7 155.3 C158.1 155 157.6 154.9 157.1 155.6 C156.6 156.4 155.2 158 154.8 158.5 C154.4 159 154 159 153.3 158.7 C152.6 158.3 150.3 157.6 147.6 155.2 C145.5 153.3 144.1 151 143.7 150.3 C143.3 149.6 143.6 149.2 144 148.8 C144.3 148.5 144.7 148 145.1 147.6 C145.5 147.1 145.6 146.8 145.8 146.3 C146 145.8 145.9 145.4 145.7 145 C145.5 144.6 144.9 142.3 144.5 141.5 Z" fill="#25D366"/>
+</svg>

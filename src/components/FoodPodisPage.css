@@ -1,0 +1,441 @@
+/* ==========================================================================
+   Food Podis Page Styles
+   ========================================================================== */
+
+.podis-combo-highlight {
+  background: linear-gradient(135deg, #FFFDF8 0%, #F5EFE0 100%);
+  border: 2px solid #E8D8BA;
+  border-radius: 24px;
+  padding: 36px 40px;
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 36px;
+  align-items: center;
+  box-shadow: 0 10px 30px rgba(178, 135, 56, 0.08);
+  margin-bottom: 50px;
+}
+
+.combo-badge {
+  background: #B28738;
+  color: #FFFFFF;
+  font-size: 0.72rem;
+  font-weight: 800;
+  padding: 4px 12px;
+  border-radius: 999px;
+  display: inline-block;
+  margin-bottom: 12px;
+  letter-spacing: 0.04em;
+}
+
+.combo-left h2 {
+  font-size: 1.8rem;
+  font-weight: 800;
+  color: #2D2312;
+  margin: 0 0 4px;
+}
+
+.combo-tamil {
+  font-size: 0.95rem;
+  color: #B28738;
+  font-weight: 700;
+  display: block;
+  margin-bottom: 12px;
+}
+
+.combo-left p {
+  font-size: 0.9rem;
+  color: #5C4B30;
+  line-height: 1.55;
+  margin: 0 0 20px;
+}
+
+.combo-price-row {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.combo-price {
+  font-size: 1.8rem;
+  font-weight: 800;
+  color: #1F3827;
+}
+
+.combo-mrp {
+  font-size: 1rem;
+  color: #94A3B8;
+  text-decoration: line-through;
+}
+
+.combo-vol {
+  font-size: 0.78rem;
+  background: #E8EFE3;
+  color: #31543A;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-weight: 700;
+}
+
+.combo-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.btn-combo-add {
+  background: var(--color-primary, #31543A);
+  color: #FFFFFF;
+  border: none;
+  font-size: 0.9rem;
+  font-weight: 700;
+  padding: 12px 24px;
+  border-radius: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 14px rgba(49, 84, 58, 0.25);
+}
+
+.btn-combo-add:hover {
+  background: #233D2B;
+  transform: translateY(-2px);
+}
+
+.btn-combo-view {
+  background: #FFFFFF;
+  color: #31543A;
+  border: 1.5px solid #31543A;
+  font-size: 0.85rem;
+  font-weight: 700;
+  padding: 12px 20px;
+  border-radius: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-combo-view:hover {
+  background: #F4F7F2;
+}
+
+.combo-right {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.combo-img {
+  max-width: 100%;
+  max-height: 300px;
+  object-fit: contain;
+  border-radius: 18px;
+  filter: drop-shadow(0 12px 24px rgba(0, 0, 0, 0.1));
+}
+
+/* Individual Podis Grid */
+.podis-section-title {
+  margin-bottom: 28px;
+}
+
+.podis-section-title h2 {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: #1F3827;
+  margin: 0 0 4px;
+}
+
+.podis-section-title p {
+  font-size: 0.88rem;
+  color: #64748B;
+  margin: 0;
+}
+
+.podis-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 24px;
+  margin-bottom: 50px;
+}
+
+.podi-card {
+  background: #FFFFFF;
+  border: 1.5px solid #E6ECE2;
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 4px 16px rgba(49, 84, 58, 0.04);
+  display: flex;
+  flex-direction: column;
+  transition: all 0.24s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.podi-card:hover {
+  transform: translateY(-4px);
+  border-color: #B28738;
+  box-shadow: 0 12px 28px rgba(178, 135, 56, 0.12);
+}
+
+.podi-media {
+  position: relative;
+  background: #F8FAF7;
+  padding: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 200px;
+  cursor: pointer;
+}
+
+.podi-img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  transition: transform 0.25s ease;
+}
+
+.podi-card:hover .podi-img {
+  transform: scale(1.06);
+}
+
+.podi-tag {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: #FFFFFF;
+  border: 1px solid #DCE6D9;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #4A5B4E;
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+
+.podi-details {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.podi-tamil {
+  font-size: 0.82rem;
+  color: #B28738;
+  font-weight: 700;
+  display: block;
+  margin-bottom: 2px;
+}
+
+.podi-name {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #1F3827;
+  margin: 0 0 8px;
+  cursor: pointer;
+}
+
+.podi-desc {
+  font-size: 0.8rem;
+  color: #556B5B;
+  line-height: 1.45;
+  margin: 0 0 14px;
+  flex: 1;
+}
+
+.podi-benefits-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 16px;
+}
+
+.podi-benefit-pill {
+  font-size: 0.74rem;
+  color: #2E7D32;
+  font-weight: 600;
+}
+
+.podi-price-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  padding-top: 12px;
+  border-top: 1px solid #F0F4EE;
+}
+
+.podi-price {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: #1F3827;
+}
+
+.podi-rating {
+  font-size: 0.72rem;
+  color: #B28738;
+  font-weight: 600;
+}
+
+.podi-btn-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.btn-podi-quick {
+  background: #FFFFFF;
+  border: 1.5px solid #DCE6D9;
+  color: #31543A;
+  padding: 8px;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-podi-quick:hover {
+  background: #F4F7F2;
+}
+
+.btn-podi-cart {
+  background: var(--color-primary, #31543A);
+  border: 1.5px solid var(--color-primary, #31543A);
+  color: #FFFFFF;
+  padding: 8px;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-podi-cart:hover {
+  background: #233D2B;
+}
+
+/* Rice Pairing Steps Section */
+.rice-pairing-section {
+  background: #FFFFFF;
+  border: 1.5px solid #E8EFE3;
+  border-radius: 24px;
+  padding: 36px 32px;
+  box-shadow: 0 6px 24px rgba(49, 84, 58, 0.04);
+}
+
+.pairing-header {
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.pairing-header h3 {
+  font-size: 1.45rem;
+  font-weight: 800;
+  color: #1F3827;
+  margin: 0 0 4px;
+}
+
+.pairing-header p {
+  font-size: 0.86rem;
+  color: #64748B;
+  margin: 0;
+}
+
+.pairing-steps-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+}
+
+.pairing-step-card {
+  background: #F8FAF7;
+  border: 1px solid #E2EADF;
+  border-radius: 18px;
+  padding: 24px 18px;
+  text-align: center;
+  position: relative;
+}
+
+.step-num-badge {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--color-primary, #31543A);
+  color: #FFFFFF;
+  font-weight: 800;
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 14px;
+  box-shadow: 0 4px 10px rgba(49, 84, 58, 0.2);
+}
+
+.pairing-step-card h4 {
+  font-size: 0.96rem;
+  font-weight: 700;
+  color: #1F3827;
+  margin: 0 0 8px;
+}
+
+.pairing-step-card p {
+  font-size: 0.78rem;
+  color: #556B5B;
+  line-height: 1.45;
+  margin: 0;
+}
+
+/* Mobile */
+@media (max-width: 900px) {
+  .podis-combo-highlight {
+    grid-template-columns: 1fr;
+    padding: 24px 20px;
+    gap: 20px;
+  }
+
+  .combo-left h2 {
+    font-size: 1.35rem;
+  }
+
+  .pairing-steps-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+}
+
+@media (max-width: 600px) {
+  .podis-cards-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .podi-media {
+    height: 140px;
+    padding: 12px;
+  }
+
+  .podi-details {
+    padding: 12px;
+  }
+
+  .podi-name {
+    font-size: 0.88rem;
+  }
+
+  .podi-price {
+    font-size: 1rem;
+  }
+
+  .podi-btn-row {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+
+  .btn-podi-quick,
+  .btn-podi-cart {
+    padding: 7px;
+    font-size: 0.74rem;
+  }
+
+  .pairing-steps-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+}

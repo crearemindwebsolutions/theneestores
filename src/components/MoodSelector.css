@@ -1,0 +1,545 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500;1,600&display=swap');
+
+/* ==========================================================================
+   THENEE 3D DEPTH PRODUCT SHOWCASE (PURE PRODUCT IMAGES ONLY)
+   ========================================================================== */
+
+.depth-showcase-section {
+  position: relative;
+  background: radial-gradient(circle at 50% 30%, #1D3427 0%, #14251C 55%, #0B1510 100%);
+  color: #F8F3E9;
+  padding: 80px 20px 65px;
+  overflow: hidden;
+  border-top: 1px solid rgba(196, 166, 106, 0.2);
+  border-bottom: 1px solid rgba(196, 166, 106, 0.2);
+}
+
+/* Subtle botanical ambient light auras */
+.depth-bg-aura {
+  position: absolute;
+  pointer-events: none;
+  border-radius: 50%;
+  filter: blur(100px);
+  z-index: 1;
+}
+
+.depth-bg-aura-top {
+  top: -150px;
+  left: 20%;
+  width: 500px;
+  height: 500px;
+  background: radial-gradient(circle, rgba(196, 166, 106, 0.12) 0%, transparent 70%);
+}
+
+.depth-bg-aura-bottom {
+  bottom: -150px;
+  right: 15%;
+  width: 600px;
+  height: 600px;
+  background: radial-gradient(circle, rgba(29, 52, 39, 0.55) 0%, transparent 70%);
+}
+
+/* ==========================================================================
+   SECTION HEADER
+   ========================================================================== */
+
+.depth-showcase-header {
+  position: relative;
+  z-index: 2;
+  max-width: 820px;
+  margin: 0 auto 40px;
+  text-align: center;
+}
+
+.depth-showcase-eyebrow {
+  display: inline-block;
+  color: #C4A66A;
+  font-family: var(--font-body);
+  font-size: 0.76rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.22em;
+  margin-bottom: 12px;
+  padding: 4px 14px;
+  border-radius: 999px;
+  background: rgba(196, 166, 106, 0.1);
+  border: 1px solid rgba(196, 166, 106, 0.25);
+  backdrop-filter: blur(8px);
+}
+
+.depth-showcase-title {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 2.85rem;
+  font-weight: 600;
+  color: #F8F3E9;
+  line-height: 1.22;
+  margin-bottom: 14px;
+  letter-spacing: -0.01em;
+  text-shadow: 0 4px 24px rgba(0, 0, 0, 0.5);
+}
+
+.depth-showcase-subtitle {
+  font-family: var(--font-body);
+  color: #C8C2B4;
+  font-size: 1.05rem;
+  line-height: 1.6;
+  max-width: 620px;
+  margin: 0 auto;
+}
+
+/* ==========================================================================
+   CAROUSEL WRAPPER & 3D STAGE
+   ========================================================================== */
+
+.depth-carousel-wrapper {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  max-width: 1440px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+}
+
+.depth-stage {
+  position: relative;
+  width: 100%;
+  height: 490px;
+  perspective: 1300px;
+  perspective-origin: 50% 50%;
+  transform-style: preserve-3d;
+  contain: layout style;
+
+  /* Product spacing variables for true physical 3D arc */
+  --product-spacing-adj: clamp(230px, 24vw, 320px);
+  --product-spacing-outer: clamp(410px, 44vw, 560px);
+  --product-spacing-far: clamp(600px, 64vw, 800px);
+}
+
+/* ==========================================================================
+   PURE 3D PRODUCT SLOTS (NO CARD BOXES, ONLY PRODUCT IMAGES)
+   ========================================================================== */
+
+.depth-product-slot {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform-style: preserve-3d;
+  cursor: pointer;
+  transition: transform 0.72s cubic-bezier(0.22, 1, 0.36, 1),
+              opacity 0.72s cubic-bezier(0.22, 1, 0.36, 1),
+              filter 0.72s cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: transform, opacity;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  outline: none;
+}
+
+.depth-product-stage {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Radial ambient backlight behind product packaging */
+.depth-product-glow {
+  position: absolute;
+  width: 320px;
+  height: 320px;
+  border-radius: 50%;
+  filter: blur(32px);
+  pointer-events: none;
+  z-index: 1;
+  opacity: 0.6;
+  transition: opacity 0.5s ease;
+}
+
+/* The Pure Product Image */
+.depth-product-img {
+  display: block;
+  max-height: 380px;
+  max-width: 300px;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  position: relative;
+  z-index: 2;
+  transition: transform 0.35s ease;
+  filter: drop-shadow(0 20px 28px rgba(0, 0, 0, 0.65));
+}
+
+/* Realistic Ground/Stage Shadow */
+.depth-product-shadow {
+  width: 200px;
+  height: 24px;
+  background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0.75) 0%, transparent 70%);
+  margin-top: -12px;
+  border-radius: 50%;
+  filter: blur(5px);
+  z-index: 1;
+  pointer-events: none;
+}
+
+/* Active Foreground Center Product (Offset 0) */
+.depth-product-slot[data-offset="0"] {
+  transform: translate3d(-50%, -50%, 120px) scale(1.18);
+  opacity: 1;
+  z-index: 30;
+  pointer-events: auto;
+}
+
+.depth-product-slot[data-offset="0"] .depth-product-img {
+  max-height: 400px;
+  max-width: 320px;
+  filter: drop-shadow(0 26px 36px rgba(0, 0, 0, 0.78));
+}
+
+.depth-product-slot[data-offset="0"]:hover .depth-product-img {
+  transform: translateY(-6px) scale(1.03);
+}
+
+.depth-product-slot[data-offset="0"] .depth-product-glow {
+  opacity: 0.85;
+  width: 360px;
+  height: 360px;
+}
+
+.depth-product-slot[data-offset="0"] .depth-product-shadow {
+  width: 240px;
+  height: 28px;
+}
+
+/* Immediate Right (Offset 1) */
+.depth-product-slot[data-offset="1"] {
+  transform: translate3d(calc(-50% + var(--product-spacing-adj)), -50%, -80px) rotateY(-22deg) scale(0.9);
+  opacity: 0.76;
+  z-index: 20;
+  pointer-events: auto;
+}
+
+.depth-product-slot[data-offset="1"] .depth-product-img {
+  filter: drop-shadow(0 16px 24px rgba(0, 0, 0, 0.65)) brightness(0.85);
+}
+
+/* Immediate Left (Offset -1) */
+.depth-product-slot[data-offset="-1"] {
+  transform: translate3d(calc(-50% - var(--product-spacing-adj)), -50%, -80px) rotateY(22deg) scale(0.9);
+  opacity: 0.76;
+  z-index: 20;
+  pointer-events: auto;
+}
+
+.depth-product-slot[data-offset="-1"] .depth-product-img {
+  filter: drop-shadow(0 16px 24px rgba(0, 0, 0, 0.65)) brightness(0.85);
+}
+
+/* Outer Right (Offset 2) */
+.depth-product-slot[data-offset="2"] {
+  transform: translate3d(calc(-50% + var(--product-spacing-outer)), -50%, -200px) rotateY(-32deg) scale(0.74);
+  opacity: 0.44;
+  z-index: 10;
+  pointer-events: auto;
+}
+
+.depth-product-slot[data-offset="2"] .depth-product-img {
+  filter: drop-shadow(0 12px 18px rgba(0, 0, 0, 0.55)) brightness(0.7);
+}
+
+/* Outer Left (Offset -2) */
+.depth-product-slot[data-offset="-2"] {
+  transform: translate3d(calc(-50% - var(--product-spacing-outer)), -50%, -200px) rotateY(32deg) scale(0.74);
+  opacity: 0.44;
+  z-index: 10;
+  pointer-events: auto;
+}
+
+.depth-product-slot[data-offset="-2"] .depth-product-img {
+  filter: drop-shadow(0 12px 18px rgba(0, 0, 0, 0.55)) brightness(0.7);
+}
+
+/* Far Offsets (Offset >= 3 or <= -3) */
+.depth-product-slot[data-offset="3"] {
+  transform: translate3d(calc(-50% + var(--product-spacing-far)), -50%, -350px) rotateY(-36deg) scale(0.55);
+  opacity: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.depth-product-slot[data-offset="-3"] {
+  transform: translate3d(calc(-50% - var(--product-spacing-far)), -50%, -350px) rotateY(36deg) scale(0.55);
+  opacity: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+
+/* Hover effect on side products */
+.depth-product-slot.is-side:hover {
+  opacity: 0.95;
+}
+
+.depth-product-slot.is-side:hover .depth-product-img {
+  transform: translateY(-4px) scale(1.04);
+  filter: drop-shadow(0 20px 30px rgba(0, 0, 0, 0.75)) brightness(1);
+}
+
+/* ==========================================================================
+   CIRCULAR NAVIGATION ARROWS
+   ========================================================================== */
+
+.depth-nav-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: rgba(20, 37, 28, 0.85);
+  border: 1.5px solid rgba(196, 166, 106, 0.45);
+  color: #F8F3E9;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 40;
+  backdrop-filter: blur(12px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  transition: background 0.25s ease, border-color 0.25s ease, transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.depth-nav-prev {
+  left: 24px;
+}
+
+.depth-nav-next {
+  right: 24px;
+}
+
+.depth-nav-arrow:hover {
+  background: rgba(29, 52, 39, 0.98);
+  border-color: #C4A66A;
+  transform: translateY(-50%) scale(1.08);
+  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.6), 0 0 20px rgba(196, 166, 106, 0.3);
+}
+
+.depth-nav-arrow:active {
+  transform: translateY(-50%) scale(0.96);
+}
+
+/* ==========================================================================
+   PAGINATION INDICATORS & BOTTOM CONTROLS
+   ========================================================================== */
+
+.depth-bottom-controls {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  margin-top: 32px;
+}
+
+.depth-pagination {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.depth-pagination-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: rgba(200, 194, 180, 0.25);
+  border: 1px solid rgba(196, 166, 106, 0.2);
+  cursor: pointer;
+  transition: all 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+  padding: 0;
+}
+
+.depth-pagination-dot:hover {
+  background: rgba(196, 166, 106, 0.5);
+}
+
+.depth-pagination-dot.is-active {
+  width: 32px;
+  border-radius: 999px;
+  background: #C4A66A;
+  border-color: #C4A66A;
+  box-shadow: 0 0 14px rgba(196, 166, 106, 0.55);
+}
+
+.depth-autoplay-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-body);
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #C8C2B4;
+  background: rgba(20, 37, 28, 0.65);
+  border: 1px solid rgba(196, 166, 106, 0.22);
+  padding: 5px 12px;
+  border-radius: 999px;
+  cursor: pointer;
+  backdrop-filter: blur(8px);
+  transition: all 0.2s ease;
+}
+
+.depth-autoplay-toggle:hover {
+  color: #F8F3E9;
+  border-color: rgba(196, 166, 106, 0.5);
+  background: rgba(29, 52, 39, 0.85);
+}
+
+/* ==========================================================================
+   RESPONSIVE DESIGN: TABLETS & LAPTOPS
+   ========================================================================== */
+
+@media (max-width: 1100px) {
+  .depth-stage {
+    --product-spacing-adj: 220px;
+    height: 440px;
+  }
+
+  .depth-product-img {
+    max-height: 330px;
+  }
+
+  .depth-product-slot[data-offset="0"] .depth-product-img {
+    max-height: 350px;
+  }
+
+  /* On medium tablets, hide outer cards to prevent crowding */
+  .depth-product-slot[data-offset="2"],
+  .depth-product-slot[data-offset="-2"] {
+    opacity: 0 !important;
+    pointer-events: none !important;
+  }
+}
+
+@media (max-width: 900px) {
+  .depth-showcase-title {
+    font-size: 2.2rem;
+  }
+}
+
+/* ==========================================================================
+   RESPONSIVE DESIGN: MOBILE (<= 768px)
+   ========================================================================== */
+
+@media (max-width: 768px) {
+  .depth-showcase-section {
+    padding: 45px 14px 40px;
+  }
+
+  .depth-showcase-header {
+    margin-bottom: 24px;
+  }
+
+  .depth-showcase-eyebrow {
+    font-size: 0.66rem;
+    padding: 3px 10px;
+  }
+
+  .depth-showcase-title {
+    font-size: 1.75rem;
+    margin-bottom: 8px;
+  }
+
+  .depth-showcase-subtitle {
+    font-size: 0.88rem;
+    line-height: 1.45;
+  }
+
+  /* Mobile Stage: clean, no distortion, zero horizontal overflow */
+  .depth-stage {
+    height: 380px;
+    perspective: none;
+    transform-style: flat;
+  }
+
+  .depth-product-img {
+    max-height: 270px;
+    max-width: 230px;
+  }
+
+  /* Center Active Product */
+  .depth-product-slot[data-offset="0"] {
+    transform: translate3d(-50%, -50%, 0) scale(1.05);
+  }
+
+  .depth-product-slot[data-offset="0"] .depth-product-img {
+    max-height: 290px;
+    max-width: 250px;
+  }
+
+  .depth-product-slot[data-offset="0"] .depth-product-glow {
+    width: 260px;
+    height: 260px;
+  }
+
+  .depth-product-slot[data-offset="0"] .depth-product-shadow {
+    width: 170px;
+    height: 20px;
+  }
+
+  /* Side products peek gently on edges */
+  .depth-product-slot[data-offset="1"] {
+    transform: translate3d(calc(-50% + 72vw), -50%, 0) scale(0.8);
+    opacity: 0.3;
+  }
+
+  .depth-product-slot[data-offset="-1"] {
+    transform: translate3d(calc(-50% - 72vw), -50%, 0) scale(0.8);
+    opacity: 0.3;
+  }
+
+  .depth-product-slot[data-offset="2"],
+  .depth-product-slot[data-offset="-2"],
+  .depth-product-slot[data-offset="3"],
+  .depth-product-slot[data-offset="-3"] {
+    opacity: 0 !important;
+    pointer-events: none !important;
+  }
+
+  /* Navigation arrows on mobile */
+  .depth-nav-arrow {
+    width: 38px;
+    height: 38px;
+  }
+
+  .depth-nav-prev {
+    left: 8px;
+  }
+
+  .depth-nav-next {
+    right: 8px;
+  }
+
+  .depth-bottom-controls {
+    margin-top: 20px;
+    gap: 16px;
+  }
+}
+
+/* ==========================================================================
+   ACCESSIBILITY: PREFERS-REDUCED-MOTION
+   ========================================================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  .depth-product-slot {
+    transition: opacity 0.3s ease !important;
+  }
+
+  .depth-autoplay-toggle {
+    display: none;
+  }
+}

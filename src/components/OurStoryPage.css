@@ -1,0 +1,307 @@
+/* ==========================================================================
+   Our Story Page Styles
+   ========================================================================== */
+
+.story-hero-card {
+  background: #FFFFFF;
+  border: 1.5px solid #E2EAE0;
+  border-radius: 24px;
+  padding: 40px;
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 40px;
+  align-items: center;
+  box-shadow: 0 8px 30px rgba(49, 84, 58, 0.05);
+  margin-bottom: 54px;
+}
+
+.story-kicker {
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: var(--color-secondary, #B28738);
+  letter-spacing: 0.06em;
+  display: block;
+  margin-bottom: 8px;
+}
+
+.story-hero-text h2 {
+  font-size: 1.85rem;
+  font-weight: 800;
+  color: #1F3827;
+  margin: 0 0 16px;
+  letter-spacing: -0.02em;
+}
+
+.story-hero-text p {
+  font-size: 0.92rem;
+  color: #556B5B;
+  line-height: 1.65;
+  margin: 0 0 16px;
+}
+
+.story-quote-box {
+  background: #F5F9F4;
+  border-left: 4px solid var(--color-primary, #31543A);
+  border-radius: 0 16px 16px 0;
+  padding: 16px 20px;
+  margin-top: 20px;
+}
+
+.story-quote-box p {
+  font-style: italic;
+  font-size: 0.88rem;
+  color: #2D4C35;
+  margin: 0 0 6px;
+  line-height: 1.5;
+}
+
+.story-quote-box span {
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: #64748B;
+}
+
+.story-hero-media {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.story-main-img {
+  width: 100%;
+  max-height: 380px;
+  object-fit: cover;
+  border-radius: 20px;
+  box-shadow: 0 10px 24px rgba(49, 84, 58, 0.12);
+}
+
+.img-caption {
+  font-size: 0.72rem;
+  color: #64748B;
+  margin-top: 8px;
+  font-style: italic;
+}
+
+/* Pillars Section */
+.story-pillars-section {
+  margin-bottom: 54px;
+}
+
+.pillars-header {
+  text-align: center;
+  margin-bottom: 36px;
+}
+
+.pillars-header h2 {
+  font-size: 1.7rem;
+  font-weight: 800;
+  color: #1F3827;
+  margin: 0 0 6px;
+}
+
+.pillars-header p {
+  font-size: 0.9rem;
+  color: #64748B;
+  margin: 0;
+}
+
+.pillars-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+}
+
+.pillar-card {
+  background: #FFFFFF;
+  border: 1.5px solid #E2EAE0;
+  border-radius: 20px;
+  padding: 28px 22px;
+  transition: all 0.22s ease;
+  display: flex;
+  flex-direction: column;
+}
+
+.pillar-card:hover {
+  transform: translateY(-4px);
+  border-color: #31543A;
+  box-shadow: 0 10px 24px rgba(49, 84, 58, 0.08);
+}
+
+.pillar-icon {
+  font-size: 2.2rem;
+  margin-bottom: 14px;
+}
+
+.pillar-card h3 {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #1F3827;
+  margin: 0 0 4px;
+}
+
+.pillar-tamil {
+  font-size: 0.74rem;
+  color: #B28738;
+  font-weight: 700;
+  margin-bottom: 12px;
+  display: block;
+}
+
+.pillar-card p {
+  font-size: 0.8rem;
+  color: #556B5B;
+  line-height: 1.5;
+  margin: 0;
+  flex: 1;
+}
+
+/* Impact Numbers Strip */
+.story-impact-strip {
+  background: linear-gradient(135deg, #31543A 0%, #1F3827 100%);
+  border-radius: 24px;
+  padding: 36px 32px;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 24px;
+  color: #FFFFFF;
+  text-align: center;
+  box-shadow: 0 12px 32px rgba(31, 56, 39, 0.25);
+  margin-bottom: 54px;
+}
+
+.impact-num-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.impact-big-val {
+  font-size: 2.4rem;
+  font-weight: 800;
+  color: #F0E6C8;
+  letter-spacing: -0.02em;
+  margin-bottom: 6px;
+}
+
+.impact-big-lbl {
+  font-size: 0.82rem;
+  color: #CFE3D4;
+  line-height: 1.35;
+  max-width: 200px;
+}
+
+/* Empowerment Narrative Card */
+.empowerment-narrative-card {
+  background: #FFFFFF;
+  border: 1.5px solid #E2EAE0;
+  border-radius: 24px;
+  padding: 40px;
+  display: grid;
+  grid-template-columns: 1fr 1.2fr;
+  gap: 40px;
+  align-items: center;
+  box-shadow: 0 8px 30px rgba(49, 84, 58, 0.05);
+}
+
+.empowerment-img {
+  width: 100%;
+  max-height: 360px;
+  object-fit: cover;
+  border-radius: 20px;
+  box-shadow: 0 10px 24px rgba(49, 84, 58, 0.1);
+}
+
+.empowerment-content h2 {
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: #1F3827;
+  margin: 0 0 14px;
+}
+
+.empowerment-content p {
+  font-size: 0.92rem;
+  color: #556B5B;
+  line-height: 1.65;
+  margin: 0 0 14px;
+}
+
+.empowerment-buttons {
+  display: flex;
+  gap: 14px;
+  margin-top: 24px;
+  flex-wrap: wrap;
+}
+
+.btn-story-explore {
+  background: var(--color-primary, #31543A);
+  color: #FFFFFF;
+  padding: 12px 22px;
+  border-radius: 12px;
+  font-size: 0.88rem;
+  font-weight: 700;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(49, 84, 58, 0.2);
+}
+
+.btn-story-explore:hover {
+  background: #233D2B;
+  transform: translateY(-2px);
+}
+
+.btn-story-wa {
+  background: #FFFFFF;
+  color: #1B5E20;
+  border: 1.5px solid #81C784;
+  padding: 12px 20px;
+  border-radius: 12px;
+  font-size: 0.88rem;
+  font-weight: 700;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.btn-story-wa:hover {
+  background: #E8F5E9;
+}
+
+/* Mobile */
+@media (max-width: 900px) {
+  .story-hero-card {
+    grid-template-columns: 1fr;
+    padding: 24px 20px;
+    gap: 24px;
+  }
+
+  .pillars-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
+  }
+
+  .story-impact-strip {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+    padding: 28px 20px;
+  }
+
+  .empowerment-narrative-card {
+    grid-template-columns: 1fr;
+    padding: 24px 20px;
+    gap: 24px;
+  }
+}
+
+@media (max-width: 600px) {
+  .pillars-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .story-impact-strip {
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+
+  .impact-big-val {
+    font-size: 1.8rem;
+  }
+}

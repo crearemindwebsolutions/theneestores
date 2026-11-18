@@ -1,0 +1,211 @@
+* {
+  padding: 0;
+  margin: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  --font-display: 'Caveat', cursive, 'Noto Sans Tamil', sans-serif;
+  --font-body: 'Poppins', 'Noto Sans Tamil', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+
+  /* Botanical Wellness Light Minimal Color Palette */
+  --bg-main: #FAF9F6;          /* Warm ivory */
+  --bg-secondary: #F2F5ED;     /* Soft botanical green */
+  --bg-card: #FFFFFF;          /* Pure white */
+  --color-primary: #31543A;    /* Deep herbal green */
+  --color-secondary: #79966F;  /* Natural sage green */
+  --color-accent: #C6A15B;     /* Muted botanical gold */
+  --text-primary: #202820;     /* Dark forest charcoal */
+  --text-secondary: #657065;   /* Muted earthy gray */
+  --border-color: #E1E7DC;     /* Soft sage border */
+  --bg-hover: #E8EFE3;         /* Pale herbal green */
+
+  /* Legacy variable mappings for seamless compatibility */
+  --cream: #FAF9F6;
+  --text-dark: #202820;
+  --herbal-green: #31543A;
+  --herbal-gold: #C6A15B;
+  --herbal-accent: #79966F;
+
+  --shadow-sm: 0 4px 14px rgba(49, 84, 58, 0.06);
+  --shadow-md: 0 10px 28px rgba(49, 84, 58, 0.08);
+  --shadow-lift: 0 18px 40px rgba(49, 84, 58, 0.12);
+}
+
+html,
+body {
+  scroll-behavior: auto;
+  overflow-x: hidden !important;
+  max-width: 100vw !important;
+  width: 100% !important;
+  position: relative;
+}
+
+#root {
+  overflow-x: hidden !important;
+  max-width: 100vw !important;
+  width: 100% !important;
+  position: relative;
+}
+
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+
+.lenis.lenis-smooth {
+  scroll-behavior: auto;
+}
+
+.lenis.lenis-stopped {
+  overflow: hidden;
+}
+
+body {
+  font-family: var(--font-body);
+  color: var(--text-primary);
+  background: var(--bg-main);
+  overflow-x: hidden;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  color: var(--color-primary);
+}
+
+button {
+  font-family: var(--font-body);
+  cursor: pointer;
+  border: none;
+  background: none;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+ul {
+  list-style: none;
+}
+
+.social-icons {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.social-icons-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-primary);
+  background: var(--bg-hover);
+  border: 1px solid var(--border-color);
+  transition: background 0.25s ease, transform 0.25s ease, color 0.25s ease;
+}
+
+.social-icons-btn:hover {
+  transform: translateY(-3px);
+  background: var(--color-primary);
+  color: #FFFFFF;
+}
+
+/* Toast notification */
+.cart-toast {
+  position: fixed;
+  bottom: 60px;
+  right: 28px;
+  background: #FFFFFF;
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  box-shadow: 0 12px 32px rgba(49, 84, 58, 0.12);
+  padding: 14px 22px;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  z-index: 99999;
+  animation: toastSlideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.cart-toast-icon {
+  font-size: 1.2rem;
+}
+
+@keyframes toastSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Mobile Viewport Safety & iOS Zoom Prevention & Compact Scaling */
+@media (max-width: 768px) {
+  input[type='text'],
+  input[type='email'],
+  input[type='tel'],
+  input[type='number'],
+  input[type='password'],
+  select,
+  textarea {
+    font-size: 16px !important; /* Disables auto-zooming in mobile Safari */
+  }
+
+  /* Global mobile heading scaling */
+  h1 {
+    font-size: clamp(1.4rem, 6vw, 1.85rem);
+  }
+  h2 {
+    font-size: clamp(1.25rem, 5vw, 1.6rem);
+  }
+  h3 {
+    font-size: clamp(1.05rem, 4vw, 1.35rem);
+  }
+
+  .cart-toast {
+    bottom: 24px;
+    right: 14px;
+    left: 14px;
+    justify-content: center;
+    padding: 10px 16px;
+    font-size: 0.8rem;
+  }
+
+  /* User requirement: Tamil words not needed in mobile view */
+  .bs-card-tamil,
+  .hero-tamil-pill,
+  .pmodal-tamil,
+  .prod-tamil-title,
+  .podi-tamil,
+  .cart-item-tamil,
+  .wishlist-tamil,
+  .footer-logo-tamil,
+  .page-hero-tamil-sub,
+  .combo-tamil,
+  .tamil-word,
+  .tamil-text,
+  .navbar-brand-sub .tamil-text,
+  .hide-on-mobile-tamil,
+  [data-tamil="true"] {
+    display: none !important;
+  }
+}

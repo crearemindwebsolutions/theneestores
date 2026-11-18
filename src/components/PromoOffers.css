@@ -1,0 +1,128 @@
+.promo-offers {
+  background: var(--bg-main);
+  padding: 60px 48px 90px;
+  overflow: hidden;
+}
+
+.promo-offers-grid {
+  max-width: 1400px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+
+.promo-tile {
+  position: relative;
+  aspect-ratio: 16 / 8;
+  border-radius: 24px;
+  overflow: hidden;
+  background-size: cover;
+  background-position: center;
+  padding: 28px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  border: 1px solid var(--border-color);
+  box-shadow: 0 10px 30px rgba(49, 84, 58, 0.08);
+}
+
+.promo-tile-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, rgba(20, 36, 24, 0.88) 0%, rgba(20, 36, 24, 0.62) 42%, rgba(20, 36, 24, 0.12) 100%);
+}
+
+.promo-tile-icon {
+  position: relative;
+  z-index: 1;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  backdrop-filter: blur(6px);
+}
+
+.promo-tile-content {
+  position: relative;
+  z-index: 1;
+  max-width: 380px;
+}
+
+.promo-tile-content h3 {
+  color: #fff;
+  font-family: var(--font-body);
+  font-size: 1.4rem;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.promo-tile-content p {
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 0.88rem;
+  line-height: 1.5;
+  margin-bottom: 20px;
+}
+
+.promo-tile-btn {
+  padding: 12px 26px;
+  border-radius: 999px;
+  background: #FFFFFF;
+  color: var(--color-primary);
+  font-weight: 700;
+  font-size: 0.85rem;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
+  transition: transform 0.25s ease, background-color 0.25s ease;
+}
+
+.promo-tile-btn:hover {
+  transform: translateY(-2px);
+  background: var(--bg-hover);
+}
+
+@media (max-width: 900px) {
+  .promo-offers-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .promo-tile {
+    aspect-ratio: 16 / 10;
+  }
+}
+
+@media (max-width: 640px) {
+  .promo-offers {
+    padding: 32px 14px 40px;
+  }
+
+  .promo-tile {
+    padding: 24px 18px;
+    border-radius: 16px;
+    aspect-ratio: 16 / 9;
+  }
+
+  .promo-tile-content {
+    max-width: 100%;
+  }
+
+  .promo-tile-content h3 {
+    font-size: 1.15rem;
+    margin-bottom: 5px;
+  }
+
+  .promo-tile-content p {
+    font-size: 0.76rem;
+    line-height: 1.4;
+    margin-bottom: 14px;
+  }
+
+  .promo-tile-btn {
+    padding: 8px 16px;
+    font-size: 0.74rem;
+  }
+}

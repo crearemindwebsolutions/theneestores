@@ -1,0 +1,324 @@
+/* ==========================================================================
+   Health Goals Page Styles
+   ========================================================================== */
+
+.goals-selector-strip {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 14px;
+  margin-bottom: 36px;
+}
+
+.goal-tab-card {
+  background: #FFFFFF;
+  border: 1.5px solid #E2EAE0;
+  border-radius: 18px;
+  padding: 18px 14px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.22s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.goal-tab-card:hover {
+  transform: translateY(-3px);
+  border-color: #31543A;
+  box-shadow: 0 6px 18px rgba(49, 84, 58, 0.08);
+}
+
+.goal-tab-card.is-selected {
+  background: linear-gradient(135deg, #F3F7F2 0%, #E8F0E6 100%);
+  border-color: #31543A;
+  box-shadow: 0 6px 20px rgba(49, 84, 58, 0.15);
+}
+
+.goal-tab-emoji {
+  font-size: 1.8rem;
+  margin-bottom: 2px;
+}
+
+.goal-tab-title {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #1F3827;
+  line-height: 1.25;
+}
+
+.goal-tab-tamil {
+  font-size: 0.72rem;
+  color: #B28738;
+  font-weight: 600;
+}
+
+/* Spotlight Box */
+.goal-spotlight-box {
+  background: #FFFFFF;
+  border: 1.5px solid #E0EADE;
+  border-radius: 24px;
+  padding: 36px 40px;
+  box-shadow: 0 8px 30px rgba(49, 84, 58, 0.05);
+  margin-bottom: 50px;
+}
+
+.goal-spotlight-header {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  margin-bottom: 16px;
+}
+
+.spotlight-emoji {
+  width: 54px;
+  height: 54px;
+  border-radius: 16px;
+  background: #EAF5EC;
+  border: 1px solid #C8E6C9;
+  font-size: 1.8rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.goal-spotlight-header h2 {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: #1F3827;
+  margin: 0 0 2px;
+}
+
+.spotlight-tamil {
+  font-size: 0.92rem;
+  color: #B28738;
+  font-weight: 700;
+}
+
+.goal-spotlight-desc {
+  font-size: 0.95rem;
+  color: #556B5B;
+  line-height: 1.6;
+  margin: 0 0 20px;
+}
+
+.goal-herbs-strip {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  padding: 14px 18px;
+  background: #F8FAF7;
+  border-radius: 14px;
+  margin-bottom: 32px;
+}
+
+.goal-herbs-strip strong {
+  font-size: 0.82rem;
+  color: #1F3827;
+}
+
+.herbs-pill-wrap {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.herb-pill {
+  background: #FFFFFF;
+  border: 1px solid #DCE6D9;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: #2E7D32;
+}
+
+/* Matched Products */
+.matched-products-section h3 {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #1F3827;
+  margin: 0 0 18px;
+}
+
+.matched-products-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 20px;
+}
+
+.matched-prod-card {
+  background: #F8FAF7;
+  border: 1.5px solid #E2EADF;
+  border-radius: 18px;
+  padding: 18px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  transition: all 0.2s ease;
+}
+
+.matched-prod-card:hover {
+  transform: translateY(-2px);
+  border-color: #31543A;
+  box-shadow: 0 6px 18px rgba(49, 84, 58, 0.08);
+}
+
+.matched-img {
+  width: 80px;
+  height: 80px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.matched-info {
+  flex: 1;
+}
+
+.matched-info h4 {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #1F3827;
+  margin: 0 0 2px;
+}
+
+.matched-vol {
+  font-size: 0.72rem;
+  color: #64748B;
+  margin: 0 0 4px;
+}
+
+.matched-price {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: #31543A;
+  display: block;
+  margin-bottom: 10px;
+}
+
+.matched-btn-row {
+  display: flex;
+  gap: 8px;
+}
+
+.btn-matched-view {
+  background: #FFFFFF;
+  border: 1px solid #DCE6D9;
+  color: #31543A;
+  font-size: 0.74rem;
+  font-weight: 700;
+  padding: 6px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.btn-matched-add {
+  background: var(--color-primary, #31543A);
+  border: none;
+  color: #FFFFFF;
+  font-size: 0.74rem;
+  font-weight: 700;
+  padding: 6px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+/* Routine Section */
+.wellness-routine-section {
+  background: #FFFFFF;
+  border: 1.5px solid #E2EAE0;
+  border-radius: 24px;
+  padding: 36px 32px;
+}
+
+.routine-header {
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.routine-header h2 {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #1F3827;
+  margin: 0 0 4px;
+}
+
+.routine-header p {
+  font-size: 0.88rem;
+  color: #64748B;
+  margin: 0;
+}
+
+.routine-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 18px;
+}
+
+.routine-step-card {
+  background: #F9FAF8;
+  border: 1px solid #E5ECE2;
+  border-radius: 18px;
+  padding: 22px 18px;
+  display: flex;
+  flex-direction: column;
+}
+
+.routine-clock {
+  font-size: 0.84rem;
+  font-weight: 800;
+  color: #B28738;
+  margin-bottom: 4px;
+}
+
+.routine-label {
+  font-size: 0.72rem;
+  color: #64748B;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+
+.routine-step-card h4 {
+  font-size: 0.98rem;
+  font-weight: 700;
+  color: #1F3827;
+  margin: 0 0 8px;
+}
+
+.routine-step-card p {
+  font-size: 0.78rem;
+  color: #556B5B;
+  line-height: 1.45;
+  margin: 0;
+  flex: 1;
+}
+
+/* Mobile */
+@media (max-width: 900px) {
+  .goals-selector-strip {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+
+  .goal-spotlight-box {
+    padding: 24px 18px;
+  }
+
+  .routine-cards-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+}
+
+@media (max-width: 600px) {
+  .goals-selector-strip {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .routine-cards-grid {
+    grid-template-columns: 1fr;
+  }
+}

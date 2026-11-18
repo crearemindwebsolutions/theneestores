@@ -1,0 +1,613 @@
+/* ==========================================================================
+   THENEE PROFESSIONAL MINIMALIST LOGIN PAGE
+   ========================================================================== */
+
+.pro-login-page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: #FBFBF9;
+  color: #202820;
+  font-family: var(--font-body, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* TOP HEADER */
+.pro-login-header {
+  background: #FFFFFF;
+  border-bottom: 1px solid #E8EDE4;
+  padding: 14px 24px;
+  position: sticky;
+  top: 0;
+  z-index: 40;
+}
+
+.pro-login-header-inner {
+  max-width: 1080px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.pro-back-btn {
+  background: transparent;
+  border: none;
+  color: #4C5E4F;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+.pro-back-btn:hover {
+  color: #1E392A;
+  background: #F2F5ED;
+}
+
+.pro-brand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.pro-brand-name {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #234330;
+  letter-spacing: 0.16em;
+  line-height: 1.1;
+}
+
+.pro-brand-tag {
+  font-size: 0.58rem;
+  font-weight: 600;
+  color: #79966F;
+  letter-spacing: 0.14em;
+  margin-top: 2px;
+}
+
+.pro-secure-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #31543A;
+  background: #EFF6EE;
+  border: 1px solid #D1E5D0;
+  padding: 4px 10px;
+  border-radius: 999px;
+}
+
+/* MAIN BODY */
+.pro-login-main {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 18px 50px;
+}
+
+.pro-login-card {
+  background: #FFFFFF;
+  border: 1px solid #E2E8DC;
+  border-radius: 16px;
+  box-shadow: 0 14px 38px -10px rgba(32, 45, 34, 0.07), 0 2px 6px rgba(0, 0, 0, 0.02);
+  width: 100%;
+  max-width: 410px;
+  padding: 32px 30px 28px;
+}
+
+/* CARD HEADER */
+.pro-card-header {
+  text-align: center;
+  margin-bottom: 22px;
+}
+
+.pro-checkout-alert-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #EFF6EE;
+  border: 1px solid #CDE2CB;
+  color: #2D5A3D;
+  font-size: 0.74rem;
+  font-weight: 600;
+  padding: 4px 12px;
+  border-radius: 999px;
+  margin-bottom: 12px;
+  box-shadow: 0 2px 6px rgba(45, 90, 61, 0.05);
+}
+
+.pro-leaf-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #EFF5ED;
+  border: 1px solid #D4E3CF;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 12px;
+}
+
+.pro-card-header h1 {
+  font-family: var(--font-body, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif) !important;
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: #1E392A;
+  letter-spacing: -0.01em;
+  margin: 0 0 6px;
+}
+
+.pro-card-header p {
+  font-size: 0.82rem;
+  color: #657065;
+  line-height: 1.45;
+  margin: 0;
+}
+
+/* METHOD TOGGLE (SEGMENTED CONTROL) */
+.pro-method-toggle {
+  display: flex;
+  background: #F0F4EC;
+  border-radius: 8px;
+  padding: 3px;
+  margin-bottom: 20px;
+}
+
+.pro-method-btn {
+  flex: 1;
+  border: none;
+  background: transparent;
+  padding: 8px 12px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #657065;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  font-family: inherit;
+}
+
+.pro-method-btn.is-active {
+  background: #FFFFFF;
+  color: #1E392A;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+}
+
+/* ERROR MESSAGE */
+.pro-error-msg {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #FDF2F2;
+  border: 1px solid #F5C6CB;
+  color: #A92634;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 0.78rem;
+  font-weight: 500;
+  margin-bottom: 16px;
+  line-height: 1.35;
+}
+
+/* FORMS & INPUTS */
+.pro-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.pro-input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  text-align: left;
+}
+
+.pro-input-group label {
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: #334035;
+  letter-spacing: 0.02em;
+}
+
+.pro-label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.pro-link-btn {
+  background: none;
+  border: none;
+  color: #31543A;
+  font-size: 0.74rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+  font-family: inherit;
+  transition: color 0.15s ease;
+}
+
+.pro-link-btn:hover {
+  text-decoration: underline;
+  color: #1E392A;
+}
+
+.pro-input-group input[type="text"],
+.pro-input-group input[type="email"],
+.pro-input-group input[type="password"] {
+  width: 100%;
+  height: 44px;
+  padding: 0 14px;
+  border: 1px solid #D5DDD0;
+  border-radius: 8px;
+  font-size: 0.88rem;
+  color: #202820;
+  background: #FFFFFF;
+  outline: none;
+  font-family: inherit;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.pro-input-group input:focus {
+  border-color: #2E4D38;
+  box-shadow: 0 0 0 3px rgba(46, 77, 56, 0.12);
+}
+
+/* PHONE INPUT GROUP */
+.pro-phone-field {
+  display: flex;
+  align-items: center;
+  border: 1px solid #D5DDD0;
+  border-radius: 8px;
+  background: #FFFFFF;
+  overflow: hidden;
+  height: 44px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.pro-phone-field:focus-within {
+  border-color: #2E4D38;
+  box-shadow: 0 0 0 3px rgba(46, 77, 56, 0.12);
+}
+
+.pro-prefix {
+  padding: 0 12px;
+  font-size: 0.86rem;
+  font-weight: 600;
+  color: #4A5B4D;
+  background: #F7FAF5;
+  border-right: 1px solid #D5DDD0;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  user-select: none;
+}
+
+.pro-phone-field input {
+  flex: 1;
+  height: 100%;
+  border: none;
+  padding: 0 12px;
+  font-size: 0.88rem;
+  color: #202820;
+  background: transparent;
+  outline: none;
+  font-family: inherit;
+}
+
+.pro-field-hint {
+  font-size: 0.7rem;
+  color: #79867A;
+  margin-top: 1px;
+}
+
+/* PASSWORD FIELD */
+.pro-password-field {
+  display: flex;
+  align-items: center;
+  border: 1px solid #D5DDD0;
+  border-radius: 8px;
+  background: #FFFFFF;
+  overflow: hidden;
+  height: 44px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.pro-password-field:focus-within {
+  border-color: #2E4D38;
+  box-shadow: 0 0 0 3px rgba(46, 77, 56, 0.12);
+}
+
+.pro-password-field input {
+  flex: 1;
+  height: 100%;
+  border: none;
+  padding: 0 14px;
+  font-size: 0.88rem;
+  color: #202820;
+  background: transparent;
+  outline: none;
+  font-family: inherit;
+}
+
+.pro-show-btn {
+  background: none;
+  border: none;
+  padding: 0 12px;
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: #5A6D5E;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.pro-show-btn:hover {
+  color: #1E392A;
+}
+
+/* OTP SPECIFIC */
+.pro-otp-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.78rem;
+  color: #4C5E4F;
+  background: #F5F9F3;
+  border: 1px solid #D8E5D5;
+  border-radius: 8px;
+  padding: 8px 12px;
+}
+
+.pro-otp-label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+
+
+.pro-otp-input {
+  text-align: center;
+  letter-spacing: 0.45em;
+  font-size: 1.15rem !important;
+  font-weight: 700;
+}
+
+/* SUBMIT BUTTON */
+.pro-submit-btn {
+  height: 44px;
+  background: #234330;
+  color: #FFFFFF;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: inherit;
+  margin-top: 4px;
+}
+
+.pro-submit-btn:hover:not(:disabled) {
+  background: #183122;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(35, 67, 48, 0.2);
+}
+
+.pro-submit-btn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+/* DIVIDER */
+.pro-divider {
+  display: flex;
+  align-items: center;
+  margin: 18px 0 14px;
+  text-align: center;
+}
+
+.pro-divider::before,
+.pro-divider::after {
+  content: '';
+  flex: 1;
+  border-bottom: 1px solid #E4EBE0;
+}
+
+.pro-divider span {
+  padding: 0 12px;
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: #8C998D;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+/* GOOGLE SIGN IN BUTTON */
+.pro-google-btn {
+  width: 100%;
+  height: 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: #FFFFFF;
+  border: 1px solid #D5DDD0;
+  color: #3C4043;
+  font-weight: 600;
+  font-size: 0.85rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: inherit;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  margin-bottom: 10px;
+}
+
+.pro-google-btn:hover:not(:disabled) {
+  background: #F8FAF6;
+  border-color: #B9C7B4;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.07);
+}
+
+.pro-google-btn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.pro-google-btn svg {
+  flex-shrink: 0;
+}
+
+
+
+/* BONUS NOTE IN SIGNUP */
+.pro-bonus-note {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  background: #EFF6EE;
+  border: 1px solid #CCE1CB;
+  color: #2D5A3D;
+  font-size: 0.76rem;
+  padding: 8px 12px;
+  border-radius: 8px;
+}
+
+/* CARD FOOTER SWITCHER */
+.pro-card-footer {
+  text-align: center;
+  margin-top: 18px;
+  font-size: 0.8rem;
+  color: #657065;
+}
+
+.pro-text-link {
+  background: none;
+  border: none;
+  color: #234330;
+  font-weight: 700;
+  cursor: pointer;
+  font-size: inherit;
+  font-family: inherit;
+  padding: 0;
+  text-decoration: underline;
+  transition: color 0.15s ease;
+}
+
+.pro-text-link:hover {
+  color: #0E1D14;
+}
+
+/* MICRO TRUST LINE */
+.pro-micro-trust {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 0.68rem;
+  color: #7A887C;
+  font-weight: 500;
+  margin-top: 22px;
+  padding-top: 14px;
+  border-top: 1px solid #EDF2EA;
+}
+
+/* BOTTOM FOOTER */
+.pro-login-footer {
+  text-align: center;
+  padding: 20px 16px 28px;
+  font-size: 0.75rem;
+  color: #79867A;
+  line-height: 1.6;
+}
+
+.pro-crearemind-link {
+  display: inline-block;
+  margin-top: 5px;
+  color: #8C998D;
+  text-decoration: none;
+  font-size: 0.7rem;
+  letter-spacing: 0.05em;
+  opacity: 0.65;
+  transition: opacity 0.2s ease, color 0.2s ease;
+}
+
+.pro-crearemind-link:hover {
+  opacity: 1;
+  color: #234330;
+}
+
+.pro-crearemind-link strong {
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+/* ==========================================================================
+   MOBILE RESPONSIVENESS
+   ========================================================================== */
+@media (max-width: 600px) {
+  .pro-login-header {
+    padding: 10px 14px;
+  }
+
+  .pro-login-header-inner {
+    gap: 8px;
+  }
+
+  .pro-brand-name {
+    font-size: 1.02rem;
+  }
+
+  .pro-brand-tag {
+    font-size: 0.52rem;
+  }
+
+  .pro-back-btn {
+    font-size: 0.76rem;
+    padding: 4px 6px;
+  }
+
+  .pro-back-btn span {
+    display: none;
+  }
+
+  .pro-login-main {
+    padding: 20px 12px 30px;
+  }
+
+  .pro-login-card {
+    padding: 24px 18px 20px;
+    border-radius: 14px;
+  }
+
+  .pro-card-header h1 {
+    font-size: 1.25rem;
+  }
+
+  .pro-card-header p {
+    font-size: 0.78rem;
+  }
+
+  .pro-micro-trust {
+    font-size: 0.62rem;
+    gap: 5px;
+    flex-wrap: wrap;
+  }
+}
