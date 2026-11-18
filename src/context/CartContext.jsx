@@ -47,6 +47,14 @@ export const CartProvider = ({ children }) => {
         localStorage.setItem('thenee_auth_user', JSON.stringify(userData))
         localStorage.setItem('thenee_user', JSON.stringify(userData))
         setCurrentUser(userData)
+
+        // Automatically redirect to account page on OAuth / magic link login
+        if (typeof window !== 'undefined') {
+          const currentHash = window.location.hash
+          if (currentHash.includes('login') || currentHash.includes('access_token')) {
+            window.location.hash = 'account'
+          }
+        }
       } else if (event === 'SIGNED_OUT') {
         localStorage.removeItem('thenee_auth_user')
         localStorage.removeItem('thenee_user')

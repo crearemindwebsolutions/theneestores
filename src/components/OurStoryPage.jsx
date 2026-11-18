@@ -10,25 +10,21 @@ const STORY_PILLARS = [
   {
     icon: '🌿',
     title: 'Western Ghats Direct Sourcing',
-    tamil: 'மேற்கு தொடர்ச்சி மலை மூலிகைகள்',
     desc: 'Harvested from natural fertile soils along the foothills of Tenkasi, enriched by fresh mountain streams and clean village air.',
   },
   {
     icon: '☀️',
     title: 'Traditional Sun-Shade Drying',
-    tamil: 'பாரம்பரிய நிழல் உலர்த்தல்',
     desc: 'We never apply artificial high-temperature industrial blowers. Shade-drying preserves volatile floral oils, natural green chlorophyll, and delicate antioxidants.',
   },
   {
     icon: '🪨',
     title: 'Slow Stone-Ground Craft',
-    tamil: 'பாரம்பரிய உரல் & அம்மியில் அரைத்தல்',
     desc: 'Spices and leaves are gently stone-ground at low RPM to ensure zero friction heat, retaining grandmother’s authentic aroma and curative potency.',
   },
   {
     icon: '🛡️',
     title: 'Zero Preservatives & FSSAI Certified',
-    tamil: '100% தூய இயற்கை & FSSAI தரச்சான்று',
     desc: 'No artificial flavors, colors, maltodextrin, or anti-caking agents. Certified under Central FSSAI License #22425278000320.',
   },
 ]
@@ -56,7 +52,6 @@ const OurStoryPage = ({ onOpenAccount }) => {
           <span>Our Story</span>
         </div>
         <h1>Rooted in Kadayam, Tenkasi</h1>
-        <span className="page-hero-tamil-sub">தேனீ • கிராமத்து பெண்களின் உழைப்பும் பாரம்பரிய மூலிகையின் ஆற்றலும்</span>
         <p className="page-hero-desc">
           How a humble village initiative in Manthiyoor, Tamil Nadu blossomed into a trusted household
           symbol of pure botanicals and daily wellness.
@@ -119,7 +114,6 @@ const OurStoryPage = ({ onOpenAccount }) => {
               <div className="pillar-card" key={idx}>
                 <div className="pillar-icon">{p.icon}</div>
                 <h3>{p.title}</h3>
-                <span className="pillar-tamil">{p.tamil}</span>
                 <p>{p.desc}</p>
               </div>
             ))}

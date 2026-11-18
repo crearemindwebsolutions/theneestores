@@ -13,7 +13,6 @@ const HEALTH_GOALS = [
     id: 'sugar',
     emoji: '🩺',
     title: 'Blood Sugar & Metabolism',
-    tamil: 'இரத்த சர்க்கரை கட்டுப்பாடு',
     desc: 'Targeted botanical herbs that slow glucose absorption, optimize insulin response, and curb sudden hunger spikes.',
     recommendedIds: ['herbal-tea', 'moringa-powder'],
     keyHerbs: ['Avaram Poo (Senna auriculata)', 'Fenugreek Seed', 'Jamun Seed Extract', 'Moringa Leaf'],
@@ -22,7 +21,6 @@ const HEALTH_GOALS = [
     id: 'gut',
     emoji: '🌿',
     title: 'Digestive Comfort & Gut Relief',
-    tamil: 'செரிமானம் மற்றும் குடல் ஆரோக்கியம்',
     desc: 'Calm bloating, reduce acid reflux, and restore gut microflora with traditional dry-roasted culinary digestives.',
     recommendedIds: ['garlic-podi', 'pirandai-podi'],
     keyHerbs: ['Country Garlic', 'Pirandai (Cissus quadrangularis)', 'Roasted Cumin', 'Asafoetida'],
@@ -31,7 +29,6 @@ const HEALTH_GOALS = [
     id: 'cooling',
     emoji: '❄️',
     title: 'Internal Body Heat & Detox',
-    tamil: 'உடல் சூடு தணித்தல் & நச்சு நீக்கம்',
     desc: 'Natural village refrigerants that lower core body temperature, clear skin redness, and soothe tired eyes.',
     recommendedIds: ['herbal-tea', 'bliss-tea'],
     keyHerbs: ['Vetiver (Khus root)', 'Rose Petals', 'Hibiscus (Semparuthi)', 'Butterfly Pea'],
@@ -40,7 +37,6 @@ const HEALTH_GOALS = [
     id: 'energy',
     emoji: '⚡',
     title: 'Clean Energy & Vitality',
-    tamil: 'நீடித்த உடல் ஆற்றல் & சுறுசுறுப்பு',
     desc: 'Caffeine-free cellular nourishment packed with biodiverse iron, calcium, plant proteins, and antioxidants.',
     recommendedIds: ['moringa-powder', 'curry-leaves-podi'],
     keyHerbs: ['Pure Moringa Leaves', 'Karuveppilai (Curry Leaves)', 'Black Sesame', 'Country Urad'],
@@ -49,7 +45,6 @@ const HEALTH_GOALS = [
     id: 'sleep',
     emoji: '🌙',
     title: 'Restorative Sleep & De-Stress',
-    tamil: 'ஆழ்ந்த தூக்கம் & மன அமைதி',
     desc: 'Melt away hectic workday anxiety and slip into deep, restorative REM sleep with tranquil botanical anthocyanins.',
     recommendedIds: ['bliss-tea'],
     keyHerbs: ['Butterfly Pea (Sangu Poo)', 'Crimson Hibiscus', 'Cardamom Pods', 'Chamomile Flowers'],
@@ -90,7 +85,6 @@ const HealthGoalsPage = ({ onOpenAccount }) => {
           <span>Health Goals</span>
         </div>
         <h1>Ayurvedic Health & Wellness Goals</h1>
-        <span className="page-hero-tamil-sub">உங்கள் நல்வாழ்வுக்கான பிரத்யேக மூலிகைத் தீர்வுகள்</span>
         <p className="page-hero-desc">
           Select your primary body and lifestyle priority. Discover targeted remedies handcrafted with
           unadulterated botanicals from the foothills of Tenkasi.
@@ -115,7 +109,6 @@ const HealthGoalsPage = ({ onOpenAccount }) => {
             >
               <span className="goal-tab-emoji">{goal.emoji}</span>
               <span className="goal-tab-title">{goal.title}</span>
-              <span className="goal-tab-tamil">{goal.tamil}</span>
             </button>
           ))}
         </div>
@@ -126,7 +119,6 @@ const HealthGoalsPage = ({ onOpenAccount }) => {
             <span className="spotlight-emoji">{currentGoal.emoji}</span>
             <div>
               <h2>{currentGoal.title}</h2>
-              <span className="spotlight-tamil">{currentGoal.tamil}</span>
             </div>
           </div>
 
@@ -147,17 +139,23 @@ const HealthGoalsPage = ({ onOpenAccount }) => {
             <div className="matched-products-grid">
               {matchedProducts.map((item) => (
                 <div className="matched-prod-card" key={item.id}>
-                  <ImageWithSkeleton
-                    src={item.bottle || item.image}
-                    alt={item.name}
-                    className="matched-img"
-                    skeletonBorderRadius="12px"
-                  />
+                  <div
+                    className="matched-img-wrap"
+                    onClick={() => setSelectedProduct(item)}
+                    title="Click for full benefits & ingredients"
+                  >
+                    <ImageWithSkeleton
+                      src={item.bottle || item.image}
+                      alt={item.name}
+                      className="matched-img"
+                      skeletonBorderRadius="12px"
+                    />
+                  </div>
                   <div className="matched-info">
-                    <h4>{item.name}</h4>
+                    <h4 onClick={() => setSelectedProduct(item)}>{item.name}</h4>
                     <p className="matched-vol">{item.volume || item.weight || '100g Pouch'}</p>
-                    <span className="matched-price">₹{item.price}</span>
-                    <div className="matched-btn-row">
+                    <div className="matched-price-action-row">
+                      <span className="matched-price">₹{item.price}</span>
                       <button
                         className="btn-matched-add"
                         onClick={() => {
@@ -178,7 +176,7 @@ const HealthGoalsPage = ({ onOpenAccount }) => {
         {/* Daily Routine Timetable */}
         <div className="wellness-routine-section">
           <div className="routine-header">
-            <h2>A Day in Natural Living (ஒரு நாள் மூலிகை பழக்கம்)</h2>
+            <h2>A Day in Natural Living</h2>
             <p>Simple daily habits to nurture metabolism, digestive fire, and peaceful sleep:</p>
           </div>
 

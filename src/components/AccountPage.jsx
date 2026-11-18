@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useCart } from '../context/CartContext'
 import { products, individualPodis, brandInfo } from '../data/products'
-import { orderService, profileService } from '../lib/supabase'
+import { orderService, profileService, adminService, inquiryService } from '../lib/supabase'
 import { SkeletonOrderCard, ImageWithSkeleton } from './Skeleton'
 import LoginPage from './LoginPage'
 import Footer from './Footer'
@@ -20,14 +20,17 @@ const TAB_TITLES = {
   wishlist: 'My Herbal Wishlist',
   wellness: 'Wellness Health & Rural Impact',
   profile: 'Profile & Preferences',
+  admin: 'Store Admin Console & Orders Backend',
 }
 
-const AccountPage = ({ onBack, onLogout }) => {
+const AccountPage = ({ onBack, onLogout, initialTab = 'hub' }) => {
   const { totalCount, openCart, addToCart, currentUser, isLoggedIn, logoutUser } = useCart()
 
   // Track active sub-view ('hub' = main profile options view, or specific subpage)
   const [activeTab, setActiveTab] = useState(() => {
+    if (initialTab && initialTab !== 'hub') return initialTab
     const hash = window.location.hash.replace('#', '')
+    if (hash === 'admin' || hash === 'account/admin') return 'admin'
     if (hash.startsWith('account/')) {
       return hash.split('/')[1] || 'hub'
     }
@@ -170,7 +173,7 @@ const AccountPage = ({ onBack, onLogout }) => {
 
   // Wishlist State
   const [wishlist, setWishlist] = useState([
-    products[1], // Thenee Bliss Tea
+    products.find((p) => p.id === 'bliss-tea') || products[0], // Thenee Bliss Tea
     individualPodis[0], // Garlic Podi
     individualPodis[2], // Moringa Podi
   ])
@@ -196,7 +199,9 @@ const AccountPage = ({ onBack, onLogout }) => {
   useEffect(() => {
     const handleHash = () => {
       const hash = window.location.hash.replace('#', '')
-      if (hash.startsWith('account/')) {
+      if (hash === 'admin' || hash === 'account/admin') {
+        setActiveTab('admin')
+      } else if (hash.startsWith('account/')) {
         const sub = hash.split('/')[1]
         setActiveTab(sub || 'hub')
       } else if (hash === 'account') {
@@ -212,11 +217,146 @@ const AccountPage = ({ onBack, onLogout }) => {
     setActiveTab(tab)
     if (tab === 'hub') {
       window.location.hash = 'account'
+    } else if (tab === 'admin') {
+      window.location.hash = 'admin'
     } else {
       window.location.hash = `account/${tab}`
     }
     window.scrollTo({ top: 0, behavior: 'instant' })
   }
+
+  // Admin Console States
+  const [isAdminUnlocked, setIsAdminUnlocked] = useState(() => adminService.isAdmin(currentUser))
+  const [adminPinInput, setAdminPinInput] = useState('')
+  const [adminPinError, setAdminPinError] = useState('')
+  const [adminOrders, setAdminOrders] = useState([])
+  const [adminInquiries, setAdminInquiries] = useState([])
+  const [adminMode, setAdminMode] = useState('orders') // 'orders' | 'inquiries'
+  const [adminFilter, setAdminFilter] = useState('all') // 'all' | 'Confirmed' | 'Processing' | 'Dispatched' | 'Delivered'
+  const [adminSearch, setAdminSearch] = useState('')
+  const [isLoadingAdmin, setIsLoadingAdmin] = useState(false)
+  const [editingAwbMap, setEditingAwbMap] = useState({})
+
+  const loadAdminData = async () => {
+    setIsLoadingAdmin(true)
+    try {
+      const [ordersRes, inqRes] = await Promise.all([
+        adminService.getAllOrders(),
+        adminService.getAllInquiries(),
+      ])
+      if (ordersRes && ordersRes.data) {
+        setAdminOrders(ordersRes.data)
+      }
+      if (inqRes && inqRes.data) {
+        setAdminInquiries(inqRes.data)
+      }
+    } catch (err) {
+      console.error('Failed to load admin data:', err)
+    } finally {
+      setIsLoadingAdmin(false)
+    }
+  }
+
+  useEffect(() => {
+    if (activeTab === 'admin' && isAdminUnlocked) {
+      loadAdminData()
+    }
+  }, [activeTab, isAdminUnlocked])
+
+  const handleUnlockAdmin = (e) => {
+    e.preventDefault()
+    if (adminService.unlockAdmin(adminPinInput)) {
+      setIsAdminUnlocked(true)
+      setAdminPinError('')
+      showToast('Admin Console Unlocked')
+      loadAdminData()
+    } else {
+      setAdminPinError('Invalid Admin Passcode. Use store PIN: thenee2026')
+    }
+  }
+
+  const handleLockAdmin = () => {
+    adminService.lockAdmin()
+    setIsAdminUnlocked(false)
+    showToast('Admin Console Locked')
+  }
+
+  const handleUpdateOrderStatus = async (orderNumber, newStatus) => {
+    await adminService.updateOrder(orderNumber, { order_status: newStatus })
+    setAdminOrders((prev) =>
+      prev.map((o) => (o.order_number === orderNumber ? { ...o, order_status: newStatus } : o))
+    )
+    setOrdersList((prev) =>
+      prev.map((o) => ((o.order_number || o.id) === orderNumber ? { ...o, status: newStatus, order_status: newStatus } : o))
+    )
+    showToast(`Order ${orderNumber} updated to ${newStatus}`)
+  }
+
+  const handleSaveTrackingAwb = async (orderNumber) => {
+    const awb = editingAwbMap[orderNumber]
+    if (awb === undefined || !awb.trim()) {
+      showToast('Please enter a valid Speed Post AWB number')
+      return
+    }
+    await adminService.updateOrder(orderNumber, {
+      tracking_awb: awb.trim(),
+      courier: 'India Post Speed Post',
+      order_status: 'Dispatched',
+    })
+    setAdminOrders((prev) =>
+      prev.map((o) =>
+        o.order_number === orderNumber
+          ? { ...o, tracking_awb: awb.trim(), courier: 'India Post Speed Post', order_status: 'Dispatched' }
+          : o
+      )
+    )
+    setOrdersList((prev) =>
+      prev.map((o) =>
+        (o.order_number || o.id) === orderNumber
+          ? { ...o, tracking_awb: awb.trim(), awb: awb.trim(), courier: 'India Post Speed Post', status: 'Dispatched' }
+          : o
+      )
+    )
+    showToast(`Consignment AWB ${awb.trim()} attached & marked Dispatched`)
+  }
+
+  const handleToggleInquiryStatus = async (inqId, currentStatus) => {
+    const nextStatus = currentStatus === 'completed' ? 'in-progress' : 'completed'
+    await adminService.updateInquiryStatus(inqId, nextStatus)
+    setAdminInquiries((prev) =>
+      prev.map((inq) => (inq.id === inqId ? { ...inq, status: nextStatus } : inq))
+    )
+    showToast(`Inquiry marked as ${nextStatus}`)
+  }
+
+  const handleExportCSV = () => {
+    adminService.exportOrdersToCSV(adminOrders)
+    showToast('Exporting Orders to CSV...')
+  }
+
+  const totalRevenue = adminOrders.reduce((acc, o) => acc + (Number(o.total_amount) || 0), 0)
+
+  const filteredAdminOrders = adminOrders.filter((order) => {
+    const matchesFilter =
+      adminFilter === 'all' ||
+      (order.order_status || '').toLowerCase() === adminFilter.toLowerCase()
+    const q = adminSearch.toLowerCase().trim()
+    if (!q) return matchesFilter
+    const num = (order.order_number || '').toLowerCase()
+    const name = (order.customer_name || '').toLowerCase()
+    const phone = (order.customer_phone || '').toLowerCase()
+    const awb = (order.tracking_awb || '').toLowerCase()
+    return matchesFilter && (num.includes(q) || name.includes(q) || phone.includes(q) || awb.includes(q))
+  })
+
+  const filteredAdminInquiries = adminInquiries.filter((inq) => {
+    const q = adminSearch.toLowerCase().trim()
+    if (!q) return true
+    const name = (inq.name || '').toLowerCase()
+    const contact = (inq.contact || inq.phone || inq.email || '').toLowerCase()
+    const msg = (inq.message || '').toLowerCase()
+    return name.includes(q) || contact.includes(q) || msg.includes(q)
+  })
 
   const showToast = (msg) => {
     setToastMsg(msg)
@@ -469,6 +609,18 @@ const AccountPage = ({ onBack, onLogout }) => {
                 <div className="hub-option-title-row">
                   <h4>Profile & Preferences</h4>
                   <span className="hub-badge-pill">{user.language}</span>
+                </div>
+              </div>
+              <span className="hub-arrow-chevron">➔</span>
+            </div>
+
+            {/* OPTION 7: Store Admin Console */}
+            <div className="hub-option-card card-admin-highlight" onClick={() => navigateTab('admin')}>
+              <div className="hub-icon-box" style={{ background: '#EDE7F6', color: '#673AB7', fontSize: '1.25rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>⚡</div>
+              <div className="hub-option-info">
+                <div className="hub-option-title-row">
+                  <h4>Store Admin Console</h4>
+                  <span className="hub-badge-pill pill-admin">Manage Orders</span>
                 </div>
               </div>
               <span className="hub-arrow-chevron">➔</span>
@@ -836,7 +988,6 @@ const AccountPage = ({ onBack, onLogout }) => {
                       <img src={item.bottle || item.image} alt={item.name} className="wishlist-img" />
                       <div className="wishlist-info">
                         <h4>{item.name}</h4>
-                        <span className="wishlist-tamil">{item.tamilName}</span>
                         <div className="wishlist-price-row">
                           <strong className="wishlist-price">₹{item.price}</strong>
                           {item.originalPrice > item.price && (
@@ -965,7 +1116,7 @@ const AccountPage = ({ onBack, onLogout }) => {
                         onChange={(e) => setProfileForm({ ...profileForm, language: e.target.value })}
                       >
                         <option value="English">English</option>
-                        <option value="Tamil">தமிழ் (Tamil)</option>
+                        <option value="Tamil">Tamil</option>
                       </select>
                     </div>
                   </div>
@@ -987,6 +1138,295 @@ const AccountPage = ({ onBack, onLogout }) => {
                   </div>
                 </form>
               </div>
+            </div>
+          )}
+
+          {/* SUBPAGE 7: STORE ADMIN CONSOLE & ORDERS BACKEND */}
+          {activeTab === 'admin' && (
+            <div className="subpage-content-box admin-content-box">
+              {!isAdminUnlocked ? (
+                <div style={{ maxWidth: '440px', margin: '40px auto', background: '#FFFFFF', padding: '36px 28px', borderRadius: '16px', border: '1px solid #E2E8F0', boxShadow: '0 4px 20px rgba(0,0,0,0.06)', textAlign: 'center' }}>
+                  <div style={{ fontSize: '2.6rem', marginBottom: '12px' }}>🔐</div>
+                  <h3 style={{ fontSize: '1.3rem', color: '#1B3524', marginBottom: '8px' }}>Store Admin Authentication</h3>
+                  <p style={{ fontSize: '0.85rem', color: '#5C6E60', marginBottom: '22px' }}>Enter the store owner PIN (e.g. <code>thenee2026</code>) to manage orders, customer inquiries, and dispatch Speed Post consignments.</p>
+                  <form onSubmit={handleUnlockAdmin} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                    <input
+                      type="password"
+                      placeholder="Enter Admin PIN"
+                      value={adminPinInput}
+                      onChange={(e) => setAdminPinInput(e.target.value)}
+                      style={{ padding: '12px 16px', borderRadius: '8px', border: '1px solid #CBD5E1', fontSize: '1rem', textAlign: 'center', letterSpacing: '2px' }}
+                      autoFocus
+                    />
+                    {adminPinError && <div style={{ color: '#DC2626', fontSize: '0.8rem', fontWeight: 600 }}>{adminPinError}</div>}
+                    <button type="submit" className="btn-primary" style={{ padding: '12px', fontSize: '0.95rem' }}>
+                      Unlock Admin Console ➔
+                    </button>
+                  </form>
+                </div>
+              ) : (
+                <div className="admin-dashboard-wrap" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                  {/* Admin Header Strip */}
+                  <div className="admin-header-strip">
+                    <div>
+                      <span className="admin-tag-pill">THENEE BACKEND OPERATIONS</span>
+                      <h2>Store Admin Console</h2>
+                      <p>Live orders, India Post consignment dispatch & customer inquiries</p>
+                    </div>
+                    <div className="admin-head-actions">
+                      <button className="btn-admin-refresh" onClick={loadAdminData} disabled={isLoadingAdmin}>
+                        {isLoadingAdmin ? 'Refreshing...' : '🔄 Refresh Data'}
+                      </button>
+                      <button className="btn-admin-export" onClick={handleExportCSV}>
+                        📥 Export Orders (CSV)
+                      </button>
+                      <button className="btn-admin-refresh" onClick={handleLockAdmin} style={{ color: '#DC2626' }}>
+                        🔒 Lock
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* KPI Row */}
+                  <div className="admin-kpi-row">
+                    <div className="admin-kpi-card highlight-green">
+                      <span className="kpi-num">₹{totalRevenue.toLocaleString('en-IN')}</span>
+                      <span className="kpi-label">TOTAL STORE REVENUE</span>
+                    </div>
+                    <div className="admin-kpi-card">
+                      <span className="kpi-num">{adminOrders.length}</span>
+                      <span className="kpi-label">TOTAL ORDERS</span>
+                    </div>
+                    <div className="admin-kpi-card">
+                      <span className="kpi-num">{adminOrders.filter((o) => o.order_status === 'Confirmed' || o.order_status === 'Processing').length}</span>
+                      <span className="kpi-label">PENDING DISPATCH</span>
+                    </div>
+                    <div className="admin-kpi-card">
+                      <span className="kpi-num">{adminInquiries.length}</span>
+                      <span className="kpi-label">CUSTOMER INQUIRIES</span>
+                    </div>
+                  </div>
+
+                  {/* Mode & Filter Tabs */}
+                  <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: '12px' }}>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <button
+                        className={`admin-filter-btn ${adminMode === 'orders' ? 'is-active' : ''}`}
+                        onClick={() => setAdminMode('orders')}
+                      >
+                        📦 Store Orders ({adminOrders.length})
+                      </button>
+                      <button
+                        className={`admin-filter-btn ${adminMode === 'inquiries' ? 'is-active' : ''}`}
+                        onClick={() => setAdminMode('inquiries')}
+                      >
+                        💬 Customer Inquiries ({adminInquiries.length})
+                      </button>
+                    </div>
+
+                    <div style={{ flex: '1', minWidth: '220px', maxWidth: '360px' }}>
+                      <input
+                        type="text"
+                        placeholder={adminMode === 'orders' ? 'Search by Order #, Name, Phone, AWB...' : 'Search inquiries...'}
+                        value={adminSearch}
+                        onChange={(e) => setAdminSearch(e.target.value)}
+                        style={{ width: '100%', padding: '8px 14px', borderRadius: '8px', border: '1px solid #CBD5E1', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                  </div>
+
+                  {adminMode === 'orders' ? (
+                    <>
+                      {/* Order Filter Pills */}
+                      <div className="admin-filter-bar">
+                        {['all', 'Confirmed', 'Processing', 'Dispatched', 'Delivered'].map((status) => (
+                          <button
+                            key={status}
+                            className={`admin-filter-btn ${adminFilter === status ? 'is-active' : ''}`}
+                            onClick={() => setAdminFilter(status)}
+                          >
+                            {status === 'all' ? 'All Orders' : status}
+                            {status !== 'all' && ` (${adminOrders.filter((o) => (o.order_status || '').toLowerCase() === status.toLowerCase()).length})`}
+                          </button>
+                        ))}
+                      </div>
+
+                      {/* Orders Table */}
+                      <div className="admin-table-wrap" style={{ overflowX: 'auto' }}>
+                        {filteredAdminOrders.length === 0 ? (
+                          <div style={{ padding: '36px 20px', textAlign: 'center', color: '#5C6E60' }}>
+                            No orders found matching this filter or search.
+                          </div>
+                        ) : (
+                          <table className="admin-table">
+                            <thead>
+                              <tr>
+                                <th>Order # & Date</th>
+                                <th>Customer & Contact</th>
+                                <th>Items Ordered</th>
+                                <th>Amount & Pay</th>
+                                <th>Order Status</th>
+                                <th>India Post Tracking AWB</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {filteredAdminOrders.map((order) => {
+                                const currentStatus = order.order_status || order.status || 'Confirmed'
+                                const awbVal = editingAwbMap[order.order_number] !== undefined ? editingAwbMap[order.order_number] : (order.tracking_awb || '')
+                                return (
+                                  <tr key={order.order_number}>
+                                    <td>
+                                      <div className="ticket-id">{order.order_number}</div>
+                                      <div style={{ fontSize: '0.72rem', color: '#64748B' }}>
+                                        {new Date(order.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                                      </div>
+                                    </td>
+                                    <td>
+                                      <div className="client-name">{order.customer_name || 'Customer'}</div>
+                                      <div className="client-contact">{order.customer_phone || order.customer_email || '—'}</div>
+                                      {order.shipping_address?.city && (
+                                        <div style={{ fontSize: '0.72rem', color: '#64748B' }}>
+                                          {order.shipping_address.city}, {order.shipping_address.state}
+                                        </div>
+                                      )}
+                                    </td>
+                                    <td>
+                                      <div style={{ fontSize: '0.78rem', maxWidth: '240px' }}>
+                                        {(order.items || []).map((it, idx) => (
+                                          <div key={idx} style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                            • {it.quantity || 1}x {it.name}
+                                          </div>
+                                        ))}
+                                      </div>
+                                    </td>
+                                    <td>
+                                      <div style={{ fontWeight: 700, color: '#1B3524' }}>₹{order.total_amount || 0}</div>
+                                      <span className="status-pill pill-new" style={{ fontSize: '0.65rem' }}>
+                                        {order.payment_status === 'paid' ? 'Paid' : (order.payment_method || 'Online')}
+                                      </span>
+                                    </td>
+                                    <td>
+                                      <select
+                                        value={currentStatus}
+                                        onChange={(e) => handleUpdateOrderStatus(order.order_number, e.target.value)}
+                                        style={{ padding: '6px 10px', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.78rem', fontWeight: 600, background: '#F8FAFC', cursor: 'pointer' }}
+                                      >
+                                        <option value="Confirmed">Confirmed</option>
+                                        <option value="Processing">Processing</option>
+                                        <option value="Dispatched">Dispatched</option>
+                                        <option value="Out for Delivery">Out for Delivery</option>
+                                        <option value="Delivered">Delivered</option>
+                                        <option value="Cancelled">Cancelled</option>
+                                      </select>
+                                    </td>
+                                    <td>
+                                      <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                                        <input
+                                          type="text"
+                                          placeholder="e.g. SP84729103IN"
+                                          value={awbVal}
+                                          onChange={(e) => setEditingAwbMap({ ...editingAwbMap, [order.order_number]: e.target.value })}
+                                          style={{ width: '130px', padding: '6px 8px', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.75rem', fontFamily: 'monospace' }}
+                                        />
+                                        <button
+                                          type="button"
+                                          onClick={() => handleSaveTrackingAwb(order.order_number)}
+                                          style={{ padding: '6px 10px', background: '#1B3524', color: '#FFFFFF', border: 'none', borderRadius: '6px', fontSize: '0.72rem', fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}
+                                          title="Save AWB and set status to Dispatched"
+                                        >
+                                          Save
+                                        </button>
+                                      </div>
+                                      {order.tracking_awb && (
+                                        <div style={{ fontSize: '0.7rem', color: '#166534', marginTop: '2px', fontWeight: 600 }}>
+                                          ✓ Dispatched via {order.courier || 'India Post Speed Post'}
+                                        </div>
+                                      )}
+                                    </td>
+                                  </tr>
+                                )
+                              })}
+                            </tbody>
+                          </table>
+                        )}
+                      </div>
+                    </>
+                  ) : (
+                    /* Customer Inquiries Table */
+                    <div className="admin-table-wrap" style={{ overflowX: 'auto' }}>
+                      {filteredAdminInquiries.length === 0 ? (
+                        <div style={{ padding: '36px 20px', textAlign: 'center', color: '#5C6E60' }}>
+                          No customer inquiries found.
+                        </div>
+                      ) : (
+                        <table className="admin-table">
+                          <thead>
+                            <tr>
+                              <th>Date & ID</th>
+                              <th>Customer & Contact</th>
+                              <th>Inquiry Type</th>
+                              <th>Message</th>
+                              <th>Status</th>
+                              <th>Action</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {filteredAdminInquiries.map((inq) => (
+                              <tr key={inq.id}>
+                                <td>
+                                  <div className="ticket-id">{inq.id}</div>
+                                  <div style={{ fontSize: '0.72rem', color: '#64748B' }}>
+                                    {new Date(inq.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
+                                  </div>
+                                </td>
+                                <td>
+                                  <div className="client-name">{inq.name}</div>
+                                  <div className="client-contact">{inq.contact || inq.phone || inq.email}</div>
+                                </td>
+                                <td>
+                                  <span className="status-pill pill-in-progress" style={{ textTransform: 'capitalize' }}>
+                                    {inq.inquiry_type || inq.type || 'General'}
+                                  </span>
+                                </td>
+                                <td>
+                                  <div style={{ fontSize: '0.78rem', maxWidth: '300px', maxHeight: '60px', overflowY: 'auto' }}>
+                                    {inq.message}
+                                  </div>
+                                </td>
+                                <td>
+                                  <span className={`status-pill ${inq.status === 'completed' ? 'pill-completed' : 'pill-contacted'}`}>
+                                    {inq.status || 'new'}
+                                  </span>
+                                </td>
+                                <td>
+                                  <div style={{ display: 'flex', gap: '6px' }}>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleToggleInquiryStatus(inq.id, inq.status)}
+                                      style={{ padding: '4px 8px', background: '#F1F5F9', border: '1px solid #CBD5E1', borderRadius: '6px', fontSize: '0.72rem', cursor: 'pointer', fontWeight: 600 }}
+                                    >
+                                      {inq.status === 'completed' ? 'Reopen' : 'Resolve'}
+                                    </button>
+                                    {(inq.phone || inq.contact) && (
+                                      <a
+                                        href={`https://wa.me/${(inq.phone || inq.contact).replace(/\D/g, '')}?text=Hello%20${encodeURIComponent(inq.name || 'Valued Customer')}%2C%20thank%20you%20for%20contacting%20THENEE.`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        style={{ padding: '4px 8px', background: '#25D366', color: '#FFFFFF', borderRadius: '6px', fontSize: '0.72rem', textDecoration: 'none', fontWeight: 700 }}
+                                      >
+                                        WhatsApp
+                                      </a>
+                                    )}
+                                  </div>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           )}
         </div>

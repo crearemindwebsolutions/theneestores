@@ -68,7 +68,7 @@ const Navbar = ({ onOpenAccount, currentRoute = 'home' }) => {
         />
         <div className="navbar-brand-text">
           <span className="navbar-brand-title">THENEE</span>
-          <span className="navbar-brand-sub"><span className="tamil-word">தேனீ • </span>Roots of Nature</span>
+          <span className="navbar-brand-sub">Roots of Nature</span>
         </div>
       </a>
 

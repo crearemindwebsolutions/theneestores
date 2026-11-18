@@ -90,6 +90,11 @@ create policy "Anyone can insert an order"
   on public.orders for insert
   with check (true);
 
+-- Allow order updates (for admin console order status and AWB tracking updates)
+create policy "Allow order updates"
+  on public.orders for update
+  using (true);
+
 
 -- 3. INQUIRIES TABLE (Stores contact form & wholesale inquiries from ContactPage)
 create table if not exists public.inquiries (
@@ -110,6 +115,16 @@ alter table public.inquiries enable row level security;
 create policy "Anyone can submit an inquiry"
   on public.inquiries for insert
   with check (true);
+
+-- Anyone can read inquiries (for admin console)
+create policy "Anyone can read inquiries"
+  on public.inquiries for select
+  using (true);
+
+-- Allow inquiry status updates
+create policy "Allow inquiry updates"
+  on public.inquiries for update
+  using (true);
 
 
 -- 4. REVIEWS TABLE (Customer feedback & testimonials)

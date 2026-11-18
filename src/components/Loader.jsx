@@ -31,7 +31,7 @@ const Loader = () => {
           />
           <div className="loader-brand-title">
             <span>THENEE</span>
-            <small>தேனீ • Rooted in Nature</small>
+            <small>Rooted in Nature</small>
           </div>
         </div>
         <div className="loader-bar">

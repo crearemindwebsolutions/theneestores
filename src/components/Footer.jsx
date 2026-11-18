@@ -64,7 +64,7 @@ const Footer = () => {
             />
             <div className="footer-logo-text">
               <span className="footer-logo-title">THENEE</span>
-              <span className="footer-logo-tamil">தேனீ • The Roots Enterprises</span>
+              <span className="footer-logo-tamil">The Roots Enterprises</span>
             </div>
           </a>
           <p className="footer-brand-motto">

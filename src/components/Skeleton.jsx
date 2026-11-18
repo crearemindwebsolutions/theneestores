@@ -1,5 +1,9 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import './Skeleton.css'
+
+// Global cache of successfully loaded image URLs to prevent re-shimmering
+// or cached image onLoad race conditions across component mounts/routes
+const loadedImageCache = new Set()
 
 export const SkeletonBox = ({ width, height, borderRadius, className = '', style = {} }) => (
   <span
@@ -99,8 +103,50 @@ export const ImageWithSkeleton = ({
   skeletonBorderRadius = '8px',
   ...props
 }) => {
-  const [isLoaded, setIsLoaded] = useState(false)
+  // If this image was already loaded during this session, show immediately without shimmer
+  const [isLoaded, setIsLoaded] = useState(() => {
+    if (!src) return true
+    return loadedImageCache.has(src)
+  })
   const [isError, setIsError] = useState(false)
+  const imgRef = useRef(null)
+
+  useEffect(() => {
+    if (!src) {
+      setIsLoaded(true)
+      return
+    }
+
+    if (loadedImageCache.has(src)) {
+      setIsLoaded(true)
+      return
+    }
+
+    // Check if browser already has image loaded in cache
+    if (imgRef.current && imgRef.current.complete && imgRef.current.naturalWidth > 0) {
+      loadedImageCache.add(src)
+      setIsLoaded(true)
+      return
+    }
+
+    // Safety fallback: if network/browser delays synthetic onLoad event,
+    // force reveal after 400ms so image is NEVER stuck hidden at opacity: 0
+    const fallbackTimer = setTimeout(() => {
+      setIsLoaded(true)
+    }, 400)
+
+    return () => clearTimeout(fallbackTimer)
+  }, [src])
+
+  const handleLoad = () => {
+    if (src) loadedImageCache.add(src)
+    setIsLoaded(true)
+  }
+
+  const handleError = () => {
+    setIsError(true)
+    setIsLoaded(true)
+  }
 
   return (
     <div className="smart-image-wrap" style={{ borderRadius: skeletonBorderRadius }}>
@@ -111,15 +157,15 @@ export const ImageWithSkeleton = ({
         />
       )}
       <img
+        ref={imgRef}
         src={src}
         alt={alt}
         className={`smart-image-elem ${isLoaded ? 'is-loaded' : ''} ${className}`}
         style={style}
-        onLoad={() => setIsLoaded(true)}
-        onError={() => {
-          setIsError(true)
-          setIsLoaded(true)
-        }}
+        loading="eager"
+        decoding="async"
+        onLoad={handleLoad}
+        onError={handleError}
         {...props}
       />
     </div>

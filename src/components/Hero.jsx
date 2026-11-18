@@ -83,9 +83,8 @@ const Hero = ({ onOpenAccount }) => {
       }
 
       document.querySelectorAll('.bs-card-img').forEach((img) => {
-        img.style.opacity = ''
+        img.style.opacity = '1'
       })
-      cardImg.style.opacity = '0'
 
       const heroImg = flyEl.querySelector('.hero-bottle-img')
       const visualEl = flyEl.closest('.hero-visual') || heroRef.current
@@ -162,7 +161,7 @@ const Hero = ({ onOpenAccount }) => {
               cachedTransform = calcTransform()
             },
             onUpdate: (self) => {
-              const isMidFlight = self.progress > 0 && self.progress < 1
+              const isMidFlight = self.progress > 0.08 && self.progress < 0.95
               heroRef.current.style.zIndex = isMidFlight ? '30' : '10'
 
               if (heroImg && !isMobile) {
@@ -170,11 +169,14 @@ const Hero = ({ onOpenAccount }) => {
                   self.progress > 0 ? 'paused' : 'running'
               }
 
-              if (self.progress >= 1) {
+              if (self.progress >= 0.95) {
                 cardImg.style.opacity = '1'
                 flyEl.style.opacity = '0'
-              } else {
+              } else if (self.progress > 0.08) {
                 cardImg.style.opacity = '0'
+                flyEl.style.opacity = '1'
+              } else {
+                cardImg.style.opacity = '1'
                 flyEl.style.opacity = '1'
               }
             },
@@ -183,8 +185,13 @@ const Hero = ({ onOpenAccount }) => {
               flyEl.style.opacity = '0'
               heroRef.current.style.zIndex = '10'
             },
+            onLeaveBack: () => {
+              cardImg.style.opacity = '1'
+              flyEl.style.opacity = '1'
+              heroRef.current.style.zIndex = '10'
+            },
             onEnterBack: () => {
-              cardImg.style.opacity = '0'
+              cardImg.style.opacity = '1'
               flyEl.style.opacity = '1'
               heroRef.current.style.zIndex = '30'
             },
@@ -194,7 +201,10 @@ const Hero = ({ onOpenAccount }) => {
     }
 
     mm.add('(max-width: 860px)', () => {
-      setupFlight(true)
+      // On mobile screens, disable flight so cards always display their photos reliably
+      document.querySelectorAll('.bs-card-img').forEach((img) => {
+        img.style.opacity = '1'
+      })
     })
 
     mm.add('(min-width: 861px)', () => {
@@ -205,11 +215,10 @@ const Hero = ({ onOpenAccount }) => {
       cancelled = true
       if (rafId) cancelAnimationFrame(rafId)
       mm.revert()
+      document.querySelectorAll('.bs-card-img').forEach((img) => {
+        img.style.opacity = '1'
+      })
       const flyEl = bottleFlyRefs.current[current.id]
-      const cardImg = document.querySelector(
-        `.bs-card-img[data-perfume-id="${current.id}"]`
-      )
-      if (cardImg) cardImg.style.opacity = ''
       if (flyEl) {
         flyEl.style.opacity = ''
         gsap.set(flyEl, { zIndex: '', x: 0, y: 0, scale: 1, willChange: '' })
@@ -257,10 +266,6 @@ const Hero = ({ onOpenAccount }) => {
               <br />
               <span className="hero-title-subtext">{current.name}</span>
             </h1>
-
-            {current.tamilName && (
-              <div className="hero-tamil-pill">{current.tamilName}</div>
-            )}
 
             <motion.p animate={{ color: current.subTextColor }} transition={BG_TRANSITION}>
               {current.description}
@@ -318,14 +323,14 @@ const Hero = ({ onOpenAccount }) => {
                 {products.map((p, i) => (
                   <div
                     key={p.id}
-                    className="hero-bottle-fly"
+                    className={`hero-bottle-fly hero-bottle-fly--${p.id}`}
                     data-perfume-id={p.id}
                     ref={(el) => (bottleFlyRefs.current[p.id] = el)}
                   >
                     <motion.img
                       src={p.bottle}
                       alt={p.name}
-                      className="hero-bottle-img"
+                      className={`hero-bottle-img hero-bottle-img--${p.id}`}
                       animate={{ opacity: i === index ? 1 : 0 }}
                       transition={{ duration: 0.3 }}
                     />

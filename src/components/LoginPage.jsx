@@ -1,10 +1,35 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useCart } from '../context/CartContext'
 import { authService, isSupabaseConfigured } from '../lib/supabase'
 import './LoginPage.css'
 
 const LoginPage = ({ onLoginSuccess, onBack, redirectTarget }) => {
-  const { loginUser } = useCart()
+  const { loginUser, isLoggedIn } = useCart()
+
+  // Central redirect handler: After login/signup, always redirect directly to account page
+  const handleCompleteLogin = (userData) => {
+    loginUser(userData)
+    const stored = sessionStorage.getItem('thenee_login_redirect')
+    sessionStorage.removeItem('thenee_login_redirect')
+    const dest = redirectTarget || stored || 'account'
+    window.location.hash = dest
+    if (onLoginSuccess) {
+      onLoginSuccess(dest)
+    }
+  }
+
+  // If already logged in, redirect immediately to account
+  useEffect(() => {
+    if (isLoggedIn) {
+      const stored = sessionStorage.getItem('thenee_login_redirect')
+      sessionStorage.removeItem('thenee_login_redirect')
+      const dest = redirectTarget || stored || 'account'
+      window.location.hash = dest
+      if (onLoginSuccess) {
+        onLoginSuccess(dest)
+      }
+    }
+  }, [isLoggedIn, redirectTarget])
 
   const isCheckoutRedirect =
     redirectTarget === 'checkout' ||
@@ -93,8 +118,7 @@ const LoginPage = ({ onLoginSuccess, onBack, redirectTarget }) => {
           joinedDate: new Date(u.created_at).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }),
           points: 100,
         }
-        loginUser(userData)
-        if (onLoginSuccess) onLoginSuccess()
+        handleCompleteLogin(userData)
       }
     } else {
       // Fallback local session if Supabase keys not provided yet
@@ -108,8 +132,7 @@ const LoginPage = ({ onLoginSuccess, onBack, redirectTarget }) => {
         joinedDate: 'Today',
         points: 100,
       }
-      loginUser(user)
-      if (onLoginSuccess) onLoginSuccess()
+      handleCompleteLogin(user)
     }
   }
 
@@ -179,8 +202,7 @@ const LoginPage = ({ onLoginSuccess, onBack, redirectTarget }) => {
           joinedDate: new Date(u.created_at).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }),
           points: 100,
         }
-        loginUser(userData)
-        if (onLoginSuccess) onLoginSuccess()
+        handleCompleteLogin(userData)
       }
     }
   }
@@ -239,8 +261,7 @@ const LoginPage = ({ onLoginSuccess, onBack, redirectTarget }) => {
           joinedDate: 'Today',
           points: 100,
         }
-        loginUser(userData)
-        if (onLoginSuccess) onLoginSuccess()
+        handleCompleteLogin(userData)
       }
     } else {
       setIsLoading(false)
@@ -252,8 +273,7 @@ const LoginPage = ({ onLoginSuccess, onBack, redirectTarget }) => {
         joinedDate: 'Today',
         points: 100,
       }
-      loginUser(user)
-      if (onLoginSuccess) onLoginSuccess()
+      handleCompleteLogin(user)
     }
   }
 
@@ -633,6 +653,19 @@ const LoginPage = ({ onLoginSuccess, onBack, redirectTarget }) => {
           </div>
         </div>
       </main>
+
+      {/* Powered by Watermark Footer */}
+      <footer className="login-bottom-credits">
+        <a
+          href="https://www.crearemind.in"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="footer-crearemind-link"
+          title="Visit Creare Mind (opens in new tab)"
+        >
+          <span>POWERED BY</span> <strong>CREARE MIND</strong>
+        </a>
+      </footer>
     </div>
   )
 }

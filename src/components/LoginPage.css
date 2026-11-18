@@ -538,6 +538,58 @@
   flex-wrap: wrap;
 }
 
+/* POWERED BY WATERMARK */
+.login-bottom-credits {
+  margin-top: auto;
+  padding: 18px 20px 28px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.login-bottom-credits .footer-crearemind-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-decoration: none;
+  color: #5C6E60;
+  opacity: 0.88;
+  transition: all 0.25s ease;
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.75);
+  border: 1px solid rgba(200, 216, 197, 0.65);
+  box-shadow: 0 2px 8px rgba(49, 84, 58, 0.04);
+}
+
+.login-bottom-credits .footer-crearemind-link span {
+  font-weight: 600;
+  color: #7A887C;
+  font-size: 0.66rem;
+}
+
+.login-bottom-credits .footer-crearemind-link strong {
+  font-weight: 800;
+  color: var(--color-primary, #31543A);
+  letter-spacing: 0.1em;
+}
+
+.login-bottom-credits .footer-crearemind-link:hover {
+  opacity: 1;
+  background: #FFFFFF;
+  border-color: var(--color-primary, #31543A);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(49, 84, 58, 0.1);
+}
+
+.login-bottom-credits .footer-crearemind-link:hover strong {
+  color: var(--color-accent, #B27042);
+}
+
 /* ==========================================================================
    MOBILE RESPONSIVENESS
    ========================================================================== */
@@ -614,5 +666,14 @@
   .pro-trust-footer {
     font-size: 0.62rem;
     gap: 4px;
+  }
+
+  .login-bottom-credits {
+    padding: 12px 14px 22px;
+  }
+
+  .login-bottom-credits .footer-crearemind-link {
+    font-size: 0.67rem;
+    padding: 5px 12px;
   }
 }

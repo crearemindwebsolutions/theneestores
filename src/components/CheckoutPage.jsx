@@ -264,7 +264,7 @@ const CheckoutPage = ({ onBack, onOpenAccount }) => {
 
           <div className="checkout-brand-logo">
             <span className="logo-main">THENEE</span>
-            <span className="logo-sub">தேனீ • Roots of Nature</span>
+            <span className="logo-sub">Roots of Nature</span>
           </div>
 
           {/* Stepper Progress */}

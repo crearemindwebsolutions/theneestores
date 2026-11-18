@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useCart } from '../context/CartContext'
+import { products, individualPodis } from '../data/products'
 import { ImageWithSkeleton } from './Skeleton'
 import './CartDrawer.css'
 
@@ -10,6 +11,7 @@ const CartDrawer = () => {
     closeCart,
     removeFromCart,
     updateQuantity,
+    addToCart,
     totalCount,
     subtotal,
     savings,
@@ -27,15 +29,59 @@ const CartDrawer = () => {
 
   const [couponInput, setCouponInput] = useState('')
   const [couponError, setCouponError] = useState('')
+  const itemsListRef = useRef(null)
 
   // Lock body scroll and pause smooth scroll when drawer is open
   useEffect(() => {
     if (isCartOpen) {
+      const initialHash = window.location.hash
+      const scrollY = window.scrollY || window.pageYOffset || document.documentElement.scrollTop
+      document.body.style.position = 'fixed'
+      document.body.style.top = `-${scrollY}px`
+      document.body.style.left = '0'
+      document.body.style.right = '0'
+      document.body.style.width = '100%'
       document.body.style.overflow = 'hidden'
+      document.documentElement.style.overflow = 'hidden'
       if (window.__lenis) window.__lenis.stop()
+
+      // Prevent background home page scroll when touching drawer, footer, or non-scrollable list
+      const handlePreventBackgroundTouch = (e) => {
+        const listEl = itemsListRef.current
+        if (listEl && listEl.contains(e.target)) {
+          if (listEl.scrollHeight > listEl.clientHeight) {
+            return
+          }
+        }
+        if (e.cancelable) {
+          e.preventDefault()
+        }
+      }
+
+      window.addEventListener('touchmove', handlePreventBackgroundTouch, { passive: false })
+
       return () => {
+        window.removeEventListener('touchmove', handlePreventBackgroundTouch)
+        document.body.style.position = ''
+        document.body.style.top = ''
+        document.body.style.left = ''
+        document.body.style.right = ''
+        document.body.style.width = ''
         document.body.style.overflow = ''
-        if (window.__lenis) window.__lenis.start()
+        document.documentElement.style.overflow = ''
+        // Only restore previous scroll position if route didn't change!
+        // If user proceeded to checkout or another page, start at top (0, 0)
+        if (window.location.hash === initialHash) {
+          window.scrollTo(0, scrollY)
+        } else {
+          window.scrollTo(0, 0)
+        }
+        if (window.__lenis) {
+          window.__lenis.start()
+          if (window.location.hash !== initialHash) {
+            window.__lenis.scrollTo(0, { immediate: true })
+          }
+        }
       }
     } else {
       setCouponError('')
@@ -45,6 +91,11 @@ const CartDrawer = () => {
   if (!isCartOpen) return null
 
   const progressPercent = Math.min(100, (subtotal / freeShippingThreshold) * 100)
+
+  // Smart suggestions when cart has room
+  const recommendations = [...products, ...individualPodis]
+    .filter((p) => !cartItems.some((ci) => ci.id === p.id))
+    .slice(0, 2)
 
   // Handle coupon apply
   const handleApplyCoupon = (codeToApply) => {
@@ -82,18 +133,21 @@ const CartDrawer = () => {
         aria-label="Shopping Cart Bag"
         data-lenis-prevent
       >
+        {/* Mobile bottom sheet grab handle */}
+        <div className="cart-sheet-handle" />
+
         {/* HEADER */}
         <div className="cart-header">
           <div className="cart-header-title">
             <h3>Your Herbal Cart</h3>
-            <span className="cart-count-pill">{totalCount} items</span>
+            <span className="cart-count-pill">{totalCount} {totalCount === 1 ? 'item' : 'items'}</span>
           </div>
           <button className="cart-close-btn" onClick={closeCart} aria-label="Close cart">
             ✕
           </button>
         </div>
 
-        {/* Free delivery progress - shown when cart has items */}
+        {/* Free delivery progress bar */}
         {cartItems.length > 0 && (
           <div className="cart-shipping-banner">
             <div className="cart-shipping-text">
@@ -132,37 +186,57 @@ const CartDrawer = () => {
           </div>
         ) : (
           <>
-            <div className="cart-items-list">
+            <div className="cart-items-list" ref={itemsListRef} data-lenis-prevent>
               {cartItems.map((item) => (
-                <div className="cart-item" key={item.id}>
-                  <div className="cart-item-img-wrap">
-                    <ImageWithSkeleton
-                      src={item.cardImage}
-                      alt={item.name}
-                      className="cart-item-img"
-                      skeletonBorderRadius="8px"
-                    />
+                <div className="cart-item-card" key={item.id}>
+                  <div className="cart-item-card-left">
+                    <div className="cart-item-img-box">
+                      <ImageWithSkeleton
+                        src={item.cardImage}
+                        alt={item.name}
+                        className="cart-item-card-img"
+                        skeletonBorderRadius="8px"
+                      />
+                    </div>
                   </div>
-                  <div className="cart-item-details">
-                    <div className="cart-item-top">
-                      <h4 className="cart-item-name">{item.name}</h4>
+
+                  <div className="cart-item-card-right">
+                    <div className="cart-item-card-header">
+                      <h4 className="cart-item-card-name">{item.name}</h4>
                       <button
-                        className="cart-item-remove"
+                        className="cart-item-delete-btn"
                         onClick={() => removeFromCart(item.id)}
                         aria-label="Remove item"
+                        title="Remove item"
                       >
-                        🗑️
+                        <svg
+                          width="14"
+                          height="14"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <polyline points="3 6 5 6 21 6" />
+                          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                          <line x1="10" y1="11" x2="10" y2="17" />
+                          <line x1="14" y1="11" x2="14" y2="17" />
+                        </svg>
                       </button>
                     </div>
-                    {item.tamilName && (
-                      <span className="cart-item-tamil">{item.tamilName}</span>
-                    )}
-                    <span className="cart-item-volume">{item.volume}</span>
-                    <div className="cart-item-bottom">
-                      <div className="cart-qty-ctrl">
+
+                    <div className="cart-item-card-sub">
+                      <span className="cart-item-vol-pill">{item.volume}</span>
+                    </div>
+
+                    <div className="cart-item-card-footer">
+                      <div className="cart-stepper">
                         <button
                           onClick={() => updateQuantity(item.id, -1)}
                           aria-label="Decrease quantity"
+                          type="button"
                         >
                           −
                         </button>
@@ -170,14 +244,16 @@ const CartDrawer = () => {
                         <button
                           onClick={() => updateQuantity(item.id, 1)}
                           aria-label="Increase quantity"
+                          type="button"
                         >
                           +
                         </button>
                       </div>
-                      <div className="cart-item-price">
-                        <strong>₹{item.price * item.quantity}</strong>
+
+                      <div className="cart-item-pricing">
+                        <span className="cart-item-now-price">₹{item.price * item.quantity}</span>
                         {item.originalPrice > item.price && (
-                          <span className="cart-item-original">
+                          <span className="cart-item-was-price">
                             ₹{item.originalPrice * item.quantity}
                           </span>
                         )}
@@ -186,105 +262,167 @@ const CartDrawer = () => {
                   </div>
                 </div>
               ))}
+
+              {/* Cross-Sell Recommendations */}
+              {recommendations.length > 0 && (
+                <div className="cart-cross-sell-section">
+                  <div className="cart-cross-sell-title">
+                    <span>✨ Frequently Paired With</span>
+                  </div>
+                  <div className="cart-cross-sell-list">
+                    {recommendations.map((rec) => (
+                      <div className="cart-rec-card" key={rec.id}>
+                        <img
+                          src={rec.bottle || rec.cardImage || rec.image}
+                          alt={rec.name}
+                          className="cart-rec-img"
+                        />
+                        <div className="cart-rec-info">
+                          <span className="cart-rec-name">{rec.name}</span>
+                          <span className="cart-rec-price">₹{rec.price}</span>
+                        </div>
+                        <button
+                          type="button"
+                          className="cart-rec-add-btn"
+                          onClick={() => addToCart(rec, 1)}
+                          aria-label={`Add ${rec.name} to cart`}
+                        >
+                          + Add
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Purity Guarantee Strip */}
+              <div className="cart-purity-strip">
+                <span>🌾 Tenkasi Heritage</span>
+                <span>•</span>
+                <span>👩‍🌾 Handcrafted by Women</span>
+                <span>•</span>
+                <span>✨ 100% Pure</span>
+              </div>
             </div>
 
             <div className="cart-footer">
-              {/* COUPON CODE APPLICATION BOX */}
-              <div className="cart-coupon-card">
-                <div className="cart-coupon-header">
-                  <span className="cart-coupon-icon">🎟️</span>
-                  <span className="cart-coupon-title">Apply Coupon Code</span>
-                </div>
-
+              {/* COMPACT SLEEK PROMO SECTION */}
+              <div className="cart-promo-section">
                 {appliedCoupon ? (
-                  <div className="coupon-applied-pill">
-                    <div className="coupon-applied-info">
-                      <span className="coupon-tag-badge">✓ {appliedCoupon.code}</span>
-                      <span className="coupon-desc-text">
-                        {appliedCoupon.desc} (−₹{couponDiscount})
-                      </span>
+                  <div className="cart-promo-applied">
+                    <div className="cart-promo-applied-info">
+                      <span className="cart-promo-tag-icon">🏷️</span>
+                      <strong className="cart-promo-code">{appliedCoupon.code}</strong>
+                      <span className="cart-promo-savings">−₹{couponDiscount}</span>
                     </div>
                     <button
                       type="button"
-                      className="coupon-remove-btn"
+                      className="cart-promo-remove-btn"
                       onClick={removeCoupon}
                       title="Remove coupon"
+                      aria-label="Remove coupon"
                     >
                       ✕ Remove
                     </button>
                   </div>
                 ) : (
                   <>
-                    <div className="coupon-input-group">
-                      <input
-                        type="text"
-                        className="coupon-text-input"
-                        placeholder="Enter coupon code"
-                        value={couponInput}
-                        onChange={(e) => {
-                          setCouponInput(e.target.value.toUpperCase())
-                          if (couponError) setCouponError('')
-                        }}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') {
-                            e.preventDefault()
-                            handleApplyCoupon()
-                          }
-                        }}
-                      />
+                    <div className="cart-promo-input-row">
+                      <div className="cart-promo-input-wrap">
+                        <span className="cart-promo-icon">🎟️</span>
+                        <input
+                          type="text"
+                          className="cart-promo-input"
+                          placeholder="Coupon code"
+                          value={couponInput}
+                          onChange={(e) => {
+                            setCouponInput(e.target.value.toUpperCase())
+                            if (couponError) setCouponError('')
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault()
+                              handleApplyCoupon()
+                            }
+                          }}
+                        />
+                      </div>
                       <button
                         type="button"
-                        className="coupon-apply-action-btn"
+                        className="cart-promo-apply-btn"
                         onClick={() => handleApplyCoupon()}
+                        disabled={!couponInput.trim()}
                       >
                         Apply
                       </button>
                     </div>
-                    {couponError && <p className="coupon-error-msg">⚠️ {couponError}</p>}
+
+                    {couponError && <p className="cart-promo-error">⚠️ {couponError}</p>}
+
+                    <div className="cart-promo-chips">
+                      <span className="cart-promo-chips-label">Quick apply:</span>
+                      <button
+                        type="button"
+                        className="cart-promo-chip"
+                        onClick={() => handleApplyCoupon('HERBALFIRST')}
+                      >
+                        HERBALFIRST <span>(15% off)</span>
+                      </button>
+                      <button
+                        type="button"
+                        className="cart-promo-chip"
+                        onClick={() => handleApplyCoupon('FREESHIP')}
+                      >
+                        FREESHIP
+                      </button>
+                    </div>
                   </>
                 )}
               </div>
 
               {/* PRICING BREAKDOWN */}
-              <div className="cart-summary-row">
-                <span>Subtotal</span>
-                <strong>₹{subtotal}</strong>
-              </div>
-              {savings > 0 && (
-                <div className="cart-summary-row cart-savings">
-                  <span>MRP Savings</span>
-                  <span className="cart-savings-val">−₹{savings}</span>
+              <div className="cart-summary-box">
+                <div className="cart-summary-row">
+                  <span>Subtotal</span>
+                  <strong>₹{subtotal}</strong>
                 </div>
-              )}
-              {couponDiscount > 0 && (
-                <div className="cart-summary-row cart-coupon-savings">
-                  <span>Coupon Discount ({appliedCoupon?.code})</span>
-                  <span className="cart-coupon-val">−₹{couponDiscount}</span>
+                {savings > 0 && (
+                  <div className="cart-summary-row cart-savings">
+                    <span>MRP Savings</span>
+                    <span className="cart-savings-val">−₹{savings}</span>
+                  </div>
+                )}
+                {couponDiscount > 0 && (
+                  <div className="cart-summary-row cart-coupon-savings">
+                    <span>Coupon Discount ({appliedCoupon?.code})</span>
+                    <span className="cart-coupon-val">−₹{couponDiscount}</span>
+                  </div>
+                )}
+                <div className="cart-summary-row">
+                  <span>Delivery</span>
+                  <span className={deliveryFee === 0 ? 'cart-free-tag' : ''}>
+                    {deliveryFee === 0 ? 'FREE' : '₹40'}
+                  </span>
                 </div>
-              )}
-              <div className="cart-summary-row">
-                <span>Delivery Charges</span>
-                <span className={deliveryFee === 0 ? 'cart-free-tag' : ''}>
-                  {deliveryFee === 0 ? 'FREE' : '₹40'}
-                </span>
-              </div>
-              <div className="cart-summary-total">
-                <span>Grand Total</span>
-                <span className="cart-total-price">₹{grandTotal}</span>
+                <div className="cart-summary-total">
+                  <span>Total Payable</span>
+                  <span className="cart-total-price">₹{grandTotal}</span>
+                </div>
               </div>
 
-              {/* NEXT BUTTON: OPENS DEDICATED FULL CHECKOUT PAGE */}
+              {/* CHECKOUT BUTTON */}
               <button
                 type="button"
                 className="cart-checkout-next-btn"
                 onClick={handleProceedToCheckout}
               >
-                <span>Next: Shipping & Online Payment</span>
+                <span>Proceed to Checkout</span>
+                <span className="cart-checkout-pill-price">₹{grandTotal}</span>
                 <span className="cart-checkout-next-arrow">➔</span>
               </button>
 
               <div className="cart-security-badge-row">
-                <span>🔒 100% Safe & Secure Online Payment</span>
+                <span>🔒 100% Safe Payments</span>
                 <span>•</span>
                 <span>UPI / Cards / NetBanking</span>
               </div>

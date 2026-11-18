@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useCart } from '../context/CartContext'
 import { brandInfo } from '../data/products'
 import { ImageWithSkeleton } from './Skeleton'
@@ -7,12 +7,56 @@ import './ProductModal.css'
 const ProductModal = () => {
   const { selectedProduct, setSelectedProduct, addToCart } = useCart()
   const [qty, setQty] = useState(1)
+  const scrollRef = useRef(null)
+  const touchStartY = useRef(0)
 
   useEffect(() => {
     if (selectedProduct) {
+      const initialHash = window.location.hash
+      const scrollY = window.scrollY || window.pageYOffset || document.documentElement.scrollTop
+      document.body.style.position = 'fixed'
+      document.body.style.top = `-${scrollY}px`
+      document.body.style.left = '0'
+      document.body.style.right = '0'
+      document.body.style.width = '100%'
       document.body.style.overflow = 'hidden'
+      document.documentElement.style.overflow = 'hidden'
+      if (window.__lenis) window.__lenis.stop()
+
+      // Prevent touch gestures on non-scrollable parts from scrolling the background window
+      const handlePreventBackgroundTouch = (e) => {
+        const scrollEl = scrollRef.current
+        if (scrollEl && scrollEl.contains(e.target)) {
+          return // Allow native scrolling inside the scrollable modal container
+        }
+        if (e.cancelable) {
+          e.preventDefault()
+        }
+      }
+
+      window.addEventListener('touchmove', handlePreventBackgroundTouch, { passive: false })
+
       return () => {
+        window.removeEventListener('touchmove', handlePreventBackgroundTouch)
+        document.body.style.position = ''
+        document.body.style.top = ''
+        document.body.style.left = ''
+        document.body.style.right = ''
+        document.body.style.width = ''
         document.body.style.overflow = ''
+        document.documentElement.style.overflow = ''
+        // Only restore previous scroll position if route didn't change!
+        if (window.location.hash === initialHash) {
+          window.scrollTo(0, scrollY)
+        } else {
+          window.scrollTo(0, 0)
+        }
+        if (window.__lenis) {
+          window.__lenis.start()
+          if (window.location.hash !== initialHash) {
+            window.__lenis.scrollTo(0, { immediate: true })
+          }
+        }
       }
     }
   }, [selectedProduct])
@@ -27,6 +71,23 @@ const ProductModal = () => {
   const handleAdd = () => {
     addToCart(selectedProduct, qty)
     handleClose()
+  }
+
+  const handleMediaTouchStart = (e) => {
+    if (e.touches && e.touches[0]) {
+      touchStartY.current = e.touches[0].clientY
+    }
+  }
+
+  const handleMediaTouchMove = (e) => {
+    if (!scrollRef.current || !e.touches || !e.touches[0]) return
+    const currentY = e.touches[0].clientY
+    const deltaY = touchStartY.current - currentY
+    touchStartY.current = currentY
+    scrollRef.current.scrollTop += deltaY
+    if (e.cancelable) {
+      e.preventDefault()
+    }
   }
 
   const discountPercent = selectedProduct.originalPrice
@@ -48,7 +109,11 @@ const ProductModal = () => {
       >
         <div className="pmodal-grid">
           {/* Left media */}
-          <div className="pmodal-media-wrap">
+          <div
+            className="pmodal-media-wrap"
+            onTouchStart={handleMediaTouchStart}
+            onTouchMove={handleMediaTouchMove}
+          >
             <span className="pmodal-badge-clean">100% Organic & Chemical-Free</span>
             <div className="pmodal-media-bg">
               <ImageWithSkeleton
@@ -63,13 +128,10 @@ const ProductModal = () => {
 
           {/* Right info - scrollable with sticky action bar */}
           <div className="pmodal-info">
-            <div className="pmodal-info-scroll" data-lenis-prevent>
+            <div className="pmodal-info-scroll" ref={scrollRef} data-lenis-prevent>
               <div className="pmodal-header">
                 <div className="pmodal-category-tag">{selectedProduct.categoryLabel || 'Herbal Wellness'}</div>
                 <h2 className="pmodal-title">{selectedProduct.name}</h2>
-                {selectedProduct.tamilName && (
-                  <div className="pmodal-tamil">{selectedProduct.tamilName}</div>
-                )}
                 {selectedProduct.tagline && (
                   <p className="pmodal-tagline">{selectedProduct.tagline}</p>
                 )}

@@ -195,76 +195,59 @@
   transform: scale(1.06);
 }
 
-.podi-tag {
-  position: absolute;
-  top: 12px;
-  right: 12px;
-  background: #FFFFFF;
-  border: 1px solid #DCE6D9;
-  font-size: 0.7rem;
-  font-weight: 700;
-  color: #4A5B4E;
-  padding: 2px 8px;
-  border-radius: 999px;
-}
-
 .podi-details {
-  padding: 20px;
+  padding: 18px;
   display: flex;
   flex-direction: column;
   flex: 1;
-}
-
-.podi-tamil {
-  font-size: 0.82rem;
-  color: #B28738;
-  font-weight: 700;
-  display: block;
-  margin-bottom: 2px;
 }
 
 .podi-name {
   font-size: 1.05rem;
   font-weight: 700;
   color: #1F3827;
-  margin: 0 0 8px;
+  margin: 0 0 6px;
   cursor: pointer;
+  line-height: 1.3;
 }
 
 .podi-desc {
-  font-size: 0.8rem;
+  font-size: 0.78rem;
   color: #556B5B;
   line-height: 1.45;
-  margin: 0 0 14px;
+  margin: 0 0 12px;
   flex: 1;
-}
-
-.podi-benefits-list {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  margin-bottom: 16px;
-}
-
-.podi-benefit-pill {
-  font-size: 0.74rem;
-  color: #2E7D32;
-  font-weight: 600;
 }
 
 .podi-price-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 16px;
-  padding-top: 12px;
+  margin-bottom: 14px;
+  padding-top: 10px;
   border-top: 1px solid #F0F4EE;
 }
 
+.podi-price-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
 .podi-price {
-  font-size: 1.25rem;
+  font-size: 1.2rem;
   font-weight: 800;
   color: #1F3827;
+}
+
+.podi-weight-chip {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #31543A;
+  background: #E8EFE3;
+  padding: 2px 7px;
+  border-radius: 6px;
+  letter-spacing: 0.02em;
 }
 
 .podi-rating {
@@ -284,7 +267,7 @@
   background: var(--color-primary, #31543A);
   border: 1.5px solid var(--color-primary, #31543A);
   color: #FFFFFF;
-  padding: 9px;
+  padding: 10px;
   border-radius: 12px;
   font-size: 0.8rem;
   font-weight: 700;
@@ -294,6 +277,7 @@
 
 .btn-podi-cart:hover {
   background: #233D2B;
+  transform: translateY(-1px);
 }
 
 /* Rice Pairing Steps Section */
@@ -388,24 +372,53 @@
 @media (max-width: 600px) {
   .podis-cards-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 12px;
+    gap: 10px;
+  }
+
+  .podi-card {
+    border-radius: 16px;
   }
 
   .podi-media {
-    height: 140px;
-    padding: 12px;
+    height: 135px;
+    padding: 10px;
   }
 
   .podi-details {
-    padding: 12px;
+    padding: 10px;
   }
 
   .podi-name {
-    font-size: 0.88rem;
+    font-size: 0.84rem;
+    margin-bottom: 3px;
+  }
+
+  .podi-desc {
+    font-size: 0.7rem;
+    line-height: 1.35;
+    margin-bottom: 8px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .podi-price-row {
+    padding-top: 6px;
+    margin-bottom: 8px;
   }
 
   .podi-price {
-    font-size: 1rem;
+    font-size: 0.98rem;
+  }
+
+  .podi-weight-chip {
+    font-size: 0.62rem;
+    padding: 1px 5px;
+  }
+
+  .podi-rating {
+    font-size: 0.64rem;
   }
 
   .podi-btn-row {
@@ -414,8 +427,9 @@
 
   .btn-podi-cart {
     width: 100%;
-    padding: 8px 10px;
-    font-size: 0.74rem;
+    padding: 7px 6px;
+    font-size: 0.72rem;
+    border-radius: 9px;
   }
 
   .pairing-steps-grid {

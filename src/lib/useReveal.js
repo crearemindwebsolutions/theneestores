@@ -12,6 +12,8 @@ export default function useReveal(groups, sharedOptions = {}) {
   const ref = useRef(null)
 
   useEffect(() => {
+    if (!ref.current) return
+
     const isMobile = typeof window !== 'undefined' && window.innerWidth <= 768
     const list =
       typeof groups === 'string' ? [{ selector: groups, ...sharedOptions }] : groups
@@ -23,7 +25,7 @@ export default function useReveal(groups, sharedOptions = {}) {
 
         // On mobile, clamp horizontal x to 0 and gentle vertical y to avoid any horizontal viewport overflow
         const xVal = isMobile ? 0 : (g.x ?? 0)
-        const yVal = isMobile ? Math.min(g.y ?? 24, 24) : (g.y ?? 60)
+        const yVal = isMobile ? Math.min(g.y ?? 20, 20) : (g.y ?? 40)
 
         gsap.from(targets, {
           opacity: 0,
@@ -34,19 +36,26 @@ export default function useReveal(groups, sharedOptions = {}) {
           scale: isMobile ? 1 : (g.scale ?? 1),
           transformPerspective: g.perspective ?? 1000,
           transformOrigin: g.transformOrigin ?? 'center center',
-          duration: isMobile ? 0.45 : (g.duration ?? 0.9),
+          duration: isMobile ? 0.4 : (g.duration ?? 0.75),
           ease: g.ease ?? 'power3.out',
-          stagger: isMobile ? 0.04 : (g.stagger ?? 0.1),
+          stagger: isMobile ? 0.03 : (g.stagger ?? 0.08),
           scrollTrigger: {
             trigger: ref.current,
-            start: g.start ?? (isMobile ? 'top 90%' : 'top 80%'),
+            start: g.start ?? (isMobile ? 'top 95%' : 'top 85%'),
             once: true,
           },
         })
       })
     }, ref)
 
-    return () => ctx.revert()
+    const refreshTimer = setTimeout(() => {
+      ScrollTrigger.refresh()
+    }, 100)
+
+    return () => {
+      clearTimeout(refreshTimer)
+      ctx.revert()
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 

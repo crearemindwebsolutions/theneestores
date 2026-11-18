@@ -1,15 +1,35 @@
+import { useState, useEffect } from 'react'
 import { products, individualPodis } from '../data/products'
 import { useCart } from '../context/CartContext'
 import useReveal from '../lib/useReveal'
+import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import './BestSellers.css'
 
+const CATEGORIES = [
+  { id: 'all', label: 'All Herbal Products' },
+  { id: 'tea', label: 'Botanical Teas' },
+  { id: 'superfood', label: 'Superfood Powders' },
+  { id: 'podi', label: 'Traditional Podis' },
+]
+
 const BestSellers = () => {
+  const [activeCategory, setActiveCategory] = useState('all')
   const { addToCart, setSelectedProduct, openCart } = useCart()
+
+  useEffect(() => {
+    ScrollTrigger.refresh()
+  }, [activeCategory])
 
   const sectionRef = useReveal([
     { selector: '.bestsellers-top', y: 30, duration: 0.7 },
     { selector: '.bs-card', y: 60, scale: 0.94, duration: 0.7, stagger: 0.1, start: 'top 80%' },
   ])
+
+  // Filter products
+  const filteredProducts =
+    activeCategory === 'all'
+      ? products
+      : products.filter((p) => p.category === activeCategory)
 
   return (
     <section className="bestsellers" id="catalog" ref={sectionRef}>
@@ -18,11 +38,24 @@ const BestSellers = () => {
           <div className="bs-section-kicker">100% Pure & Village Sourced</div>
           <h2>Our Signature Herbal Blends</h2>
         </div>
+
+        {/* Category Filters */}
+        <div className="bestsellers-filters">
+          {CATEGORIES.map((cat) => (
+            <button
+              key={cat.id}
+              className={`bs-filter-pill ${activeCategory === cat.id ? 'is-active' : ''}`}
+              onClick={() => setActiveCategory(cat.id)}
+            >
+              {cat.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Flagship Hero Grid (includes the 4 GSAP landing slots) */}
       <div className="bestsellers-grid">
-        {products.map((p) => (
+        {filteredProducts.map((p) => (
           <div className="bs-card" key={p.id}>
             <div
               className="bs-card-media"
@@ -38,7 +71,6 @@ const BestSellers = () => {
             </div>
 
             <div className="bs-card-info">
-              {p.tamilName && <p className="bs-card-tamil">{p.tamilName}</p>}
               <h3 className="bs-card-name" onClick={() => setSelectedProduct(p)}>
                 {p.name}
               </h3>
@@ -96,7 +128,6 @@ const BestSellers = () => {
             </div>
 
             <div className="bs-card-info">
-              {podi.tamilName && <p className="bs-card-tamil">{podi.tamilName}</p>}
               <h3 className="bs-card-name" onClick={() => setSelectedProduct(podi)}>
                 {podi.name}
               </h3>

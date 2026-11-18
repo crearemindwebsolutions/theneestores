@@ -91,16 +91,9 @@ const REVIEW_PRODUCTS = [
 
 const ReviewsPage = ({ onOpenAccount }) => {
   const [filter, setFilter] = useState('All Reviews')
-  const [isLoading, setIsLoading] = useState(false)
   const [reviewsList, setReviewsList] = useState(INITIAL_REVIEWS)
   const [helpfulMap, setHelpfulMap] = useState({})
   const [toastMsg, setToastMsg] = useState('')
-
-  useEffect(() => {
-    setIsLoading(true)
-    const timer = setTimeout(() => setIsLoading(false), 250)
-    return () => clearTimeout(timer)
-  }, [filter])
 
   // Form State
   const [form, setForm] = useState({
@@ -161,7 +154,6 @@ const ReviewsPage = ({ onOpenAccount }) => {
           <span>Reviews</span>
         </div>
         <h1>Loved by 16,000+ Health-Conscious Homes</h1>
-        <span className="page-hero-tamil-sub">வாடிக்கையாளர்களின் உண்மையான அனுபவங்கள் & நல்வாழ்த்துகள்</span>
         <p className="page-hero-desc">
           Real stories from families across Tamil Nadu and India who turned to Kadayam village botanicals
           for sugar balance, deep sleep, clean stamina, and wholesome meals.
@@ -229,11 +221,8 @@ const ReviewsPage = ({ onOpenAccount }) => {
 
         {/* Reviews Cards List */}
         <div className="reviews-cards-grid">
-          {isLoading ? (
-            Array.from({ length: 4 }).map((_, i) => <SkeletonReviewCard key={i} />)
-          ) : (
-            filteredReviews.map((rev) => (
-              <div className="customer-review-card" key={rev.id}>
+          {filteredReviews.map((rev) => (
+            <div className="customer-review-card" key={rev.id}>
               <div className="review-card-top">
                 <div className="reviewer-info">
                   <div className="reviewer-avatar">{rev.name.charAt(0)}</div>
@@ -264,8 +253,7 @@ const ReviewsPage = ({ onOpenAccount }) => {
                 </button>
               </div>
             </div>
-          ))
-        )}
+          ))}
       </div>
 
         {/* Write a Review Section */}

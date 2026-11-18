@@ -9,23 +9,16 @@ import './PagesShared.css'
 import './ProductsPage.css'
 
 const CATEGORIES = [
-  { id: 'all', label: 'All Products (அனைத்தும்)' },
-  { id: 'tea', label: 'Botanical Teas (மூலிகை டீ)' },
-  { id: 'superfood', label: 'Superfood Powders (சூப்பர்ஃபுட்)' },
-  { id: 'podi', label: 'Traditional Podis (உணவு பொடிகள்)' },
+  { id: 'all', label: 'All Products' },
+  { id: 'tea', label: 'Botanical Teas' },
+  { id: 'superfood', label: 'Superfood Powders' },
+  { id: 'podi', label: 'Traditional Podis' },
 ]
 
 const ProductsPage = ({ onOpenAccount }) => {
   const [activeCategory, setActiveCategory] = useState('all')
   const [searchQuery, setSearchQuery] = useState('')
-  const [isLoading, setIsLoading] = useState(true)
   const { addToCart, setSelectedProduct, openCart } = useCart()
-
-  useEffect(() => {
-    setIsLoading(true)
-    const timer = setTimeout(() => setIsLoading(false), 300)
-    return () => clearTimeout(timer)
-  }, [activeCategory])
 
   // Combine products
   const allCatalog = [
@@ -44,7 +37,6 @@ const ProductsPage = ({ onOpenAccount }) => {
     const matchesCat = activeCategory === 'all' || item.category === activeCategory
     const matchesSearch =
       item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (item.tamilName && item.tamilName.includes(searchQuery)) ||
       (item.shortDesc && item.shortDesc.toLowerCase().includes(searchQuery.toLowerCase()))
     return matchesCat && matchesSearch
   })
@@ -64,7 +56,6 @@ const ProductsPage = ({ onOpenAccount }) => {
           <span>Products</span>
         </div>
         <h1>Signature Herbal Botanicals & Powders</h1>
-        <span className="page-hero-tamil-sub">தேனீ • 100% இயற்கை பாரம்பரிய மூலிகைப் பொருட்கள்</span>
         <p className="page-hero-desc">
           Handcrafted by rural women artisans in Kadayam, Tenkasi. Gentle sun-shade dried, stone-ground,
           and chemical-free for natural balance and lasting vitality.
@@ -115,11 +106,8 @@ const ProductsPage = ({ onOpenAccount }) => {
 
         {/* Product Grid */}
         <div className="products-catalog-grid">
-          {isLoading ? (
-            Array.from({ length: 6 }).map((_, i) => <SkeletonProductCard key={i} />)
-          ) : (
-            filtered.map((item) => (
-              <div className="prod-catalog-card" key={item.id}>
+          {filtered.map((item) => (
+            <div className="prod-catalog-card" key={item.id}>
                 <div
                   className="prod-card-media"
                   onClick={() => setSelectedProduct(item)}
@@ -139,7 +127,6 @@ const ProductsPage = ({ onOpenAccount }) => {
                 </div>
 
               <div className="prod-card-body">
-                {item.tamilName && <span className="prod-tamil-title">{item.tamilName}</span>}
                 <h3 className="prod-card-title" onClick={() => setSelectedProduct(item)}>
                   {item.name}
                 </h3>
@@ -176,8 +163,7 @@ const ProductsPage = ({ onOpenAccount }) => {
                 </div>
               </div>
             </div>
-          ))
-        )}
+          ))}
       </div>
 
         {/* Bottom Purity Promise Callout */}

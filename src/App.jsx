@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import useLenis from './lib/useLenis'
 import Loader from './components/Loader'
 import Hero from './components/Hero'
@@ -25,6 +26,7 @@ import { CartProvider, useCart } from './context/CartContext'
 
 const parseRouteFromHash = () => {
   const hash = window.location.hash.replace('#', '')
+  if (hash.startsWith('admin')) return 'admin'
   if (hash.startsWith('account')) return 'account'
   if (hash.startsWith('login') || hash.startsWith('signin') || hash.startsWith('signup')) return 'login'
   if (hash.startsWith('checkout')) return 'checkout'
@@ -46,12 +48,52 @@ const AppContent = () => {
   useEffect(() => {
     const handleHashChange = () => {
       setRoute(parseRouteFromHash())
-      window.scrollTo({ top: 0, behavior: 'instant' })
     }
 
     window.addEventListener('hashchange', handleHashChange)
     return () => window.removeEventListener('hashchange', handleHashChange)
   }, [])
+
+  // Whenever the active route changes, reset body locks, sync Lenis, scroll to top, and refresh GSAP ScrollTrigger
+  useEffect(() => {
+    // 1. Clear any stuck body locks from previous drawers/modals
+    document.body.style.position = ''
+    document.body.style.top = ''
+    document.body.style.left = ''
+    document.body.style.right = ''
+    document.body.style.width = ''
+    document.body.style.overflow = ''
+    document.documentElement.style.overflow = ''
+
+    // 2. Unpause and reset Lenis scroll if active
+    if (window.__lenis) {
+      window.__lenis.start()
+      window.__lenis.scrollTo(0, { immediate: true })
+    }
+
+    // 3. Scroll browser viewport to top
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' })
+
+    // 4. Double check scroll position on next frame and after 100ms
+    // to override any component unmount cleanups and update GSAP ScrollTrigger
+    const rafId = requestAnimationFrame(() => {
+      window.scrollTo({ top: 0, left: 0, behavior: 'instant' })
+      if (window.__lenis) {
+        window.__lenis.scrollTo(0, { immediate: true })
+      }
+      ScrollTrigger.refresh()
+    })
+
+    const timer = setTimeout(() => {
+      window.scrollTo({ top: 0, left: 0, behavior: 'instant' })
+      ScrollTrigger.refresh()
+    }, 120)
+
+    return () => {
+      cancelAnimationFrame(rafId)
+      clearTimeout(timer)
+    }
+  }, [route])
 
   const navigateToAccount = () => {
     if (isLoggedIn) {
@@ -80,31 +122,48 @@ const AppContent = () => {
     <>
       <Loader />
 
+      {route === 'admin' && (
+        isLoggedIn ? (
+          <AccountPage initialTab="admin" onBack={navigateToHome} onLogout={navigateToLogin} />
+        ) : (
+          <LoginPage
+            redirectTarget="admin"
+            onLoginSuccess={(dest) => {
+              const target = dest || 'admin'
+              window.location.hash = target
+              setRoute(target)
+            }}
+            onBack={navigateToHome}
+          />
+        )
+      )}
       {route === 'account' && (
         isLoggedIn ? (
           <AccountPage onBack={navigateToHome} onLogout={navigateToLogin} />
         ) : (
           <LoginPage
-            onLoginSuccess={() => {
-              const redirect = sessionStorage.getItem('thenee_login_redirect') || 'account'
-              sessionStorage.removeItem('thenee_login_redirect')
-              window.location.hash = redirect
-              setRoute(redirect)
+            onLoginSuccess={(dest) => {
+              const target = dest || 'account'
+              window.location.hash = target
+              setRoute(target)
             }}
             onBack={navigateToHome}
           />
         )
       )}
       {route === 'login' && (
-        <LoginPage
-          onLoginSuccess={() => {
-            const redirect = sessionStorage.getItem('thenee_login_redirect') || 'account'
-            sessionStorage.removeItem('thenee_login_redirect')
-            window.location.hash = redirect
-            setRoute(redirect)
-          }}
-          onBack={navigateToHome}
-        />
+        isLoggedIn ? (
+          <AccountPage onBack={navigateToHome} onLogout={navigateToLogin} />
+        ) : (
+          <LoginPage
+            onLoginSuccess={(dest) => {
+              const target = dest || 'account'
+              window.location.hash = target
+              setRoute(target)
+            }}
+            onBack={navigateToHome}
+          />
+        )
       )}
       {route === 'checkout' && (
         isLoggedIn ? (
