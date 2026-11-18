@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useCart } from '../context/CartContext'
 import { brandInfo } from '../data/products'
 import { orderService } from '../lib/supabase'
+import { sendOrderConfirmationEmail, sendAdminOrderAlertEmail } from '../lib/emailService'
 import { ImageWithSkeleton } from './Skeleton'
 import './CheckoutPage.css'
 
@@ -30,6 +31,7 @@ const CheckoutPage = ({ onBack, onOpenAccount }) => {
   const [shippingForm, setShippingForm] = useState({
     name: '',
     phone: '',
+    email: currentUser?.email || '',
     street: '',
     city: '',
     state: 'Tamil Nadu',
@@ -43,6 +45,7 @@ const CheckoutPage = ({ onBack, onOpenAccount }) => {
       const savedAddresses = localStorage.getItem('thenee_addresses')
       let name = currentUser?.name || ''
       let phone = currentUser?.contact || ''
+      let email = currentUser?.email || ''
       let street = ''
       let city = ''
       let state = 'Tamil Nadu'
@@ -52,6 +55,7 @@ const CheckoutPage = ({ onBack, onOpenAccount }) => {
         const u = JSON.parse(savedUser)
         if (u.name && !name) name = u.name
         if (u.contact && !phone) phone = u.contact
+        if (u.email && !email) email = u.email
       }
       if (savedAddresses) {
         const addrs = JSON.parse(savedAddresses)
@@ -65,7 +69,7 @@ const CheckoutPage = ({ onBack, onOpenAccount }) => {
           if (def.pincode) pincode = def.pincode
         }
       }
-      setShippingForm({ name, phone, street, city, state, pincode })
+      setShippingForm({ name, phone, email, street, city, state, pincode })
     } catch {
       // fallback
     }
@@ -128,6 +132,7 @@ const CheckoutPage = ({ onBack, onOpenAccount }) => {
       address: `${shippingForm.street}, ${shippingForm.city} - ${shippingForm.pincode}`,
       recipient: shippingForm.name,
       phone: shippingForm.phone,
+      email: shippingForm.email || currentUser?.email || '',
       timeline: [
         { title: 'Payment Authorized & Order Confirmed', time: `${dateStr}, ${timeStr}`, done: true },
         { title: 'Handcrafting at Tenkasi Rural Unit', time: 'Tomorrow, by 10:00 AM', done: false },
@@ -153,6 +158,7 @@ const CheckoutPage = ({ onBack, onOpenAccount }) => {
         shipping_address: {
           recipient: shippingForm.name,
           phone: shippingForm.phone,
+          email: shippingForm.email || currentUser?.email || '',
           street: shippingForm.street,
           city: shippingForm.city,
           state: shippingForm.state,
@@ -162,6 +168,21 @@ const CheckoutPage = ({ onBack, onOpenAccount }) => {
       })
     } catch (dbErr) {
       console.warn('Supabase order creation skipped/errored:', dbErr)
+    }
+
+    // Trigger Resend automated emails (Customer receipt & Store owner alert)
+    try {
+      const targetCustomerEmail = shippingForm.email || currentUser?.email
+      if (targetCustomerEmail && targetCustomerEmail.includes('@')) {
+        sendOrderConfirmationEmail(newOrder, targetCustomerEmail).catch((mailErr) => {
+          console.warn('Customer confirmation email notice:', mailErr)
+        })
+      }
+      sendAdminOrderAlertEmail(newOrder).catch((adminMailErr) => {
+        console.warn('Admin order alert notice:', adminMailErr)
+      })
+    } catch (emailNotice) {
+      console.warn('Resend email trigger skipped:', emailNotice)
     }
 
     // Persist to local storage for immediate access
@@ -205,7 +226,9 @@ const CheckoutPage = ({ onBack, onOpenAccount }) => {
         <header className="checkout-nav-bar">
           <div className="checkout-nav-inner">
             <button className="checkout-nav-back-btn" onClick={handleReturnToStore}>
-              ← Return to Store
+              <span className="back-arrow">←</span>
+              <span className="back-text-full">Return to Store</span>
+              <span className="back-text-short">Store</span>
             </button>
             <div className="checkout-brand-logo">
               <span className="logo-main">THENEE</span>
@@ -259,7 +282,9 @@ const CheckoutPage = ({ onBack, onOpenAccount }) => {
       <header className="checkout-nav-bar">
         <div className="checkout-nav-inner">
           <button className="checkout-nav-back-btn" onClick={handleReturnToStore}>
-            ← Return to Store
+            <span className="back-arrow">←</span>
+            <span className="back-text-full">Return to Store</span>
+            <span className="back-text-short">Store</span>
           </button>
 
           <div className="checkout-brand-logo">
@@ -400,6 +425,16 @@ const CheckoutPage = ({ onBack, onOpenAccount }) => {
                         required
                       />
                     </div>
+                  </div>
+
+                  <div className="form-field">
+                    <label>Email Address (For Order Tracking Receipt)</label>
+                    <input
+                      type="email"
+                      value={shippingForm.email}
+                      onChange={(e) => setShippingForm({ ...shippingForm, email: e.target.value })}
+                      placeholder="yourname@gmail.com"
+                    />
                   </div>
 
                   <div className="form-field">

@@ -1,12 +1,122 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useCart } from '../context/CartContext'
 import { authService, isSupabaseConfigured } from '../lib/supabase'
+import {
+  signInWithEmailPassword,
+  sendSignupOtp,
+  verifySignupOtp,
+  sendForgotPasswordOtp,
+  resetPasswordWithOtp,
+} from '../lib/authApi'
 import './LoginPage.css'
 
+/* ==============================================================================
+   4-DIGIT OTP INPUT COMPONENT (Auto-advance & Backspace)
+   ============================================================================== */
+const FourDigitOtpInput = ({ value, onChange, onComplete }) => {
+  const inputRefs = [useRef(null), useRef(null), useRef(null), useRef(null)]
+  const digits = [
+    value[0] || '',
+    value[1] || '',
+    value[2] || '',
+    value[3] || '',
+  ]
+
+  const handleDigitChange = (index, val) => {
+    const char = val.replace(/\D/g, '').slice(-1)
+    const newDigits = [...digits]
+    newDigits[index] = char
+    const combined = newDigits.join('')
+    onChange(combined)
+
+    if (char && index < 3) {
+      inputRefs[index + 1].current?.focus()
+    }
+    if (combined.length === 4 && onComplete) {
+      onComplete(combined)
+    }
+  }
+
+  const handleKeyDown = (index, e) => {
+    if (e.key === 'Backspace' && !digits[index] && index > 0) {
+      inputRefs[index - 1].current?.focus()
+    }
+  }
+
+  const handlePaste = (e) => {
+    e.preventDefault()
+    const pasted = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 4)
+    if (pasted) {
+      onChange(pasted)
+      const focusIndex = Math.min(pasted.length, 3)
+      inputRefs[focusIndex].current?.focus()
+      if (pasted.length === 4 && onComplete) {
+        onComplete(pasted)
+      }
+    }
+  }
+
+  return (
+    <div className="pro-otp-boxes-row" onPaste={handlePaste}>
+      {[0, 1, 2, 3].map((idx) => (
+        <input
+          key={idx}
+          ref={inputRefs[idx]}
+          type="tel"
+          maxLength={1}
+          inputMode="numeric"
+          autoComplete="one-time-code"
+          className={`pro-otp-digit-box ${digits[idx] ? 'is-filled' : ''}`}
+          value={digits[idx]}
+          onChange={(e) => handleDigitChange(idx, e.target.value)}
+          onKeyDown={(e) => handleKeyDown(idx, e)}
+          autoFocus={idx === 0}
+        />
+      ))}
+    </div>
+  )
+}
+
+/* ==============================================================================
+   MAIN LOGIN PAGE
+   ============================================================================== */
 const LoginPage = ({ onLoginSuccess, onBack, redirectTarget }) => {
   const { loginUser, isLoggedIn } = useCart()
 
-  // Central redirect handler: After login/signup, always redirect directly to account page
+  // Views: 'signin' | 'signup' | 'verify-signup-otp' | 'forgot' | 'verify-forgot-otp'
+  const [view, setView] = useState('signin')
+
+  // Sign In States
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
+
+  // Sign Up Form States
+  const [signupForm, setSignupForm] = useState({
+    name: '',
+    phone: '',
+    email: '',
+    password: '',
+  })
+
+  // OTP Verification States
+  const [otpCode, setOtpCode] = useState('')
+  const [otpToken, setOtpToken] = useState('')
+  const [resendTimer, setResendTimer] = useState(60)
+  const [canResend, setCanResend] = useState(false)
+
+  // Forgot Password States
+  const [forgotEmail, setForgotEmail] = useState('')
+  const [newPassword, setNewPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+
+  // UI Feedback States
+  const [errorMessage, setErrorMessage] = useState('')
+  const [errorCode, setErrorCode] = useState('')
+  const [successMessage, setSuccessMessage] = useState('')
+  const [isLoading, setIsLoading] = useState(false)
+
+  // Central login completion
   const handleCompleteLogin = (userData) => {
     loginUser(userData)
     const stored = sessionStorage.getItem('thenee_login_redirect')
@@ -18,7 +128,7 @@ const LoginPage = ({ onLoginSuccess, onBack, redirectTarget }) => {
     }
   }
 
-  // If already logged in, redirect immediately to account
+  // Auto-redirect if already logged in
   useEffect(() => {
     if (isLoggedIn) {
       const stored = sessionStorage.getItem('thenee_login_redirect')
@@ -31,192 +141,74 @@ const LoginPage = ({ onLoginSuccess, onBack, redirectTarget }) => {
     }
   }, [isLoggedIn, redirectTarget])
 
-  const isCheckoutRedirect =
-    redirectTarget === 'checkout' ||
-    (typeof window !== 'undefined' && sessionStorage.getItem('thenee_login_redirect') === 'checkout')
+  // Timer countdown for OTP resend
+  useEffect(() => {
+    let interval = null
+    if ((view === 'verify-signup-otp' || view === 'verify-forgot-otp') && resendTimer > 0) {
+      interval = setInterval(() => {
+        setResendTimer((prev) => prev - 1)
+      }, 1000)
+    } else if (resendTimer === 0) {
+      setCanResend(true)
+    }
+    return () => clearInterval(interval)
+  }, [view, resendTimer])
 
-  // Primary view: 'signin' | 'signup'
-  const [view, setView] = useState('signin')
-
-  // Auth method under signin: 'email' | 'phone'
-  const [authMethod, setAuthMethod] = useState('email')
-
-  // Email States
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [showPassword, setShowPassword] = useState(false)
-
-  // Phone OTP States
-  const [phoneNumber, setPhoneNumber] = useState('')
-  const [otpSent, setOtpSent] = useState(false)
-  const [otpCode, setOtpCode] = useState('')
-
-  // Registration Form
-  const [signupForm, setSignupForm] = useState({
-    name: '',
-    phone: '',
-    email: '',
-    password: '',
-  })
-
-  const [errorMessage, setErrorMessage] = useState('')
-  const [successMessage, setSuccessMessage] = useState('')
-  const [isLoading, setIsLoading] = useState(false)
-
-  // Handle Google OAuth Login via Supabase
-  const handleGoogleLogin = async () => {
-    setIsLoading(true)
+  const clearAlerts = () => {
     setErrorMessage('')
+    setErrorCode('')
     setSuccessMessage('')
-
-    if (!isSupabaseConfigured) {
-      setIsLoading(false)
-      setErrorMessage('Database keys pending. Please add your Supabase URL & Anon Key to .env to enable Google Login.')
-      return
-    }
-
-    const stored = sessionStorage.getItem('thenee_login_redirect')
-    const dest = redirectTarget || stored || 'account'
-    const { error } = await authService.signInWithGoogle(dest)
-    if (error) {
-      setIsLoading(false)
-      setErrorMessage(error.message || 'Google sign-in failed. Please try again.')
-    }
   }
 
-  // Handle Email & Password Sign In
+  // ----------------------------------------------------------------------------
+  // 1. EMAIL SIGN IN (Registered users enter email & password)
+  // ----------------------------------------------------------------------------
   const handleEmailLogin = async (e) => {
     e.preventDefault()
-    setErrorMessage('')
-    setSuccessMessage('')
+    clearAlerts()
 
     if (!email || !email.includes('@')) {
       setErrorMessage('Please enter a valid email address.')
       return
     }
-    if (!password || password.length < 6) {
-      setErrorMessage('Password must be at least 6 characters.')
+    if (!password) {
+      setErrorMessage('Please enter your password.')
       return
     }
 
     setIsLoading(true)
 
-    if (isSupabaseConfigured) {
-      const { data, error } = await authService.signInWithEmail({ email, password })
+    try {
+      const result = await signInWithEmailPassword({ email, password })
       setIsLoading(false)
 
-      if (error) {
-        setErrorMessage(error.message || 'Invalid email or password.')
+      if (!result.success) {
+        setErrorMessage(result.error)
+        setErrorCode(result.code || '')
         return
       }
 
-      if (data?.user) {
-        const u = data.user
-        const userData = {
-          id: u.id,
-          name: u.user_metadata?.full_name || u.email?.split('@')[0] || 'Member',
-          email: u.email,
-          contact: u.phone || u.user_metadata?.phone || '',
-          joinedDate: new Date(u.created_at).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }),
-          points: 100,
-        }
-        handleCompleteLogin(userData)
-      }
-    } else {
-      // Fallback local session if Supabase keys not provided yet
+      handleCompleteLogin(result.user)
+    } catch (err) {
       setIsLoading(false)
-      const namePart = email.split('@')[0]
-      const capitalized = namePart.charAt(0).toUpperCase() + namePart.slice(1)
-      const user = {
-        name: capitalized,
-        email,
-        contact: '',
-        joinedDate: 'Today',
-        points: 100,
-      }
-      handleCompleteLogin(user)
+      setErrorMessage('Login failed. Please try again.')
     }
   }
 
-  // Handle Send Phone OTP
-  const handleSendOtp = async (e) => {
+  // ----------------------------------------------------------------------------
+  // 2. SIGN UP STEP 1 (Validate & send real-time 4-digit OTP)
+  // ----------------------------------------------------------------------------
+  const handleInitiateSignup = async (e) => {
     e.preventDefault()
-    setErrorMessage('')
-    setSuccessMessage('')
-
-    const clean = phoneNumber.replace(/\D/g, '')
-    if (clean.length < 10) {
-      setErrorMessage('Please enter a valid 10-digit mobile number.')
-      return
-    }
-
-    setIsLoading(true)
-
-    if (isSupabaseConfigured) {
-      const fullPhone = `+91${clean.slice(-10)}`
-      const { error } = await authService.signInWithOtp({ phone: fullPhone })
-      setIsLoading(false)
-
-      if (error) {
-        setErrorMessage(error.message || 'Failed to send OTP. Please check your number or try email login.')
-        return
-      }
-
-      setOtpSent(true)
-      setSuccessMessage(`Verification code sent to +91 ${clean.slice(-10)}`)
-    } else {
-      setIsLoading(false)
-      setErrorMessage('SMS service requires Supabase Twilio/MessageBird setup. Please use Email login.')
-    }
-  }
-
-  // Handle Verify Phone OTP
-  const handleVerifyOtp = async (e) => {
-    e.preventDefault()
-    setErrorMessage('')
-    setSuccessMessage('')
-
-    if (!otpCode || otpCode.trim().length < 4) {
-      setErrorMessage('Please enter the 6-digit verification code.')
-      return
-    }
-
-    setIsLoading(true)
-
-    if (isSupabaseConfigured) {
-      const clean = phoneNumber.replace(/\D/g, '').slice(-10)
-      const fullPhone = `+91${clean}`
-      const { data, error } = await authService.verifyOtp({ phone: fullPhone, token: otpCode.trim() })
-      setIsLoading(false)
-
-      if (error) {
-        setErrorMessage(error.message || 'Invalid or expired verification code.')
-        return
-      }
-
-      if (data?.user) {
-        const u = data.user
-        const userData = {
-          id: u.id,
-          name: u.user_metadata?.full_name || `Member (${clean.slice(-4)})`,
-          contact: fullPhone,
-          email: u.email || '',
-          joinedDate: new Date(u.created_at).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }),
-          points: 100,
-        }
-        handleCompleteLogin(userData)
-      }
-    }
-  }
-
-  // Handle User Registration (Sign Up)
-  const handleSignup = async (e) => {
-    e.preventDefault()
-    setErrorMessage('')
-    setSuccessMessage('')
+    clearAlerts()
 
     if (!signupForm.name.trim()) {
       setErrorMessage('Please enter your full name.')
+      return
+    }
+    const cleanPhone = signupForm.phone.replace(/\D/g, '').slice(-10)
+    if (cleanPhone.length !== 10) {
+      setErrorMessage('Please enter a valid 10-digit mobile number.')
       return
     }
     if (!signupForm.email || !signupForm.email.includes('@')) {
@@ -230,53 +222,254 @@ const LoginPage = ({ onLoginSuccess, onBack, redirectTarget }) => {
 
     setIsLoading(true)
 
-    if (isSupabaseConfigured) {
-      const cleanPhone = signupForm.phone.replace(/\D/g, '').slice(-10)
-      const fullPhone = cleanPhone ? `+91 ${cleanPhone}` : ''
-
-      const { data, error } = await authService.signUp({
-        email: signupForm.email.trim(),
+    try {
+      const result = await sendSignupOtp({
+        email: signupForm.email,
+        name: signupForm.name,
+        phone: cleanPhone,
         password: signupForm.password,
-        fullName: signupForm.name.trim(),
-        phone: fullPhone,
       })
 
       setIsLoading(false)
 
-      if (error) {
-        setErrorMessage(error.message || 'Registration failed. Please try again.')
+      if (!result.success) {
+        setErrorMessage(result.error)
+        setErrorCode(result.code || '')
         return
       }
 
-      if (data?.user) {
-        // If Supabase has email confirmation enabled
-        if (data.user.identities && data.user.identities.length === 0) {
-          setErrorMessage('An account with this email already exists. Please sign in.')
-          return
-        }
-
-        const userData = {
-          id: data.user.id,
-          name: signupForm.name.trim(),
-          contact: fullPhone,
-          email: signupForm.email.trim(),
-          joinedDate: 'Today',
-          points: 100,
-        }
-        handleCompleteLogin(userData)
-      }
-    } else {
+      setOtpToken(result.otpToken || '')
+      setOtpCode('')
+      setResendTimer(60)
+      setCanResend(false)
+      setView('verify-signup-otp')
+      setSuccessMessage(`We have sent a 4-digit verification code to ${signupForm.email}`)
+    } catch (err) {
       setIsLoading(false)
-      const cleanPhone = signupForm.phone.replace(/\D/g, '').slice(-10)
-      const user = {
-        name: signupForm.name.trim(),
-        contact: cleanPhone ? `+91 ${cleanPhone}` : '',
-        email: signupForm.email.trim(),
-        joinedDate: 'Today',
-        points: 100,
-      }
-      handleCompleteLogin(user)
+      setErrorMessage('Failed to send verification code. Please check your email or network.')
     }
+  }
+
+  // ----------------------------------------------------------------------------
+  // 3. SIGN UP STEP 2 (Verify 4-digit OTP & complete signup)
+  // ----------------------------------------------------------------------------
+  const handleVerifySignupOtp = async (e) => {
+    if (e && e.preventDefault) e.preventDefault()
+    clearAlerts()
+
+    if (!otpCode || otpCode.length !== 4) {
+      setErrorMessage('Please enter the complete 4-digit verification code.')
+      return
+    }
+
+    setIsLoading(true)
+
+    try {
+      const result = await verifySignupOtp({
+        email: signupForm.email,
+        otp: otpCode,
+        otpToken,
+        name: signupForm.name,
+        phone: signupForm.phone,
+        password: signupForm.password,
+      })
+
+      setIsLoading(false)
+
+      if (!result.success) {
+        setErrorMessage(result.error)
+        setErrorCode(result.code || '')
+        return
+      }
+
+      handleCompleteLogin(result.user)
+    } catch (err) {
+      setIsLoading(false)
+      setErrorMessage('Verification failed. Please try again.')
+    }
+  }
+
+  // Resend Signup OTP
+  const handleResendSignupOtp = async () => {
+    if (!canResend) return
+    clearAlerts()
+    setIsLoading(true)
+
+    try {
+      const result = await sendSignupOtp({
+        email: signupForm.email,
+        name: signupForm.name,
+        phone: signupForm.phone,
+        password: signupForm.password,
+      })
+      setIsLoading(false)
+
+      if (result.success) {
+        setOtpToken(result.otpToken || '')
+        setOtpCode('')
+        setResendTimer(60)
+        setCanResend(false)
+        setSuccessMessage(`A fresh 4-digit code was sent to ${signupForm.email}`)
+      } else {
+        setErrorMessage(result.error)
+      }
+    } catch {
+      setIsLoading(false)
+      setErrorMessage('Failed to resend code. Please try again.')
+    }
+  }
+
+  // ----------------------------------------------------------------------------
+  // 4. FORGOT PASSWORD STEP 1 (Send 4-digit OTP)
+  // ----------------------------------------------------------------------------
+  const handleInitiateForgotPassword = async (e) => {
+    e.preventDefault()
+    clearAlerts()
+
+    if (!forgotEmail || !forgotEmail.includes('@')) {
+      setErrorMessage('Please enter a valid email address.')
+      return
+    }
+
+    setIsLoading(true)
+
+    try {
+      const result = await sendForgotPasswordOtp({ email: forgotEmail })
+      setIsLoading(false)
+
+      if (!result.success) {
+        setErrorMessage(result.error)
+        setErrorCode(result.code || '')
+        return
+      }
+
+      setOtpToken(result.otpToken || '')
+      setOtpCode('')
+      setResendTimer(60)
+      setCanResend(false)
+      setView('verify-forgot-otp')
+      setSuccessMessage(`Password reset code sent to ${forgotEmail}`)
+    } catch {
+      setIsLoading(false)
+      setErrorMessage('Failed to dispatch reset code. Please try again.')
+    }
+  }
+
+  // ----------------------------------------------------------------------------
+  // 5. FORGOT PASSWORD STEP 2 (Verify OTP & save new password)
+  // ----------------------------------------------------------------------------
+  const handleCompletePasswordReset = async (e) => {
+    e.preventDefault()
+    clearAlerts()
+
+    if (!otpCode || otpCode.length !== 4) {
+      setErrorMessage('Please enter the complete 4-digit code.')
+      return
+    }
+    if (!newPassword || newPassword.length < 6) {
+      setErrorMessage('Password must be at least 6 characters.')
+      return
+    }
+    if (newPassword !== confirmPassword) {
+      setErrorMessage('Passwords do not match. Please re-enter.')
+      return
+    }
+
+    setIsLoading(true)
+
+    try {
+      const result = await resetPasswordWithOtp({
+        email: forgotEmail,
+        otp: otpCode,
+        otpToken,
+        newPassword,
+      })
+
+      setIsLoading(false)
+
+      if (!result.success) {
+        setErrorMessage(result.error)
+        setErrorCode(result.code || '')
+        return
+      }
+
+      // Success: Switch to signin view with prefilled email
+      setEmail(forgotEmail)
+      setPassword('')
+      setView('signin')
+      setSuccessMessage('Your password has been reset successfully! Please sign in with your new password.')
+    } catch {
+      setIsLoading(false)
+      setErrorMessage('Password reset failed. Please check the code and try again.')
+    }
+  }
+
+  // Resend Forgot Password OTP
+  const handleResendForgotOtp = async () => {
+    if (!canResend) return
+    clearAlerts()
+    setIsLoading(true)
+
+    try {
+      const result = await sendForgotPasswordOtp({ email: forgotEmail })
+      setIsLoading(false)
+
+      if (result.success) {
+        setOtpToken(result.otpToken || '')
+        setOtpCode('')
+        setResendTimer(60)
+        setCanResend(false)
+        setSuccessMessage(`A fresh 4-digit reset code was sent to ${forgotEmail}`)
+      } else {
+        setErrorMessage(result.error)
+      }
+    } catch {
+      setIsLoading(false)
+      setErrorMessage('Failed to resend code.')
+    }
+  }
+
+  // ----------------------------------------------------------------------------
+  // 6. GOOGLE OAUTH LOGIN
+  // ----------------------------------------------------------------------------
+  const handleGoogleLogin = async () => {
+    clearAlerts()
+    setIsLoading(true)
+
+    if (!isSupabaseConfigured) {
+      setIsLoading(false)
+      setErrorMessage('Database keys pending. Please add Supabase URL & Anon Key to .env to enable Google Login.')
+      return
+    }
+
+    const stored = sessionStorage.getItem('thenee_login_redirect')
+    const dest = redirectTarget || stored || 'account'
+    const { error } = await authService.signInWithGoogle(dest)
+    if (error) {
+      setIsLoading(false)
+      setErrorMessage(error.message || 'Google sign-in encountered an issue. Please try again.')
+    }
+  }
+
+  // ----------------------------------------------------------------------------
+  // QUICK ACTIONS FOR SMART ALERTS
+  // ----------------------------------------------------------------------------
+  const switchToSignupWithEmail = (presetEmail) => {
+    clearAlerts()
+    setSignupForm((prev) => ({ ...prev, email: presetEmail || email }))
+    setView('signup')
+  }
+
+  const switchToSigninWithEmail = (presetEmail) => {
+    clearAlerts()
+    setEmail(presetEmail || signupForm.email)
+    setView('signin')
+  }
+
+  const switchToForgotWithEmail = (presetEmail) => {
+    clearAlerts()
+    setForgotEmail(presetEmail || email)
+    setView('forgot')
   }
 
   return (
@@ -308,206 +501,153 @@ const LoginPage = ({ onLoginSuccess, onBack, redirectTarget }) => {
       {/* Main Login Card */}
       <main className="pro-login-main">
         <div className="pro-card">
-          {/* Badge & Icon */}
+          {/* Card Hero */}
           <div className="pro-card-hero">
             <div className="pro-hero-icon-bubble">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-                <circle cx="12" cy="7" r="4" />
-              </svg>
+              {view === 'verify-signup-otp' || view === 'verify-forgot-otp' ? (
+                <span>✉️</span>
+              ) : view === 'forgot' ? (
+                <span>🔑</span>
+              ) : (
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                  <circle cx="12" cy="7" r="4" />
+                </svg>
+              )}
             </div>
-            <h2>{view === 'signin' ? 'Sign In to THENEE' : 'Create an Account'}</h2>
+
+            <h2>
+              {view === 'signin' && 'Sign In to THENEE'}
+              {view === 'signup' && 'Create Your Account'}
+              {view === 'verify-signup-otp' && 'Verify Your Email'}
+              {view === 'forgot' && 'Reset Your Password'}
+              {view === 'verify-forgot-otp' && 'Set New Password'}
+            </h2>
+
             <p className="pro-card-subtitle">
-              {isCheckoutRedirect
-                ? 'Please sign in to complete your speed delivery order from Tenkasi.'
-                : view === 'signin'
-                ? 'Manage your orders, track consignments & redeem pure herbal perks.'
-                : 'Join 16,000+ happy families enjoying handcrafted herbal wellness.'}
+              {view === 'signin' && 'Enter your registered email and password to access your account.'}
+              {view === 'signup' && 'Enter your details. We will send a 4-digit code to verify your email.'}
+              {view === 'verify-signup-otp' && `Enter the 4-digit code sent to ${signupForm.email}`}
+              {view === 'forgot' && 'Enter your registered email to receive a 4-digit verification code.'}
+              {view === 'verify-forgot-otp' && `Enter the code sent to ${forgotEmail} and choose a new password.`}
             </p>
           </div>
 
-          {/* Database configuration reminder if keys not yet added */}
-          {!isSupabaseConfigured && (
-            <div className="pro-db-notice" role="alert">
-              <span>⚡ Database Ready: Connect Supabase URL & Key in <code>.env</code></span>
-            </div>
-          )}
-
-          {/* Error Message */}
+          {/* SMART ERROR ALERT WITH ONE-CLICK ACTION */}
           {errorMessage && (
-            <div className="pro-alert-error" role="alert">
-              <span>{errorMessage}</span>
+            <div className="pro-alert-error-box" role="alert">
+              <p className="pro-alert-error-text">{errorMessage}</p>
+
+              {/* If no user found, provide quick 1-click Sign Up button */}
+              {errorCode === 'USER_NOT_FOUND' && (
+                <button
+                  type="button"
+                  className="pro-alert-action-btn"
+                  onClick={() => switchToSignupWithEmail(email || forgotEmail)}
+                >
+                  Create New Account ➔
+                </button>
+              )}
+
+              {/* If user is already registered, provide quick 1-click Sign In button */}
+              {errorCode === 'ALREADY_REGISTERED' && (
+                <button
+                  type="button"
+                  className="pro-alert-action-btn"
+                  onClick={() => switchToSigninWithEmail(signupForm.email)}
+                >
+                  Sign In with Password ➔
+                </button>
+              )}
+
+              {/* If incorrect password, provide quick Forgot Password link */}
+              {errorCode === 'INVALID_PASSWORD' && (
+                <button
+                  type="button"
+                  className="pro-alert-action-btn"
+                  onClick={() => switchToForgotWithEmail(email)}
+                >
+                  Forgot Password? Reset Here ➔
+                </button>
+              )}
             </div>
           )}
 
-          {/* Success Message */}
+          {/* SUCCESS MESSAGE */}
           {successMessage && (
             <div className="pro-alert-success" role="status">
               <span>{successMessage}</span>
             </div>
           )}
 
-          {/* SIGN IN VIEW */}
+          {/* ================================================================
+              VIEW 1: SIGN IN (Direct email & password login)
+              ================================================================ */}
           {view === 'signin' && (
             <>
-              {/* Tab Selector: Email vs Phone */}
-              <div className="pro-tabs" role="tablist">
-                <button
-                  type="button"
-                  className={`pro-tab ${authMethod === 'email' ? 'is-active' : ''}`}
-                  onClick={() => {
-                    setAuthMethod('email')
-                    setErrorMessage('')
-                    setSuccessMessage('')
-                  }}
-                  role="tab"
-                  aria-selected={authMethod === 'email'}
-                >
-                  Email
-                </button>
-                <button
-                  type="button"
-                  className={`pro-tab ${authMethod === 'phone' ? 'is-active' : ''}`}
-                  onClick={() => {
-                    setAuthMethod('phone')
-                    setErrorMessage('')
-                    setSuccessMessage('')
-                  }}
-                  role="tab"
-                  aria-selected={authMethod === 'phone'}
-                >
-                  Mobile OTP
-                </button>
-              </div>
+              <form onSubmit={handleEmailLogin} className="pro-form">
+                <div className="pro-input-group">
+                  <label htmlFor="pro-signin-email">Email Address</label>
+                  <input
+                    id="pro-signin-email"
+                    type="email"
+                    placeholder="name@example.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                    autoFocus
+                  />
+                </div>
 
-              {/* Email & Password Form */}
-              {authMethod === 'email' && (
-                <form onSubmit={handleEmailLogin} className="pro-form">
-                  <div className="pro-input-group">
-                    <label htmlFor="pro-email-input">Email Address</label>
+                <div className="pro-input-group">
+                  <div className="pro-label-row">
+                    <label htmlFor="pro-signin-password">Password</label>
+                    <button
+                      type="button"
+                      className="pro-link-btn"
+                      onClick={() => {
+                        setForgotEmail(email)
+                        clearAlerts()
+                        setView('forgot')
+                      }}
+                    >
+                      Forgot password?
+                    </button>
+                  </div>
+                  <div className="pro-password-field">
                     <input
-                      id="pro-email-input"
-                      type="email"
-                      placeholder="name@example.com"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
+                      id="pro-signin-password"
+                      type={showPassword ? 'text' : 'password'}
+                      placeholder="••••••••"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
                       required
-                      autoFocus
                     />
-                  </div>
-
-                  <div className="pro-input-group">
-                    <div className="pro-label-row">
-                      <label htmlFor="pro-password-input">Password</label>
-                    </div>
-                    <div className="pro-password-field">
-                      <input
-                        id="pro-password-input"
-                        type={showPassword ? 'text' : 'password'}
-                        placeholder="••••••••"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        required
-                      />
-                      <button
-                        type="button"
-                        className="pro-show-btn"
-                        onClick={() => setShowPassword(!showPassword)}
-                        aria-label="Toggle password visibility"
-                      >
-                        {showPassword ? 'Hide' : 'Show'}
-                      </button>
-                    </div>
-                  </div>
-
-                  <button
-                    type="submit"
-                    className="pro-submit-btn"
-                    disabled={isLoading}
-                  >
-                    {isLoading ? 'Signing In...' : 'Sign In with Email'}
-                  </button>
-                </form>
-              )}
-
-              {/* Phone OTP Form */}
-              {authMethod === 'phone' && (
-                !otpSent ? (
-                  <form onSubmit={handleSendOtp} className="pro-form">
-                    <div className="pro-input-group">
-                      <label htmlFor="pro-phone-input">Mobile Number</label>
-                      <div className="pro-phone-field">
-                        <span className="pro-phone-prefix">+91</span>
-                        <input
-                          id="pro-phone-input"
-                          type="tel"
-                          maxLength={10}
-                          placeholder="98765 43210"
-                          value={phoneNumber}
-                          onChange={(e) => setPhoneNumber(e.target.value.replace(/\D/g, ''))}
-                          required
-                          autoFocus
-                        />
-                      </div>
-                      <span className="pro-field-hint">We will send a verification code via SMS</span>
-                    </div>
-
                     <button
-                      type="submit"
-                      className="pro-submit-btn"
-                      disabled={isLoading}
+                      type="button"
+                      className="pro-show-btn"
+                      onClick={() => setShowPassword(!showPassword)}
+                      aria-label="Toggle password visibility"
                     >
-                      {isLoading ? 'Sending Code...' : 'Send Verification OTP'}
+                      {showPassword ? 'Hide' : 'Show'}
                     </button>
-                  </form>
-                ) : (
-                  <form onSubmit={handleVerifyOtp} className="pro-form">
-                    <div className="pro-otp-meta">
-                      <span>Code sent to <strong>+91 {phoneNumber}</strong></span>
-                      <button
-                        type="button"
-                        className="pro-link-btn"
-                        onClick={() => {
-                          setOtpSent(false)
-                          setOtpCode('')
-                        }}
-                      >
-                        Change Number
-                      </button>
-                    </div>
+                  </div>
+                </div>
 
-                    <div className="pro-input-group">
-                      <label htmlFor="pro-otp-input">Enter Verification Code</label>
-                      <input
-                        id="pro-otp-input"
-                        type="text"
-                        maxLength={6}
-                        placeholder="• • • • • •"
-                        className="pro-otp-input"
-                        value={otpCode}
-                        onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ''))}
-                        required
-                        autoFocus
-                      />
-                    </div>
+                <button
+                  type="submit"
+                  className="pro-submit-btn"
+                  disabled={isLoading}
+                >
+                  {isLoading ? 'Signing In...' : 'Sign In with Password'}
+                </button>
+              </form>
 
-                    <button
-                      type="submit"
-                      className="pro-submit-btn"
-                      disabled={isLoading}
-                    >
-                      {isLoading ? 'Verifying...' : 'Verify & Continue'}
-                    </button>
-                  </form>
-                )
-              )}
-
-              {/* Divider */}
               <div className="pro-divider">
                 <span>or</span>
               </div>
 
-              {/* Google Sign In Button */}
+              {/* Google OAuth Login */}
               <button
                 type="button"
                 className="pro-google-btn"
@@ -523,33 +663,33 @@ const LoginPage = ({ onLoginSuccess, onBack, redirectTarget }) => {
                 <span>Continue with Google</span>
               </button>
 
-              {/* Toggle to Signup */}
               <div className="pro-card-footer">
-                <span>Don&apos;t have an account?</span>{' '}
+                <span>New to THENEE?</span>{' '}
                 <button
                   type="button"
                   className="pro-text-link"
                   onClick={() => {
+                    clearAlerts()
                     setView('signup')
-                    setErrorMessage('')
-                    setSuccessMessage('')
                   }}
                 >
-                  Create account
+                  Create an account
                 </button>
               </div>
             </>
           )}
 
-          {/* SIGN UP VIEW */}
+          {/* ================================================================
+              VIEW 2: SIGN UP (Enter details -> Send 4-digit OTP)
+              ================================================================ */}
           {view === 'signup' && (
-            <form onSubmit={handleSignup} className="pro-form">
+            <form onSubmit={handleInitiateSignup} className="pro-form">
               <div className="pro-input-group">
-                <label htmlFor="reg-name-input">Full Name *</label>
+                <label htmlFor="reg-fullname">Full Name *</label>
                 <input
-                  id="reg-name-input"
+                  id="reg-fullname"
                   type="text"
-                  placeholder="e.g. Meenakshi Sundaram"
+                  placeholder="e.g. Anitha Meenakshi"
                   value={signupForm.name}
                   onChange={(e) => setSignupForm({ ...signupForm, name: e.target.value })}
                   required
@@ -558,11 +698,11 @@ const LoginPage = ({ onLoginSuccess, onBack, redirectTarget }) => {
               </div>
 
               <div className="pro-input-group">
-                <label htmlFor="reg-phone-input">Mobile Number *</label>
+                <label htmlFor="reg-mobile">Mobile Number (10 digits) *</label>
                 <div className="pro-phone-field">
                   <span className="pro-phone-prefix">+91</span>
                   <input
-                    id="reg-phone-input"
+                    id="reg-mobile"
                     type="tel"
                     maxLength={10}
                     placeholder="98765 43210"
@@ -576,23 +716,24 @@ const LoginPage = ({ onLoginSuccess, onBack, redirectTarget }) => {
               </div>
 
               <div className="pro-input-group">
-                <label htmlFor="reg-email-input">Email Address *</label>
+                <label htmlFor="reg-email">Email Address *</label>
                 <input
-                  id="reg-email-input"
+                  id="reg-email"
                   type="email"
                   placeholder="name@example.com"
                   value={signupForm.email}
                   onChange={(e) => setSignupForm({ ...signupForm, email: e.target.value })}
                   required
                 />
+                <span className="pro-field-hint">We will send a 4-digit verification code to this email</span>
               </div>
 
               <div className="pro-input-group">
-                <label htmlFor="reg-password-input">Password (minimum 6 characters) *</label>
+                <label htmlFor="reg-pass">Create Password (minimum 6 characters) *</label>
                 <input
-                  id="reg-password-input"
+                  id="reg-pass"
                   type="password"
-                  placeholder="Create a secure password"
+                  placeholder="••••••••"
                   value={signupForm.password}
                   onChange={(e) => setSignupForm({ ...signupForm, password: e.target.value })}
                   required
@@ -604,14 +745,13 @@ const LoginPage = ({ onLoginSuccess, onBack, redirectTarget }) => {
                 className="pro-submit-btn"
                 disabled={isLoading}
               >
-                {isLoading ? 'Creating Account...' : 'Create Account'}
+                {isLoading ? 'Sending Verification Code...' : 'Send 4-Digit Verification Code ➔'}
               </button>
 
               <div className="pro-divider">
                 <span>or</span>
               </div>
 
-              {/* Google Sign In in Signup View */}
               <button
                 type="button"
                 className="pro-google-btn"
@@ -627,19 +767,181 @@ const LoginPage = ({ onLoginSuccess, onBack, redirectTarget }) => {
                 <span>Sign up with Google</span>
               </button>
 
-              {/* Toggle to Sign In */}
               <div className="pro-card-footer">
                 <span>Already have an account?</span>{' '}
                 <button
                   type="button"
                   className="pro-text-link"
                   onClick={() => {
+                    clearAlerts()
                     setView('signin')
-                    setErrorMessage('')
-                    setSuccessMessage('')
                   }}
                 >
                   Sign In
+                </button>
+              </div>
+            </form>
+          )}
+
+          {/* ================================================================
+              VIEW 3: VERIFY SIGNUP 4-DIGIT OTP
+              ================================================================ */}
+          {view === 'verify-signup-otp' && (
+            <form onSubmit={handleVerifySignupOtp} className="pro-form">
+              <div className="pro-input-group" style={{ textAlign: 'center' }}>
+                <label>Enter 4-Digit Verification Code</label>
+                <FourDigitOtpInput
+                  value={otpCode}
+                  onChange={(val) => setOtpCode(val)}
+                  onComplete={() => {}}
+                />
+              </div>
+
+              <div className="pro-otp-helper-row">
+                <span>Didn&apos;t receive code?</span>
+                <button
+                  type="button"
+                  className="pro-otp-resend-btn"
+                  onClick={handleResendSignupOtp}
+                  disabled={!canResend || isLoading}
+                >
+                  {canResend ? 'Resend Code' : `Resend in ${resendTimer}s`}
+                </button>
+              </div>
+
+              <button
+                type="submit"
+                className="pro-submit-btn"
+                disabled={isLoading || otpCode.length !== 4}
+              >
+                {isLoading ? 'Verifying Code...' : 'Verify & Complete Signup ➔'}
+              </button>
+
+              <div className="pro-card-footer">
+                <button
+                  type="button"
+                  className="pro-link-btn"
+                  onClick={() => {
+                    clearAlerts()
+                    setView('signup')
+                  }}
+                >
+                  ← Change email address
+                </button>
+              </div>
+            </form>
+          )}
+
+          {/* ================================================================
+              VIEW 4: FORGOT PASSWORD (Enter email -> Send 4-digit OTP)
+              ================================================================ */}
+          {view === 'forgot' && (
+            <form onSubmit={handleInitiateForgotPassword} className="pro-form">
+              <div className="pro-input-group">
+                <label htmlFor="forgot-email">Registered Email Address</label>
+                <input
+                  id="forgot-email"
+                  type="email"
+                  placeholder="name@example.com"
+                  value={forgotEmail}
+                  onChange={(e) => setForgotEmail(e.target.value)}
+                  required
+                  autoFocus
+                />
+                <span className="pro-field-hint">We will send a 4-digit password reset code to this email</span>
+              </div>
+
+              <button
+                type="submit"
+                className="pro-submit-btn"
+                disabled={isLoading}
+              >
+                {isLoading ? 'Sending Reset Code...' : 'Send 4-Digit Reset Code ➔'}
+              </button>
+
+              <div className="pro-card-footer">
+                <button
+                  type="button"
+                  className="pro-link-btn"
+                  onClick={() => {
+                    clearAlerts()
+                    setView('signin')
+                  }}
+                >
+                  ← Back to Sign In
+                </button>
+              </div>
+            </form>
+          )}
+
+          {/* ================================================================
+              VIEW 5: VERIFY FORGOT PASSWORD OTP & SET NEW PASSWORD
+              ================================================================ */}
+          {view === 'verify-forgot-otp' && (
+            <form onSubmit={handleCompletePasswordReset} className="pro-form">
+              <div className="pro-input-group" style={{ textAlign: 'center' }}>
+                <label>Enter 4-Digit Reset Code</label>
+                <FourDigitOtpInput
+                  value={otpCode}
+                  onChange={(val) => setOtpCode(val)}
+                  onComplete={() => {}}
+                />
+              </div>
+
+              <div className="pro-otp-helper-row">
+                <span>Didn&apos;t receive code?</span>
+                <button
+                  type="button"
+                  className="pro-otp-resend-btn"
+                  onClick={handleResendForgotOtp}
+                  disabled={!canResend || isLoading}
+                >
+                  {canResend ? 'Resend Code' : `Resend in ${resendTimer}s`}
+                </button>
+              </div>
+
+              <div className="pro-input-group">
+                <label htmlFor="new-pass">New Password (minimum 6 characters) *</label>
+                <input
+                  id="new-pass"
+                  type="password"
+                  placeholder="Enter new password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  required
+                />
+              </div>
+
+              <div className="pro-input-group">
+                <label htmlFor="confirm-pass">Confirm New Password *</label>
+                <input
+                  id="confirm-pass"
+                  type="password"
+                  placeholder="Re-enter new password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  required
+                />
+              </div>
+
+              <button
+                type="submit"
+                className="pro-submit-btn"
+                disabled={isLoading || otpCode.length !== 4}
+              >
+                {isLoading ? 'Updating Password...' : 'Reset Password & Proceed ➔'}
+              </button>
+
+              <div className="pro-card-footer">
+                <button
+                  type="button"
+                  className="pro-link-btn"
+                  onClick={() => {
+                    clearAlerts()
+                    setView('signin')
+                  }}
+                >
+                  ← Cancel and return to Sign In
                 </button>
               </div>
             </form>

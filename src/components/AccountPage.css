@@ -108,6 +108,16 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.user-chip-avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+  display: block;
 }
 
 .user-chip-name {
@@ -223,6 +233,15 @@
   box-shadow: 0 8px 22px rgba(49, 84, 58, 0.22);
   flex-shrink: 0;
   border: 3px solid #FFFFFF;
+  overflow: hidden;
+}
+
+.profile-hub-avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+  display: block;
 }
 
 .profile-hub-user-text h2 {

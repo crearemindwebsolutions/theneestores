@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useCart } from '../context/CartContext'
 import { products, individualPodis, brandInfo } from '../data/products'
 import { orderService, profileService, adminService, inquiryService } from '../lib/supabase'
+import { sendOrderStatusUpdateEmail } from '../lib/emailService'
 import { SkeletonOrderCard, ImageWithSkeleton } from './Skeleton'
 import LoginPage from './LoginPage'
 import Footer from './Footer'
@@ -338,6 +339,24 @@ const AccountPage = ({ onBack, onLogout, initialTab = 'hub' }) => {
           : o
       )
     )
+
+    // Trigger customer dispatch email with Speed Post tracking via Resend
+    try {
+      const targetOrder =
+        adminOrders.find((o) => o.order_number === orderNumber) ||
+        ordersList.find((o) => (o.order_number || o.id) === orderNumber)
+      if (targetOrder) {
+        const destEmail = targetOrder.shipping_address?.email || targetOrder.email
+        if (destEmail && destEmail.includes('@')) {
+          sendOrderStatusUpdateEmail(targetOrder, 'Dispatched', awb.trim(), destEmail).catch((e) => {
+            console.warn('Dispatch email notice:', e)
+          })
+        }
+      }
+    } catch (e) {
+      console.warn('Dispatch email trigger skipped:', e)
+    }
+
     showToast(`Consignment AWB ${awb.trim()} attached & marked Dispatched`)
   }
 
@@ -496,7 +515,13 @@ const AccountPage = ({ onBack, onLogout, initialTab = 'hub' }) => {
 
         <div className="account-nav-right">
           <div className="account-user-chip" onClick={() => navigateTab('profile')}>
-            <span className="user-chip-avatar">{(user.name || 'U').charAt(0).toUpperCase()}</span>
+            <span className="user-chip-avatar">
+              {user.avatar ? (
+                <img src={user.avatar} alt={user.name || 'User'} className="user-chip-avatar-img" referrerPolicy="no-referrer" />
+              ) : (
+                (user.name || 'U').charAt(0).toUpperCase()
+              )}
+            </span>
             <span className="user-chip-name">{user.name || 'Member'}</span>
           </div>
 
@@ -525,7 +550,13 @@ const AccountPage = ({ onBack, onLogout, initialTab = 'hub' }) => {
           {/* Hero Profile Summary Card */}
           <div className="profile-hub-hero">
             <div className="profile-hub-user-left">
-              <div className="profile-hub-avatar">{(user.name || 'U').charAt(0).toUpperCase()}</div>
+              <div className="profile-hub-avatar">
+                {user.avatar ? (
+                  <img src={user.avatar} alt={user.name || 'User'} className="profile-hub-avatar-img" referrerPolicy="no-referrer" />
+                ) : (
+                  (user.name || 'U').charAt(0).toUpperCase()
+                )}
+              </div>
               <div className="profile-hub-user-text">
                 <h2>{user.name || 'Valued Customer'}</h2>
                 <p>{user.contact || user.email || 'Tamil Nadu'}{user.email && user.contact ? ` • ${user.email}` : ''}</p>

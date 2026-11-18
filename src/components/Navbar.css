@@ -125,18 +125,25 @@
 
 .navbar-account-btn {
   position: relative;
-  width: 42px;
-  height: 42px;
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  min-height: 40px;
+  aspect-ratio: 1 / 1;
   border-radius: 50%;
   background: #FFFFFF;
   color: var(--color-primary);
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid var(--border-color);
+  border: 1.5px solid var(--border-color);
   box-shadow: var(--shadow-sm);
   transition: transform 0.2s ease, background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
   cursor: pointer;
+  padding: 0 !important;
+  flex-shrink: 0;
+  box-sizing: border-box;
+  overflow: visible;
 }
 
 .navbar-account-btn:hover,
@@ -150,8 +157,20 @@
 
 .navbar-account-btn.is-logged-in {
   border-color: #2E7D32;
-  background: #F1F8F3;
+  background: #FFFFFF;
   color: #2E7D32;
+}
+
+.navbar-avatar-wrap {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #F0F4EE;
+  flex-shrink: 0;
 }
 
 .navbar-avatar-img {
@@ -159,18 +178,35 @@
   height: 100%;
   border-radius: 50%;
   object-fit: cover;
-  padding: 2px;
+  display: block;
+}
+
+.navbar-avatar-initial {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: #274C37;
+  color: #FFFFFF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.95rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
 }
 
 .navbar-account-dot {
   position: absolute;
-  top: 1px;
-  right: 1px;
-  width: 9px;
-  height: 9px;
+  top: -1px;
+  right: -1px;
+  width: 10px;
+  height: 10px;
   border-radius: 50%;
   background: #2E7D32;
   border: 2px solid #FFFFFF;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  z-index: 2;
 }
 
 /* ==========================================================================
@@ -782,13 +818,18 @@
     font-size: 0.62rem;
   }
   .navbar-actions {
-    gap: 6px;
+    gap: 8px;
+    align-items: center;
   }
   .navbar-cart-btn,
   .navbar-account-btn,
   .navbar-burger {
-    width: 36px;
-    height: 36px;
-    padding: 0 8px;
+    width: 36px !important;
+    height: 36px !important;
+    min-width: 36px !important;
+    min-height: 36px !important;
+    padding: 0 !important;
+    aspect-ratio: 1 / 1 !important;
+    box-sizing: border-box !important;
   }
 }

@@ -4,14 +4,15 @@ import OfferMarquee from './OfferMarquee'
 import Footer from './Footer'
 import { brandInfo } from '../data/products'
 import { inquiryService } from '../lib/supabase'
+import { sendInquiryEmails } from '../lib/emailService'
 import './PagesShared.css'
 import './ContactPage.css'
 
 const INQUIRY_TYPES = [
-  { id: 'Retail Order & Tracking', label: 'Order Tracking', emoji: '📦' },
-  { id: 'Herbal Wellness Guidance', label: 'Wellness Advice', emoji: '🌿' },
-  { id: 'Clinic & Ayurvedic Wholesale', label: 'Wholesale & Clinic', emoji: '🏥' },
-  { id: 'Corporate Gift Hampers', label: 'Corporate Gifts', emoji: '🎁' },
+  { id: 'Retail Order & Tracking', label: 'Order Tracking & Delivery Status' },
+  { id: 'Herbal Wellness Guidance', label: 'Herbal Wellness Guidance' },
+  { id: 'Clinic & Ayurvedic Wholesale', label: 'Clinic & Ayurvedic Wholesale' },
+  { id: 'Corporate Gift Hampers', label: 'Corporate Gift Hampers' },
 ]
 
 const FAQS = [
@@ -55,6 +56,9 @@ const ContactPage = ({ onOpenAccount }) => {
     setIsSubmitting(true)
     try {
       await inquiryService.submitInquiry(form)
+      sendInquiryEmails(form).catch((emailErr) => {
+        console.warn('Inquiry email notice:', emailErr)
+      })
     } catch (err) {
       console.warn('Inquiry submission fallback:', err)
     } finally {
@@ -108,21 +112,29 @@ const ContactPage = ({ onOpenAccount }) => {
             </div>
 
             <form onSubmit={handleSubmit} className="contact-form-modern">
-              {/* Inquiry Type Chips */}
-              <div className="inquiry-selector-wrap">
-                <label className="form-label">What is this regarding?</label>
-                <div className="inquiry-chips-group">
-                  {INQUIRY_TYPES.map((t) => (
-                    <button
-                      key={t.id}
-                      type="button"
-                      className={`inquiry-chip-btn ${form.type === t.id ? 'is-active' : ''}`}
-                      onClick={() => setForm({ ...form, type: t.id })}
-                    >
-                      <span>{t.emoji}</span>
-                      <span>{t.label}</span>
-                    </button>
-                  ))}
+              {/* Inquiry Type Select Dropdown */}
+              <div className="form-field">
+                <label className="form-label" htmlFor="inquiry-type-select">
+                  What is this regarding? *
+                </label>
+                <div className="form-select-wrap">
+                  <select
+                    id="inquiry-type-select"
+                    className="form-select"
+                    value={form.type}
+                    onChange={(e) => setForm({ ...form, type: e.target.value })}
+                  >
+                    {INQUIRY_TYPES.map((t) => (
+                      <option key={t.id} value={t.id}>
+                        {t.label}
+                      </option>
+                    ))}
+                  </select>
+                  <div className="form-select-arrow" aria-hidden="true">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="6 9 12 15 18 9" />
+                    </svg>
+                  </div>
                 </div>
               </div>
 

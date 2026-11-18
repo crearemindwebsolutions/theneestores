@@ -22,6 +22,7 @@ import ReviewsPage from './components/ReviewsPage'
 import ContactPage from './components/ContactPage'
 import CheckoutPage from './components/CheckoutPage'
 import LoginPage from './components/LoginPage'
+import ProfileCompletionModal from './components/ProfileCompletionModal'
 import { CartProvider, useCart } from './context/CartContext'
 
 const parseRouteFromHash = () => {
@@ -106,7 +107,7 @@ const AppContent = () => {
   const [route, setRoute] = useState(parseRouteFromHash)
 
   useLenis()
-  const { toastMessage, isLoggedIn, authLoading } = useCart()
+  const { toastMessage, isLoggedIn, authLoading, currentUser, loginUser } = useCart()
 
   useEffect(() => {
     const handleHashChange = () => {
@@ -262,9 +263,9 @@ const AppContent = () => {
         <>
           <Hero onOpenAccount={navigateToAccount} />
           <BestSellers />
-          <AboutUs />
           <OfferGallery />
           <MoodSelector />
+          <AboutUs />
           <Testimonial />
           <Reviews />
           <PromoOffers />
@@ -274,6 +275,16 @@ const AppContent = () => {
 
       <CartDrawer />
       <ProductModal />
+
+      {/* Compulsory Profile Completion for Google Users without Name / Phone */}
+      {isLoggedIn && currentUser && (!currentUser.contact || currentUser.contact.trim() === '' || !currentUser.name || currentUser.name.trim() === '' || currentUser.name.includes('@')) && (
+        <ProfileCompletionModal
+          currentUser={currentUser}
+          onComplete={(updatedUser) => {
+            loginUser(updatedUser)
+          }}
+        />
+      )}
 
       {/* Cart toast notification */}
       {toastMessage && (

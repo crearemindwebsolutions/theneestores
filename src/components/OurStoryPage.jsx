@@ -87,7 +87,7 @@ const OurStoryPage = ({ onOpenAccount }) => {
                 "We don't manufacture tea in automated factories. Our mothers and sisters in Manthiyoor sort each flower,
                 shade-dry every leaf, and blend each jar with prayer and dignity."
               </p>
-              <span>— Founder, THENEE The Roots Enterprises</span>
+              <span>— Anitha, Founder, THENEE The Roots Enterprises</span>
             </div>
           </div>
 

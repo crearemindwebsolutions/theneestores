@@ -108,8 +108,32 @@ const Navbar = ({ onOpenAccount, currentRoute = 'home' }) => {
           aria-label={isLoggedIn ? `Account (${currentUser?.name || 'User'})` : 'Login / Account Portal'}
           title={isLoggedIn ? `Account: ${currentUser?.name || 'User'} (Signed In)` : 'Login to Account Portal'}
         >
-          {isLoggedIn && currentUser?.avatar ? (
-            <img src={currentUser.avatar} alt={currentUser.name || 'Account'} className="navbar-avatar-img" />
+          {isLoggedIn ? (
+            currentUser?.avatar ? (
+              <span className="navbar-avatar-wrap">
+                <img
+                  src={currentUser.avatar}
+                  alt={currentUser.name || 'Account'}
+                  className="navbar-avatar-img"
+                  referrerPolicy="no-referrer"
+                  onError={(e) => {
+                    e.currentTarget.style.display = 'none'
+                    if (e.currentTarget.nextSibling) {
+                      e.currentTarget.nextSibling.style.display = 'flex'
+                    }
+                  }}
+                />
+                <span className="navbar-avatar-initial" style={{ display: 'none' }}>
+                  {(currentUser.name || 'U').charAt(0).toUpperCase()}
+                </span>
+              </span>
+            ) : (
+              <span className="navbar-avatar-wrap">
+                <span className="navbar-avatar-initial">
+                  {(currentUser?.name || 'U').charAt(0).toUpperCase()}
+                </span>
+              </span>
+            )
           ) : (
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
               <path
