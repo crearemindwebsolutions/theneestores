@@ -82,17 +82,30 @@ export const authService = {
   },
 
   // Sign in with Google OAuth
-  async signInWithGoogle() {
+  async signInWithGoogle(redirectTarget = 'account') {
     if (!isSupabaseConfigured || !supabase) {
       return { data: null, error: new Error('Supabase is not configured yet. Please add your API keys.') }
     }
+    try {
+      localStorage.setItem('thenee_oauth_pending', 'true')
+      localStorage.setItem('thenee_auth_redirect', redirectTarget)
+    } catch {}
+
+    // Clean URL without hash fragment (RFC 6749 Section 3.1.2 forbids hash fragments in OAuth redirect_uri)
+    const cleanOrigin = window.location.origin || `${window.location.protocol}//${window.location.host}`
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}/#account`,
+        redirectTo: cleanOrigin,
       },
     })
     return { data, error }
+  },
+
+  // Exchange PKCE auth code for session
+  async exchangeCodeForSession(code) {
+    if (!isSupabaseConfigured || !supabase || !code) return { data: null, error: null }
+    return await supabase.auth.exchangeCodeForSession(code)
   },
 
   // Sign out

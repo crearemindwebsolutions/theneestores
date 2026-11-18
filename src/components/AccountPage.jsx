@@ -21,7 +21,7 @@ const TAB_TITLES = {
 }
 
 const AccountPage = ({ onBack, onLogout, initialTab = 'hub' }) => {
-  const { totalCount, openCart, addToCart, currentUser, isLoggedIn, logoutUser } = useCart()
+  const { totalCount, openCart, addToCart, currentUser, isLoggedIn, logoutUser, authLoading } = useCart()
 
   // Track active sub-view ('hub' = main profile options view, or specific subpage)
   const [activeTab, setActiveTab] = useState(() => {
@@ -38,6 +38,30 @@ const AccountPage = ({ onBack, onLogout, initialTab = 'hub' }) => {
   const [activeTrackingOrder, setActiveTrackingOrder] = useState(null)
   const [copiedCoupon, setCopiedCoupon] = useState('')
   const [toastMsg, setToastMsg] = useState('')
+
+  // If authenticating (e.g. returning from Google OAuth), show clean loader
+  if (authLoading) {
+    return (
+      <div style={{ minHeight: '75vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '16px', padding: '40px 20px', textAlign: 'center' }}>
+        <div style={{
+          width: '44px',
+          height: '44px',
+          border: '3.5px solid rgba(49, 84, 58, 0.15)',
+          borderTopColor: '#274C37',
+          borderRadius: '50%',
+          animation: 'authSpin 0.8s linear infinite'
+        }} />
+        <style>{`
+          @keyframes authSpin {
+            to { transform: rotate(360deg); }
+          }
+        `}</style>
+        <p style={{ fontFamily: 'var(--font-heading, serif)', color: 'var(--color-primary, #1e392a)', fontSize: '1.2rem', fontWeight: 600, margin: 0 }}>
+          Signing you into your THENEE Account...
+        </p>
+      </div>
+    )
+  }
 
   // Strictly guard: without login, no user can open account page!
   if (!isLoggedIn) {

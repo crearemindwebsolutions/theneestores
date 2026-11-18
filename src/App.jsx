@@ -25,6 +25,18 @@ import LoginPage from './components/LoginPage'
 import { CartProvider, useCart } from './context/CartContext'
 
 const parseRouteFromHash = () => {
+  if (typeof window !== 'undefined') {
+    const search = window.location.search || ''
+    const fullHash = window.location.hash || ''
+    const isOauthPending = localStorage.getItem('thenee_oauth_pending') === 'true'
+
+    // If OAuth code or access token is present, route directly to account (or saved redirect)
+    if (search.includes('code=') || fullHash.includes('access_token=') || (isOauthPending && !fullHash)) {
+      const target = localStorage.getItem('thenee_auth_redirect') || 'account'
+      return target
+    }
+  }
+
   const hash = window.location.hash.replace('#', '')
   if (hash.startsWith('admin')) return 'admin'
   if (hash.startsWith('account')) return 'account'
@@ -39,11 +51,62 @@ const parseRouteFromHash = () => {
   return 'home'
 }
 
+const AuthLoadingScreen = () => (
+  <div
+    style={{
+      minHeight: '75vh',
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: '16px',
+      padding: '40px 20px',
+      textAlign: 'center',
+    }}
+  >
+    <div
+      style={{
+        width: '44px',
+        height: '44px',
+        border: '3.5px solid rgba(49, 84, 58, 0.15)',
+        borderTopColor: '#274C37',
+        borderRadius: '50%',
+        animation: 'authSpin 0.8s linear infinite',
+      }}
+    />
+    <style>{`
+      @keyframes authSpin {
+        to { transform: rotate(360deg); }
+      }
+    `}</style>
+    <p
+      style={{
+        fontFamily: 'var(--font-heading, serif)',
+        color: 'var(--color-primary, #1e392a)',
+        fontSize: '1.2rem',
+        fontWeight: 600,
+        margin: 0,
+      }}
+    >
+      Signing you into your THENEE Account...
+    </p>
+    <p
+      style={{
+        color: '#666',
+        fontSize: '0.9rem',
+        margin: 0,
+      }}
+    >
+      Verifying credentials with Google
+    </p>
+  </div>
+)
+
 const AppContent = () => {
   const [route, setRoute] = useState(parseRouteFromHash)
 
   useLenis()
-  const { toastMessage, isLoggedIn } = useCart()
+  const { toastMessage, isLoggedIn, authLoading } = useCart()
 
   useEffect(() => {
     const handleHashChange = () => {
@@ -123,7 +186,9 @@ const AppContent = () => {
       <Loader />
 
       {route === 'admin' && (
-        isLoggedIn ? (
+        authLoading ? (
+          <AuthLoadingScreen />
+        ) : isLoggedIn ? (
           <AccountPage initialTab="admin" onBack={navigateToHome} onLogout={navigateToLogin} />
         ) : (
           <LoginPage
@@ -138,7 +203,9 @@ const AppContent = () => {
         )
       )}
       {route === 'account' && (
-        isLoggedIn ? (
+        authLoading ? (
+          <AuthLoadingScreen />
+        ) : isLoggedIn ? (
           <AccountPage onBack={navigateToHome} onLogout={navigateToLogin} />
         ) : (
           <LoginPage
@@ -152,7 +219,9 @@ const AppContent = () => {
         )
       )}
       {route === 'login' && (
-        isLoggedIn ? (
+        authLoading ? (
+          <AuthLoadingScreen />
+        ) : isLoggedIn ? (
           <AccountPage onBack={navigateToHome} onLogout={navigateToLogin} />
         ) : (
           <LoginPage
@@ -166,7 +235,9 @@ const AppContent = () => {
         )
       )}
       {route === 'checkout' && (
-        isLoggedIn ? (
+        authLoading ? (
+          <AuthLoadingScreen />
+        ) : isLoggedIn ? (
           <CheckoutPage onBack={navigateToHome} onOpenAccount={navigateToAccount} />
         ) : (
           <LoginPage

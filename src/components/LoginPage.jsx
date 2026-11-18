@@ -75,7 +75,9 @@ const LoginPage = ({ onLoginSuccess, onBack, redirectTarget }) => {
       return
     }
 
-    const { error } = await authService.signInWithGoogle()
+    const stored = sessionStorage.getItem('thenee_login_redirect')
+    const dest = redirectTarget || stored || 'account'
+    const { error } = await authService.signInWithGoogle(dest)
     if (error) {
       setIsLoading(false)
       setErrorMessage(error.message || 'Google sign-in failed. Please try again.')

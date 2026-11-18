@@ -28,41 +28,167 @@ export const CartProvider = ({ children }) => {
     }
   })
 
+  // Track active auth resolution (e.g. while returning from Google OAuth)
+  const [authLoading, setAuthLoading] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const search = window.location.search || ''
+      const hash = window.location.hash || ''
+      const isOauthPending = localStorage.getItem('thenee_oauth_pending') === 'true'
+      return search.includes('code=') || hash.includes('access_token=') || isOauthPending
+    }
+    return false
+  })
+
   // Sync with Supabase Auth state if configured
   useEffect(() => {
-    if (!isSupabaseConfigured) return
+    if (!isSupabaseConfigured) {
+      setAuthLoading(false)
+      return
+    }
 
-    const { data: authListener } = authService.onAuthStateChange(async (event, session) => {
-      if (session?.user) {
-        const u = session.user
-        const userData = {
-          id: u.id,
-          name: u.user_metadata?.full_name || u.user_metadata?.name || u.email?.split('@')[0] || 'Member',
-          email: u.email || '',
-          contact: u.phone || u.user_metadata?.phone || '',
-          authProvider: u.app_metadata?.provider || 'supabase',
-          joinedDate: new Date(u.created_at || Date.now()).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }),
-          points: 100,
+    let isMounted = true
+
+    // Check for OAuth error parameters in URL (?error=... or #error=...)
+    if (typeof window !== 'undefined') {
+      const search = window.location.search || ''
+      const hash = window.location.hash || ''
+      if (search.includes('error=') || hash.includes('error=')) {
+        try {
+          localStorage.removeItem('thenee_oauth_pending')
+          localStorage.removeItem('thenee_auth_redirect')
+        } catch {}
+        if (window.history && window.history.replaceState) {
+          window.history.replaceState(null, '', window.location.origin + window.location.pathname + '#login')
+        } else {
+          window.location.hash = 'login'
         }
+        window.dispatchEvent(new HashChangeEvent('hashchange'))
+        setAuthLoading(false)
+        showToast('Google sign-in was cancelled or encountered an issue.')
+        return
+      }
+    }
+
+    const syncSessionUser = (session) => {
+      if (!session?.user) return false
+      const u = session.user
+      const userData = {
+        id: u.id,
+        name: u.user_metadata?.full_name || u.user_metadata?.name || u.email?.split('@')[0] || 'Member',
+        email: u.email || '',
+        contact: u.phone || u.user_metadata?.phone || '',
+        avatar: u.user_metadata?.avatar_url || u.user_metadata?.picture || '',
+        authProvider: u.app_metadata?.provider || 'google',
+        joinedDate: new Date(u.created_at || Date.now()).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }),
+        points: 100,
+      }
+
+      try {
         localStorage.setItem('thenee_auth_user', JSON.stringify(userData))
         localStorage.setItem('thenee_user', JSON.stringify(userData))
-        setCurrentUser(userData)
+      } catch {}
 
-        // Automatically redirect to account page on OAuth / magic link login
+      if (isMounted) {
+        setCurrentUser(userData)
+        setAuthLoading(false)
+      }
+
+      // Check if returning from OAuth / login redirect
+      if (typeof window !== 'undefined') {
+        const isOauthPending = localStorage.getItem('thenee_oauth_pending') === 'true'
+        const search = window.location.search || ''
+        const hash = window.location.hash || ''
+        const hasAuthParams = search.includes('code=') || hash.includes('access_token') || hash.includes('login')
+        const targetRoute = localStorage.getItem('thenee_auth_redirect') || 'account'
+
+        if (isOauthPending || hasAuthParams) {
+          try {
+            localStorage.removeItem('thenee_oauth_pending')
+            localStorage.removeItem('thenee_auth_redirect')
+          } catch {}
+
+          // Clean URL parameters in browser history
+          if (window.history && window.history.replaceState) {
+            const cleanUrl = window.location.origin + window.location.pathname + '#' + targetRoute
+            window.history.replaceState(null, '', cleanUrl)
+          } else {
+            window.location.hash = targetRoute
+          }
+          window.dispatchEvent(new HashChangeEvent('hashchange'))
+          showToast(`Welcome back, ${userData.name}! 🌿`)
+        }
+      }
+      return true
+    }
+
+    // Proactively exchange code or verify current session on startup
+    const initAuthSession = async () => {
+      try {
         if (typeof window !== 'undefined') {
-          const currentHash = window.location.hash
-          if (currentHash.includes('login') || currentHash.includes('access_token')) {
-            window.location.hash = 'account'
+          const searchParams = new URLSearchParams(window.location.search)
+          const code = searchParams.get('code')
+          if (code) {
+            try {
+              const res = await authService.exchangeCodeForSession(code)
+              if (res?.data?.session) {
+                syncSessionUser(res.data.session)
+                return
+              }
+            } catch {
+              // Ignore if code was already exchanged by detectSessionInUrl
+            }
           }
         }
+
+        const session = await authService.getSession()
+        if (session) {
+          syncSessionUser(session)
+        } else if (isMounted) {
+          setAuthLoading(false)
+        }
+      } catch (err) {
+        console.warn('Auth session check notice:', err)
+        if (isMounted) setAuthLoading(false)
+      }
+    }
+
+    initAuthSession()
+
+    // Subscribe to auth state updates
+    const { data: authListener } = authService.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION' || event === 'TOKEN_REFRESHED') {
+        if (session) {
+          syncSessionUser(session)
+        } else if (isMounted) {
+          setAuthLoading(false)
+        }
       } else if (event === 'SIGNED_OUT') {
-        localStorage.removeItem('thenee_auth_user')
-        localStorage.removeItem('thenee_user')
-        setCurrentUser(null)
+        try {
+          localStorage.removeItem('thenee_auth_user')
+          localStorage.removeItem('thenee_user')
+          localStorage.removeItem('thenee_oauth_pending')
+          localStorage.removeItem('thenee_auth_redirect')
+        } catch {}
+        if (isMounted) {
+          setCurrentUser(null)
+          setAuthLoading(false)
+        }
       }
     })
 
+    // Safety timeout in case network stalls
+    const safetyTimeout = setTimeout(() => {
+      if (isMounted) {
+        setAuthLoading(false)
+        try {
+          localStorage.removeItem('thenee_oauth_pending')
+        } catch {}
+      }
+    }, 4000)
+
     return () => {
+      isMounted = false
+      clearTimeout(safetyTimeout)
       authListener?.subscription?.unsubscribe()
     }
   }, [])
@@ -278,6 +404,7 @@ export const CartProvider = ({ children }) => {
         generateWhatsAppOrderUrl,
         currentUser,
         isLoggedIn,
+        authLoading,
         loginUser,
         logoutUser,
       }}

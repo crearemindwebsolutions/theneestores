@@ -1,15 +1,13 @@
-import { useState } from 'react'
 import useReveal from '../lib/useReveal'
-import { useCart } from '../context/CartContext'
 import './PromoOffers.css'
 
 const TILES = [
   {
     image: '/images/custom_thenee/herbal-tea-scene.jpg',
-    heading: '15% Off Your First Order',
-    body: 'Use code THENEE15 at checkout or on WhatsApp.',
-    cta: 'Claim Code: THENEE15',
-    action: 'coupon',
+    heading: 'Handcrafted Botanical Wellness',
+    body: '100% pure village-sourced herbal teas & traditional food podis.',
+    cta: 'Explore Products',
+    action: 'shop',
     icon: (
       <path
         d="M4 12.5 12.5 4h6a1.5 1.5 0 0 1 1.5 1.5v6L11.5 20 4 12.5Z M15.5 8.5h.01"
@@ -40,11 +38,14 @@ const TILES = [
 ]
 
 const PromoOffers = () => {
-  const { openCart } = useCart()
-  const [copied, setCopied] = useState(false)
   const sectionRef = useReveal([
     { selector: '.promo-tile', y: 50, duration: 0.75, stagger: 0.14, start: 'top 82%' },
   ])
+
+  const handleNavigate = () => {
+    window.location.hash = 'products'
+    window.scrollTo({ top: 0, behavior: 'instant' })
+  }
 
   return (
     <section className="promo-offers" ref={sectionRef}>
@@ -62,19 +63,9 @@ const PromoOffers = () => {
               <p>{t.body}</p>
               <button
                 className="promo-tile-btn"
-                onClick={() => {
-                  if (t.action === 'coupon') {
-                    navigator.clipboard?.writeText('THENEE15')
-                    setCopied(true)
-                    setTimeout(() => setCopied(false), 2500)
-                    openCart()
-                  } else {
-                    window.location.hash = 'products'
-                    window.scrollTo({ top: 0, behavior: 'instant' })
-                  }
-                }}
+                onClick={handleNavigate}
               >
-                {t.action === 'coupon' && copied ? '✓ Code Copied!' : t.cta}
+                {t.cta}
               </button>
             </div>
           </div>

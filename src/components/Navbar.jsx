@@ -103,29 +103,33 @@ const Navbar = ({ onOpenAccount, currentRoute = 'home' }) => {
 
         {/* Account Button: Directly opens the dedicated Account Page */}
         <button
-          className="navbar-account-btn"
+          className={`navbar-account-btn ${isLoggedIn ? 'is-logged-in' : ''}`}
           onClick={handleAccountClick}
           aria-label={isLoggedIn ? `Account (${currentUser?.name || 'User'})` : 'Login / Account Portal'}
           title={isLoggedIn ? `Account: ${currentUser?.name || 'User'} (Signed In)` : 'Login to Account Portal'}
         >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-            <path
-              d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"
-              stroke="currentColor"
-              strokeWidth="1.8"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-            <circle
-              cx="12"
-              cy="7"
-              r="4"
-              stroke="currentColor"
-              strokeWidth="1.8"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
+          {isLoggedIn && currentUser?.avatar ? (
+            <img src={currentUser.avatar} alt={currentUser.name || 'Account'} className="navbar-avatar-img" />
+          ) : (
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+              <path
+                d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+              <circle
+                cx="12"
+                cy="7"
+                r="4"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          )}
           {isLoggedIn && <span className="navbar-account-dot" title="Signed In" />}
         </button>
 

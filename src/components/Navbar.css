@@ -148,6 +148,20 @@
   border-color: var(--color-secondary);
 }
 
+.navbar-account-btn.is-logged-in {
+  border-color: #2E7D32;
+  background: #F1F8F3;
+  color: #2E7D32;
+}
+
+.navbar-avatar-img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  padding: 2px;
+}
+
 .navbar-account-dot {
   position: absolute;
   top: 1px;
