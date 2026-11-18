@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { updateUserProfile } from '../lib/authApi'
 import { profileService, isSupabaseConfigured } from '../lib/supabase'
 
-export default function ProfileCompletionModal({ currentUser, onComplete }) {
+export default function ProfileCompletionModal({ currentUser, onComplete, onClose }) {
   const [name, setName] = useState(
     currentUser?.name && !currentUser.name.includes('@') ? currentUser.name : ''
   )
@@ -32,7 +32,7 @@ export default function ProfileCompletionModal({ currentUser, onComplete }) {
     const fullPhone = `+91 ${cleanPhone}`
 
     // 1. Update in local registry & session
-    const updated = updateUserProfile({
+    updateUserProfile({
       email: currentUser.email,
       name: cleanName,
       phone: fullPhone,
@@ -62,6 +62,17 @@ export default function ProfileCompletionModal({ currentUser, onComplete }) {
   return (
     <div className="pro-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modal-title">
       <div className="pro-profile-complete-modal">
+        {onClose && (
+          <button
+            type="button"
+            className="pro-modal-close-btn"
+            onClick={onClose}
+            aria-label="Close"
+          >
+            ✕
+          </button>
+        )}
+
         <div className="pro-profile-complete-hero">
           <span className="pro-profile-badge">Required Information</span>
           <h3 id="modal-title">Complete Your Profile</h3>
@@ -86,7 +97,6 @@ export default function ProfileCompletionModal({ currentUser, onComplete }) {
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
-              autoFocus
             />
           </div>
 
@@ -115,6 +125,16 @@ export default function ProfileCompletionModal({ currentUser, onComplete }) {
           >
             {isSubmitting ? 'Saving Profile...' : 'Save & Enter Store ➔'}
           </button>
+
+          {onClose && (
+            <button
+              type="button"
+              className="pro-skip-btn"
+              onClick={onClose}
+            >
+              Skip for now
+            </button>
+          )}
         </form>
       </div>
     </div>

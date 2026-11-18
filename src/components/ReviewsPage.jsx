@@ -141,8 +141,8 @@ const ReviewsPage = ({ onOpenAccount }) => {
 
   return (
     <div className="page-wrapper reviews-page">
-      <header className="page-header-nav-wrap">
-        <OfferMarquee />
+      <OfferMarquee />
+      <header className="site-header-sticky">
         <Navbar onOpenAccount={onOpenAccount} currentRoute="reviews" />
       </header>
 

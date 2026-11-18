@@ -1,332 +1,258 @@
+/* ==========================================================================
+   THENEE Hero Section - Botanical Luxury Minimalist Design
+   ========================================================================== */
+
 .hero {
   position: relative;
   width: 100%;
   max-width: 100vw;
-  overflow: visible !important;
+  overflow: hidden !important;
   z-index: 10;
-  min-height: 100vh;
+  min-height: calc(100vh - 84px);
   display: flex;
-  flex-direction: column;
-  padding-bottom: 24px;
-  background-color: var(--bg-main);
+  align-items: center;
+  justify-content: center;
+  padding: 40px 0 60px;
+  background-color: #FAF7F2;
 }
 
-.hero-bg-layer {
+/* Decorative Botanical Watermark in Background */
+.hero-botanical-bg {
   position: absolute;
   inset: 0;
-  overflow: hidden;
-  z-index: 0;
-}
-
-.hero-circle {
-  position: absolute;
-  border-radius: 50%;
-  opacity: 0.65;
   pointer-events: none;
+  z-index: 1;
+  overflow: hidden;
 }
 
-.hero-circle--left {
-  width: 62vw;
-  height: 62vw;
-  max-width: 900px;
-  max-height: 900px;
-  left: -18vw;
-  top: 50%;
-  translate: 0 -50%;
-}
-
-.hero-circle--right {
-  width: 46vw;
-  height: 46vw;
-  max-width: 680px;
-  max-height: 680px;
-  right: -6vw;
-  top: 50%;
-  translate: 0 -50%;
-  opacity: 0.45;
+.hero-botanical-svg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .hero-main {
   position: relative;
   z-index: 5;
-  flex: 1 1 auto;
-  min-height: 0;
-  display: flex;
-  padding-top: 24px;
-}
-
-.hero-pills {
-  position: absolute;
-  top: 0;
-  right: 48px;
-  z-index: 15;
-  display: flex;
-  gap: 8px;
-}
-
-.hero-pill {
-  background: #FFFFFF;
-  color: var(--text-secondary);
-  border: 1px solid var(--border-color);
-  font-weight: 600;
-  font-size: 0.68rem;
-  letter-spacing: 0.02em;
-  height: 38px;
-  padding: 0 16px;
-  border-radius: 999px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background 0.3s ease, color 0.3s ease, transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
-  box-shadow: var(--shadow-sm);
-}
-
-.hero-pill.is-current {
-  background: var(--color-primary);
-  color: #FFFFFF;
-  border-color: var(--color-primary);
-  box-shadow: 0 6px 16px rgba(49, 84, 58, 0.2);
-}
-
-.hero-pill:hover {
-  transform: translateY(-2px);
-  border-color: var(--color-secondary);
-  color: var(--color-primary);
-}
-
-.hero-pill.is-current:hover {
-  color: #FFFFFF;
-  background: #25422d;
+  width: 100%;
 }
 
 .hero-body {
-  position: relative;
-  z-index: 10;
   width: 100%;
-  max-width: 1400px;
+  max-width: 1360px;
   margin: 0 auto;
   padding: 0 48px;
-  display: flex;
+  display: grid;
+  grid-template-columns: 1.15fr 0.85fr;
   align-items: center;
-  justify-content: space-between;
   gap: 48px;
 }
 
-.hero-kicker-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  background: #FFFFFF;
-  padding: 6px 14px;
-  border-radius: 999px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  letter-spacing: 0.03em;
-  margin-bottom: 16px;
-  box-shadow: 0 4px 14px rgba(49, 84, 58, 0.06);
-  border: 1px solid var(--border-color);
-  color: var(--color-primary);
-}
+/* ==========================================================================
+   Left Column: Text, Pricing, CTA & Slider Controls
+   ========================================================================== */
 
-.hero-kicker-dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: var(--color-accent);
-}
-
-.hero-title-subtext {
-  font-size: 0.65em;
-  font-family: var(--font-body);
-  font-weight: 600;
-  letter-spacing: -0.01em;
-  display: block;
-  margin-top: 4px;
-  color: var(--color-primary);
-}
-
-.hero-tamil-pill {
-  display: inline-block;
-  background: var(--bg-secondary);
-  color: var(--color-primary);
-  font-size: 0.92rem;
-  font-weight: 600;
-  padding: 4px 14px;
-  border-radius: 999px;
-  margin-bottom: 16px;
-  border: 1px solid var(--border-color);
-}
-
-.hero-price-tag {
+.hero-text {
   display: flex;
-  align-items: center;
-  gap: 12px;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
+  max-width: 580px;
+}
+
+.hero-title-group {
   margin-bottom: 22px;
+}
+
+.hero-brand-name {
+  display: block;
+  font-family: var(--font-serif, 'Playfair Display', serif);
+  font-style: italic;
+  font-weight: 500;
+  font-size: 3.6rem;
+  color: #2C4837;
+  line-height: 1.08;
+  letter-spacing: -0.01em;
+  margin-bottom: 2px;
+}
+
+.hero-product-heading {
+  font-family: var(--font-serif, 'Playfair Display', serif);
+  font-style: italic;
+  font-weight: 400;
+  font-size: 3.6rem;
+  color: #2C4837;
+  line-height: 1.12;
+  margin: 0;
+}
+
+.hero-desc {
+  font-family: var(--font-body, 'Poppins', sans-serif);
+  font-size: 0.95rem;
+  line-height: 1.68;
+  color: #3A473E;
+  max-width: 500px;
+  margin: 0 0 24px 0;
+}
+
+/* Pricing and Specifications Strip */
+.hero-meta-row {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  margin-bottom: 24px;
   flex-wrap: wrap;
 }
 
+.hero-price-wrap {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
 .hero-price-now {
-  font-size: 1.8rem;
-  font-weight: 700;
-  color: var(--text-primary);
+  font-size: 1.85rem;
+  font-weight: 800;
+  color: #1B3524;
+  line-height: 1;
 }
 
 .hero-price-orig {
   font-size: 1.1rem;
+  color: #9EABA0;
   text-decoration: line-through;
-  color: var(--text-secondary);
-  opacity: 0.7;
+  font-weight: 500;
+  line-height: 1;
 }
 
-.hero-volume-badge {
-  font-size: 0.78rem;
-  background: var(--bg-secondary);
-  padding: 3px 10px;
+.hero-pill-badge {
+  border: 1px solid #CFDCD0;
   border-radius: 999px;
-  color: var(--color-primary);
+  padding: 4px 14px;
+  font-size: 0.78rem;
   font-weight: 600;
-  border: 1px solid var(--border-color);
+  color: #435A4A;
+  background: transparent;
+  line-height: 1.4;
+  white-space: nowrap;
 }
 
 .hero-rating-badge {
-  font-size: 0.78rem;
-  color: var(--color-accent);
-  font-weight: 700;
-}
-
-.hero-family-count {
-  font-size: 0.78rem;
-  color: var(--text-secondary);
-  margin-left: 12px;
-}
-
-.hero-family-count strong {
-  color: var(--color-primary);
-}
-
-.hero-text {
-  max-width: 560px;
-  flex-shrink: 0;
-}
-
-.hero-text h1 {
-  font-size: clamp(3.2rem, 4.6vw + 1.2rem, 4.6rem);
-  line-height: 1.08;
-  margin-bottom: 22px;
-  color: var(--color-primary);
-}
-
-.hero-title-word {
-  position: relative;
-  display: inline-block;
-  color: var(--color-primary);
-}
-
-.hero-title-leaf {
-  position: absolute;
-  top: -14px;
-  right: -6px;
-  transform: rotate(20deg);
-}
-
-.hero-text p {
-  font-family: var(--font-body);
-  font-size: 1.08rem;
-  line-height: 1.65;
-  max-width: 460px;
-  margin-bottom: 30px;
-  color: var(--text-secondary);
-}
-
-.hero-actions {
-  display: flex;
-  gap: 14px;
-}
-
-.btn {
-  padding: 16px 30px;
-  border-radius: 999px;
+  color: #B59352;
+  font-size: 0.84rem;
   font-weight: 600;
-  font-size: 0.85rem;
-  letter-spacing: 0.01em;
-  transition: transform 0.25s ease, filter 0.25s ease, box-shadow 0.25s ease, background-color 0.25s ease, color 0.25s ease;
+  line-height: 1.4;
+  white-space: nowrap;
 }
 
-.btn:hover {
-  transform: translateY(-4px);
+/* Primary CTA Button */
+.hero-actions {
+  margin-bottom: 36px;
 }
 
-/* Primary Add to Cart button: deep herbal green with white text */
-.btn-cream {
-  background: var(--color-primary);
-  color: #FFFFFF !important;
-  box-shadow: 0 10px 25px rgba(49, 84, 58, 0.24);
-  border: 1.5px solid var(--color-primary);
-}
-
-.btn-cream:hover {
-  background: #25422d;
-  box-shadow: 0 14px 30px rgba(49, 84, 58, 0.32);
-}
-
-/* Outline button */
-.btn-outline {
+.btn-hero-outline {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1.5px solid #1C3626;
+  border-radius: 999px;
   background: transparent;
-  color: var(--color-primary);
-  border: 1.5px solid var(--color-primary);
+  color: #1C3626;
+  font-family: var(--font-body, 'Poppins', sans-serif);
+  font-size: 0.86rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  padding: 12px 32px;
+  cursor: pointer;
+  transition: all 0.22s ease;
+  text-decoration: none;
 }
 
-.btn-outline:hover {
-  background: var(--bg-hover);
-  color: var(--color-primary);
+.btn-hero-outline:hover {
+  background: #1C3626;
+  color: #FFFFFF;
+  box-shadow: 0 6px 18px rgba(28, 54, 38, 0.2);
+  transform: translateY(-2px);
 }
 
+/* Slider Navigation & Trust Count */
 .hero-nav {
   display: flex;
   align-items: center;
-  gap: 14px;
-  margin-top: 34px;
+  gap: 12px;
 }
 
-.hero-arrow {
-  width: 42px;
-  height: 42px;
+.hero-arrow-btn {
+  width: 38px;
+  height: 38px;
   border-radius: 50%;
-  background: #FFFFFF;
-  color: var(--color-primary);
-  border: 1px solid var(--border-color);
-  display: flex;
+  border: 1px solid #9DAFA1;
+  background: transparent;
+  color: #2C4837;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  transition: transform 0.25s ease, box-shadow 0.25s ease, background 0.25s ease;
-  box-shadow: var(--shadow-sm);
+  cursor: pointer;
+  transition: all 0.2s ease;
 }
 
-.hero-arrow:hover {
-  transform: scale(1.08);
-  box-shadow: var(--shadow-md);
-  background: var(--bg-hover);
+.hero-arrow-btn:hover {
+  background: #2C4837;
+  color: #FFFFFF;
+  border-color: #2C4837;
+  transform: scale(1.05);
 }
 
-.hero-nav-count {
-  color: var(--text-secondary);
-  font-size: 0.8rem;
+.hero-nav-counter {
+  font-size: 0.84rem;
   font-weight: 600;
-  letter-spacing: 0.04em;
+  color: #435A4A;
+  letter-spacing: 0.05em;
+  min-width: 52px;
+  text-align: center;
 }
+
+.hero-family-trust {
+  font-size: 0.82rem;
+  color: #586B5F;
+  margin-left: 14px;
+}
+
+.hero-family-trust strong {
+  color: #1C3626;
+  font-weight: 700;
+}
+
+/* ==========================================================================
+   Right Column: Circular Backdrop, Upright Bottle & Trust Badges
+   ========================================================================== */
 
 .hero-right {
   position: relative;
-  flex-shrink: 0;
   display: flex;
   align-items: center;
-  gap: 22px;
+  justify-content: center;
+  gap: 28px;
+}
+
+/* Soft Sand/Cream Circular Disk */
+.hero-center-circle-backdrop {
+  position: relative;
+  width: 440px;
+  height: 440px;
+  border-radius: 50%;
+  background: #ECE5DB;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.03);
 }
 
 .hero-visual {
   position: relative;
-  width: clamp(300px, 32vw, 460px);
-  height: clamp(380px, 58vh, 540px);
+  width: 100%;
+  height: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -338,125 +264,115 @@
 .hero-visual-bottle-layer {
   position: absolute;
   inset: 0;
-  overflow: visible;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   z-index: 20;
   pointer-events: none;
 }
 
+.hero-bottle-wrap,
 .hero-bottle-fly {
   position: absolute;
   inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   pointer-events: none;
-  transform-origin: 50% 50%;
-  will-change: transform;
-  backface-visibility: hidden;
-  -webkit-backface-visibility: hidden;
 }
 
 .hero-bottle-img {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  translate: -50% -50%;
-  max-height: 94%;
-  max-width: 94%;
+  max-height: 380px;
+  max-width: 300px;
   width: auto;
   height: auto;
   object-fit: contain;
-  will-change: transform, opacity;
   user-select: none;
   -webkit-user-drag: none;
   pointer-events: none;
-  /* Subtle, realistic shadows to the product bottle using CSS */
-  filter: drop-shadow(0 20px 30px rgba(49, 84, 58, 0.16)) drop-shadow(0 8px 14px rgba(0, 0, 0, 0.08));
-  -webkit-clip-path: none;
-  clip-path: none;
-  animation: bottle-float 4.5s ease-in-out infinite;
+  filter: drop-shadow(0 16px 28px rgba(33, 56, 40, 0.16));
 }
 
 .hero-bottle-img--bliss-tea {
-  max-height: 100%;
-  max-width: 100%;
-  scale: 1.18;
+  max-height: 390px;
+  max-width: 310px;
 }
 
-@keyframes bottle-float {
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-16px);
-  }
-}
-
-.hero-badges {
+/* Vertical Trust Badges (Right of the Circle) */
+.hero-trust-badges-vertical {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 22px;
+  flex-shrink: 0;
 }
 
-.hero-badge {
-  width: 92px;
-  height: 92px;
+.hero-circle-badge {
+  width: 78px;
+  height: 78px;
   border-radius: 50%;
-  background: #FFFFFF;
-  border: 1px solid var(--border-color);
-  box-shadow: 0 8px 24px rgba(49, 84, 58, 0.08);
+  border: 1.2px solid #364D3D;
+  background: rgba(255, 255, 255, 0.55);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 4px;
   text-align: center;
+  gap: 3px;
   padding: 6px;
-  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  box-shadow: 0 4px 14px rgba(44, 72, 55, 0.06);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-.hero-badge:hover {
+.hero-circle-badge:hover {
   transform: translateY(-2px);
-  box-shadow: 0 12px 28px rgba(49, 84, 58, 0.12);
+  box-shadow: 0 8px 20px rgba(44, 72, 55, 0.12);
 }
 
-.hero-badge span {
-  font-size: 0.6rem;
-  font-weight: 700;
-  line-height: 1.25;
-  color: var(--text-primary);
-  text-transform: uppercase;
-  letter-spacing: 0.01em;
-}
-
-.hero-badge-icon-leaf {
-  fill: var(--color-primary);
-}
-
-.hero-badge-icon-drop {
-  fill: var(--color-accent);
-}
-
-.hero-badge.is-purple .hero-badge-icon-leaf,
-.hero-badge.is-purple .hero-badge-icon-drop {
-  fill: none;
-  stroke: var(--color-primary);
+.hero-circle-badge svg {
+  color: #243B2C;
+  stroke: #243B2C;
   stroke-width: 1.6;
 }
 
+.hero-circle-badge span {
+  font-size: 0.56rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #243B2C;
+  line-height: 1.15;
+  letter-spacing: 0.04em;
+}
+
+/* ==========================================================================
+   Responsive Breakpoints
+   ========================================================================== */
+
 @media (max-width: 1100px) {
-  .hero-circle--left {
-    max-width: 700px;
-    max-height: 700px;
+  .hero-body {
+    gap: 32px;
+    padding: 0 32px;
+  }
+
+  .hero-center-circle-backdrop {
+    width: 360px;
+    height: 360px;
+  }
+
+  .hero-bottle-img {
+    max-height: 330px;
+  }
+
+  .hero-product-heading {
+    font-size: 2.8rem;
   }
 }
 
-@media (max-width: 860px), (max-height: 620px) {
+@media (max-width: 860px) {
   .hero {
     min-height: auto;
-    padding-bottom: 20px;
-  }
-
-  .hero-main {
-    padding-top: 8px;
+    padding: 24px 0 36px;
   }
 
   .hero-body {
@@ -464,175 +380,107 @@
     flex-direction: column;
     align-items: center;
     text-align: center;
-    padding: 0 14px;
-    gap: 8px;
+    padding: 0 16px;
+    gap: 16px;
   }
 
-  /* Unbox hero-text and hero-right so their children participate directly in hero-body flex order */
-  .hero-text,
-  .hero-right {
-    display: contents;
-  }
-
-  /* 1. Kicker pill badge at top */
-  .hero-kicker-badge {
-    order: 1;
-    font-size: 0.62rem;
-    padding: 3px 10px;
-    margin-bottom: 2px;
-  }
-
-  /* 2. Product bottle placed IN UP-SIDE of Thenee Herbal Tea text */
-  .hero-visual {
-    order: 2;
-    width: min(280px, 80vw);
-    height: 280px;
-    margin: 4px auto 8px;
-    position: relative;
-    display: flex;
+  .hero-text {
     align-items: center;
-    justify-content: center;
-    touch-action: pan-y;
-    user-select: none;
-    -webkit-user-select: none;
+    text-align: center;
+    order: 2;
+  }
+
+  .hero-right {
+    order: 1;
+    flex-direction: column;
+    gap: 16px;
+    width: 100%;
+  }
+
+  .hero-center-circle-backdrop {
+    width: 270px;
+    height: 270px;
   }
 
   .hero-bottle-img {
-    max-height: 265px;
-    max-width: 95%;
-    animation: none; /* Disable infinite bottle floating animation on mobile to save GPU battery & improve scroll performance */
-    filter: drop-shadow(0 12px 22px rgba(49, 84, 58, 0.15));
-    user-select: none;
-    -webkit-user-drag: none;
-    pointer-events: none;
+    max-height: 250px;
+    max-width: 210px;
   }
 
-  .hero-bottle-img--bliss-tea {
-    max-height: 280px;
-    scale: 1.25;
-    filter: drop-shadow(0 14px 26px rgba(49, 84, 58, 0.2));
+  .hero-trust-badges-vertical {
+    flex-direction: row;
+    gap: 16px;
   }
 
-  /* 3. Thenee Herbal Tea main heading */
-  .hero-text h1,
-  .hero-body h1 {
-    order: 3;
-    font-size: 1.65rem;
-    line-height: 1.12;
-    margin-bottom: 4px;
+  .hero-circle-badge {
+    width: 68px;
+    height: 68px;
   }
 
-  .hero-title-subtext {
-    font-size: 0.58em;
+  .hero-product-heading {
+    font-size: 2.2rem;
   }
 
-  .hero-title-leaf {
-    width: 14px;
-    height: 14px;
-    top: -6px;
-    right: -3px;
+  .hero-desc {
+    font-size: 0.82rem;
+    line-height: 1.55;
+    max-width: 360px;
+    margin: 0 auto 16px;
   }
 
-  .hero-pills {
-    display: none !important;
-  }
-
-  .hero-tamil-pill {
-    order: 4;
-    display: none !important;
-  }
-
-  .hero-tamil-tag {
-    display: none !important;
-  }
-
-  /* 4. Description */
-  .hero-text p,
-  .hero-body p {
-    order: 5;
-    font-size: 0.78rem;
-    line-height: 1.45;
-    max-width: 320px;
-    margin: 0 auto 10px;
-  }
-
-  /* 5. Pricing */
-  .hero-price-tag,
-  .hero-price-row {
-    order: 6;
+  .hero-meta-row {
     justify-content: center;
-    gap: 8px;
-    margin-bottom: 12px;
+    gap: 10px;
+    margin-bottom: 18px;
   }
 
-  .hero-price-now,
-  .hero-price {
-    font-size: 1.35rem;
+  .hero-price-now {
+    font-size: 1.45rem;
   }
 
-  .hero-price-orig,
-  .hero-orig-price {
-    font-size: 0.88rem;
+  .hero-price-orig {
+    font-size: 0.92rem;
   }
 
-  .hero-volume-badge,
-  .hero-weight-badge {
-    font-size: 0.65rem;
-    padding: 2px 7px;
+  .hero-pill-badge {
+    font-size: 0.72rem;
+    padding: 3px 10px;
   }
 
   .hero-rating-badge {
-    font-size: 0.68rem;
+    font-size: 0.76rem;
   }
 
-  /* 6. Action buttons */
   .hero-actions {
-    order: 7;
-    display: flex;
-    flex-wrap: wrap;
+    margin-bottom: 20px;
+    width: 100%;
+  }
+
+  .btn-hero-outline {
+    width: 100%;
+    max-width: 280px;
+    padding: 10px 20px;
+    font-size: 0.82rem;
+  }
+
+  .hero-nav {
     justify-content: center;
     gap: 8px;
-    width: 100%;
-    margin-bottom: 10px;
-  }
-
-  .hero-actions .btn {
-    padding: 8px 14px;
-    font-size: 0.74rem;
-    border-radius: 999px;
-    white-space: nowrap;
-  }
-
-  /* 7. Carousel Navigation */
-  .hero-nav {
-    order: 8;
-    margin-top: 4px;
-    justify-content: center;
-    gap: 6px;
     flex-wrap: wrap;
   }
 
-  .hero-nav-count {
-    font-size: 0.7rem;
+  .hero-arrow-btn {
+    width: 32px;
+    height: 32px;
   }
 
-  .hero-arrow {
-    width: 28px;
-    height: 28px;
+  .hero-nav-counter {
+    font-size: 0.76rem;
+    min-width: 44px;
   }
 
-  .hero-family-count {
-    font-size: 0.68rem;
-  }
-
-  /* 8. Trust badges hidden in mobile view */
-  .hero-badges {
-    display: none !important;
-  }
-}
-
-@media (max-width: 520px) {
-  .hero-pills {
-    display: none; /* Hide top pill tabs on small mobile to avoid crowding the nav */
+  .hero-family-trust {
+    font-size: 0.74rem;
+    margin-left: 6px;
   }
 }

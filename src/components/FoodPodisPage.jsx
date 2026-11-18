@@ -22,8 +22,8 @@ const FoodPodisPage = ({ onOpenAccount }) => {
 
   return (
     <div className="page-wrapper food-podis-page">
-      <header className="page-header-nav-wrap">
-        <OfferMarquee />
+      <OfferMarquee />
+      <header className="site-header-sticky">
         <Navbar onOpenAccount={onOpenAccount} currentRoute="podis" />
       </header>
 

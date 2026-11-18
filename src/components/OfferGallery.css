@@ -1,216 +1,183 @@
+/* ==========================================================================
+   Rooted in Nature - Village Heritage Photo Collage
+   ========================================================================== */
+
 .offer-gallery {
   position: relative;
-  background: var(--bg-main);
-  padding: 76px 48px;
+  background: #FAF8F5;
+  padding: 68px 32px 84px;
   overflow: hidden;
 }
 
-.offer-gallery-top-wave {
+/* Decorative Botanical Background Watermark */
+.gallery-botanical-bg {
   position: absolute;
-  top: -60px;
-  left: 0;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  overflow: hidden;
+}
+
+.gallery-botanical-svg {
   width: 100%;
-  height: 90px;
-  display: block;
+  height: 100%;
+  object-fit: cover;
 }
 
 .offer-gallery-header {
-  max-width: 1140px;
-  margin: 0 auto 30px;
+  position: relative;
+  z-index: 2;
+  max-width: 800px;
+  margin: 0 auto 34px;
   text-align: center;
 }
 
 .offer-gallery-kicker {
   display: block;
-  color: var(--color-secondary);
-  font-family: var(--font-body);
-  font-size: 0.76rem;
+  color: #637667;
+  font-family: var(--font-body, 'Poppins', sans-serif);
+  font-size: 0.72rem;
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.14em;
-  margin-bottom: 10px;
+  letter-spacing: 0.16em;
+  margin-bottom: 6px;
 }
 
-.offer-gallery-header h2 {
-  color: var(--color-primary);
-  font-size: 2.1rem;
+.offer-gallery-title {
+  font-family: var(--font-display, 'Caveat', cursive) !important;
+  font-size: 3.1rem;
+  font-weight: 600;
+  color: #2D4C38;
+  line-height: 1.15;
+  margin: 0;
 }
 
+/* 3-Column Bento Photo Grid */
 .offer-gallery-grid {
-  max-width: 1140px;
-  height: 460px;
+  position: relative;
+  z-index: 2;
+  max-width: 1200px;
+  height: 480px;
   margin: 0 auto;
   display: grid;
-  grid-template-columns: 1fr 1.9fr 1fr;
-  gap: 14px;
+  grid-template-columns: 1fr 1.75fr 1fr;
+  gap: 16px;
 }
 
 .offer-gallery-col {
   height: 100%;
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 16px;
 }
 
-.gallery-card {
+.gallery-photo-card {
   position: relative;
   flex: 1 1 0;
   min-height: 0;
-  border-radius: 16px;
+  border-radius: 18px;
   overflow: hidden;
-  cursor: pointer;
-  box-shadow: 0 10px 24px rgba(49, 84, 58, 0.08);
-  border: 1px solid var(--border-color);
+  box-shadow: 0 4px 18px rgba(18, 50, 35, 0.05);
+  border: 1px solid rgba(0, 0, 0, 0.04);
+  background: #E8ECE5;
 }
 
-.gallery-card-img {
+.gallery-photo-img {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
-  max-width: none;
   object-fit: cover;
-  transition: transform 0.6s ease;
+  transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.gallery-card:hover .gallery-card-img {
-  transform: scale(1.08);
+.gallery-photo-card:hover .gallery-photo-img {
+  transform: scale(1.04);
 }
 
-.gallery-card-overlay {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-end;
-  padding: 16px;
-  color: #fff;
-  background: linear-gradient(180deg, rgba(20, 36, 24, 0) 40%, rgba(20, 36, 24, 0.88) 100%);
-  opacity: 0;
-  transition: opacity 0.4s ease;
-}
-
-.gallery-card:hover .gallery-card-overlay {
-  opacity: 1;
-}
-
-.gallery-card-offer {
-  font-weight: 700;
-  font-size: 0.98rem;
-  letter-spacing: -0.01em;
-}
-
-.gallery-card-sub {
-  font-size: 0.74rem;
-  color: rgba(255, 255, 255, 0.85);
-  margin-top: 2px;
-}
-
-@media (hover: none) {
-  .gallery-card-overlay {
-    opacity: 1;
-    background: linear-gradient(180deg, rgba(20, 36, 24, 0) 50%, rgba(20, 36, 24, 0.85) 100%);
+/* Tablet & Mobile Breakpoints */
+@media (max-width: 960px) {
+  .offer-gallery {
+    padding: 48px 20px 60px;
   }
-}
 
-@media (max-width: 1000px) {
+  .offer-gallery-title {
+    font-size: 2.4rem;
+  }
+
   .offer-gallery-grid {
-    height: auto;
-    grid-template-columns: 1fr 1fr;
+    height: 420px;
+    gap: 12px;
   }
 
   .offer-gallery-col {
-    height: auto;
+    gap: 12px;
   }
 
-  .gallery-card {
-    flex: none;
-  }
-
-  .gallery-card.is-tall {
-    aspect-ratio: 4 / 5;
-  }
-
-  .offer-gallery-col--wide {
-    grid-column: span 2;
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-  }
-
-  .gallery-card.is-wide {
-    aspect-ratio: 4 / 5;
+  .gallery-photo-card {
+    border-radius: 14px;
   }
 }
 
-@media (max-width: 640px) {
+@media (max-width: 720px) {
   .offer-gallery {
-    padding: 30px 10px;
-    overflow: hidden;
+    padding: 36px 14px 44px;
   }
 
   .offer-gallery-header {
-    margin-bottom: 16px;
-    width: 100%;
+    margin-bottom: 20px;
   }
 
   .offer-gallery-kicker {
-    font-size: 0.64rem;
-    margin-bottom: 4px;
+    font-size: 0.65rem;
+    letter-spacing: 0.12em;
   }
 
-  .offer-gallery-header h2 {
-    font-size: 1.35rem;
-    line-height: 1.25;
+  .offer-gallery-title {
+    font-size: 1.95rem;
   }
 
   .offer-gallery-grid {
     height: auto;
     display: flex;
     flex-direction: column;
-    gap: 8px;
-    width: 100%;
+    gap: 10px;
   }
 
-  .offer-gallery-col {
+  .gallery-col-left {
     height: auto;
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 8px;
-    width: 100%;
+    gap: 10px;
   }
 
-  .offer-gallery-col--wide {
+  .gallery-col-left .gallery-photo-card {
+    height: 150px;
+  }
+
+  .gallery-col-middle {
+    height: auto;
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 6px;
-    width: 100%;
+    gap: 8px;
   }
 
-  .gallery-card {
-    height: 140px;
+  .gallery-col-middle .gallery-photo-card {
+    height: 110px;
+  }
+
+  .gallery-col-right {
+    height: auto;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .gallery-col-right .gallery-photo-card {
+    height: 150px;
+  }
+
+  .gallery-photo-card {
     border-radius: 12px;
-    width: 100%;
-    position: relative;
-    box-shadow: 0 4px 12px rgba(49, 84, 58, 0.08);
-  }
-
-  .offer-gallery-col--wide .gallery-card {
-    height: 120px;
-  }
-
-  .gallery-card-overlay {
-    opacity: 1;
-    padding: 8px 6px;
-    background: linear-gradient(180deg, rgba(20, 36, 24, 0) 30%, rgba(20, 36, 24, 0.88) 100%);
-  }
-
-  .gallery-card-offer {
-    font-size: 0.72rem;
-    line-height: 1.2;
-  }
-
-  .gallery-card-sub {
-    font-size: 0.58rem;
-    line-height: 1.2;
   }
 }

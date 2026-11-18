@@ -58,6 +58,56 @@ const DAILY_ROUTINE = [
   { time: '09:30 PM', label: 'Nighttime Relaxation', item: 'Thenee Bliss Tea (Sangu Poo)', tip: 'Sip a warm blue cup 30 mins before bed for serene muscle relaxation and deep sleep.' },
 ]
 
+const renderGoalIcon = (id, size = 24) => {
+  switch (id) {
+    case 'sugar':
+      return (
+        <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="#7C3AED" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M4.5 3v5a4.5 4.5 0 0 0 9 0V3" />
+          <path d="M9 12.5v2a4.5 4.5 0 0 0 9 0v-2" />
+          <circle cx="18" cy="10.5" r="2" />
+          <circle cx="4.5" cy="3" r="1.5" />
+          <circle cx="13.5" cy="3" r="1.5" />
+        </svg>
+      )
+    case 'gut':
+      return (
+        <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="#16A34A" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M12 22v-9" />
+          <path d="M9 13a4.5 4.5 0 0 1 3-4.24V4a8 8 0 0 0-8 8c0 1 .5 1.5 1.5 1.5H9z" />
+          <path d="M15 13a4.5 4.5 0 0 0-3-4.24V4a8 8 0 0 1 8 8c0 1-.5 1.5-1.5 1.5H15z" />
+        </svg>
+      )
+    case 'cooling':
+      return (
+        <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="#0EA5E9" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <line x1="12" y1="2" x2="12" y2="22" />
+          <line x1="20" y1="12" x2="4" y2="12" />
+          <line x1="17.66" y1="6.34" x2="6.34" y2="17.66" />
+          <line x1="17.66" y1="17.66" x2="6.34" y2="6.34" />
+          <polyline points="9 3 12 6 15 3" />
+          <polyline points="9 21 12 18 15 21" />
+          <polyline points="21 9 18 12 21 15" />
+          <polyline points="3 9 6 12 3 15" />
+        </svg>
+      )
+    case 'energy':
+      return (
+        <svg width={size} height={size} viewBox="0 0 24 24" fill="#EA580C" stroke="#EA580C" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round">
+          <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+        </svg>
+      )
+    case 'sleep':
+      return (
+        <svg width={size} height={size} viewBox="0 0 24 24" fill="#EAB308" stroke="#EAB308" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" />
+        </svg>
+      )
+    default:
+      return null
+  }
+}
+
 const HealthGoalsPage = ({ onOpenAccount }) => {
   const [selectedGoalId, setSelectedGoalId] = useState('sugar')
   const { addToCart, setSelectedProduct, openCart } = useCart()
@@ -72,8 +122,8 @@ const HealthGoalsPage = ({ onOpenAccount }) => {
 
   return (
     <div className="page-wrapper health-goals-page">
-      <header className="page-header-nav-wrap">
-        <OfferMarquee />
+      <OfferMarquee />
+      <header className="site-header-sticky">
         <Navbar onOpenAccount={onOpenAccount} currentRoute="wellness" />
       </header>
 
@@ -107,7 +157,7 @@ const HealthGoalsPage = ({ onOpenAccount }) => {
               className={`goal-tab-card ${selectedGoalId === goal.id ? 'is-selected' : ''}`}
               onClick={() => setSelectedGoalId(goal.id)}
             >
-              <span className="goal-tab-emoji">{goal.emoji}</span>
+              <div className="goal-tab-icon">{renderGoalIcon(goal.id, 24)}</div>
               <span className="goal-tab-title">{goal.title}</span>
             </button>
           ))}
@@ -116,26 +166,40 @@ const HealthGoalsPage = ({ onOpenAccount }) => {
         {/* Selected Goal Spotlight Box */}
         <div className="goal-spotlight-box">
           <div className="goal-spotlight-header">
-            <span className="spotlight-emoji">{currentGoal.emoji}</span>
-            <div>
-              <h2>{currentGoal.title}</h2>
-            </div>
+            <div className="spotlight-icon-box">{renderGoalIcon(currentGoal.id, 24)}</div>
+            <h2 className="spotlight-title">{currentGoal.title}</h2>
           </div>
 
           <p className="goal-spotlight-desc">{currentGoal.desc}</p>
 
           <div className="goal-herbs-strip">
-            <strong>Key Active Botanicals:</strong>
+            <span className="goal-herbs-label">Key Active Botanicals:</span>
             <div className="herbs-pill-wrap">
               {currentGoal.keyHerbs.map((herb, i) => (
-                <span className="herb-pill" key={i}>🌿 {herb}</span>
+                <span className="herb-pill" key={i}>
+                  <svg
+                    width="12"
+                    height="12"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="#16A34A"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="herb-leaf-icon"
+                  >
+                    <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z" />
+                    <path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12" />
+                  </svg>
+                  {herb}
+                </span>
               ))}
             </div>
           </div>
 
           {/* Matched Products Row */}
           <div className="matched-products-section">
-            <h3>Recommended Herbal Formulations for this Goal</h3>
+            <h3 className="matched-section-heading">Recommended Herbal Formulations for this Goal</h3>
             <div className="matched-products-grid">
               {matchedProducts.map((item) => (
                 <div className="matched-prod-card" key={item.id}>

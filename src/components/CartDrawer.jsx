@@ -256,15 +256,6 @@ const CartDrawer = () => {
                   </div>
                 </div>
               ))}
-
-              {/* Purity Guarantee Strip */}
-              <div className="cart-purity-strip">
-                <span>🌾 Tenkasi Heritage</span>
-                <span>•</span>
-                <span>👩‍🌾 Handcrafted by Women</span>
-                <span>•</span>
-                <span>✨ 100% Pure</span>
-              </div>
             </div>
 
             <div className="cart-footer">

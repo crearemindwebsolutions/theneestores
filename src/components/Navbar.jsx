@@ -135,11 +135,11 @@ const Navbar = ({ onOpenAccount, currentRoute = 'home' }) => {
               </span>
             )
           ) : (
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
               <path
                 d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"
                 stroke="currentColor"
-                strokeWidth="1.8"
+                strokeWidth="2"
                 strokeLinecap="round"
                 strokeLinejoin="round"
               />
@@ -148,7 +148,7 @@ const Navbar = ({ onOpenAccount, currentRoute = 'home' }) => {
                 cy="7"
                 r="4"
                 stroke="currentColor"
-                strokeWidth="1.8"
+                strokeWidth="2"
                 strokeLinecap="round"
                 strokeLinejoin="round"
               />
@@ -163,16 +163,16 @@ const Navbar = ({ onOpenAccount, currentRoute = 'home' }) => {
           onClick={openCart}
           aria-label={`Shopping Cart with ${totalCount} items`}
         >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
             <path
               d="M3 4h2l2.4 12.2a2 2 0 0 0 2 1.6h7.6a2 2 0 0 0 2-1.6L21 8H6"
               stroke="currentColor"
-              strokeWidth="1.8"
+              strokeWidth="2"
               strokeLinecap="round"
               strokeLinejoin="round"
             />
-            <circle cx="10" cy="21" r="1.4" fill="currentColor" />
-            <circle cx="17" cy="21" r="1.4" fill="currentColor" />
+            <circle cx="10" cy="21" r="1.5" fill="currentColor" />
+            <circle cx="17" cy="21" r="1.5" fill="currentColor" />
           </svg>
           {totalCount > 0 && <span className="navbar-cart-badge">{totalCount}</span>}
         </button>

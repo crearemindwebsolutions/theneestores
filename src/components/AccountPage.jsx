@@ -3,9 +3,9 @@ import { useCart } from '../context/CartContext'
 import { products, individualPodis, brandInfo } from '../data/products'
 import { orderService, profileService, adminService, inquiryService } from '../lib/supabase'
 import { sendOrderStatusUpdateEmail } from '../lib/emailService'
+import { getSavedAddresses, saveAddress, updateAddress, deleteAddress, setDefaultAddress } from '../lib/addressService'
 import { SkeletonOrderCard, ImageWithSkeleton } from './Skeleton'
 import LoginPage from './LoginPage'
-import Footer from './Footer'
 import './AccountPage.css'
 
 // Active coupon vouchers (demo codes removed until store owner creates active campaigns)
@@ -84,7 +84,21 @@ const AccountPage = ({ onBack, onLogout, initialTab = 'hub' }) => {
   const [ordersList, setOrdersList] = useState(() => {
     try {
       const saved = localStorage.getItem('thenee_user_orders')
-      return saved ? JSON.parse(saved) : []
+      if (!saved) return []
+      const parsed = JSON.parse(saved)
+      const cleaned = Array.isArray(parsed)
+        ? parsed.filter(
+            (o) =>
+              !['THN-884102', 'THN-884095', 'THN-883981'].includes(o.id || o.order_number) &&
+              o.customer_name !== 'Dr. Anand Raman' &&
+              o.customer_name !== 'Meenakshi Sundaram' &&
+              o.customer_name !== 'Suresh Narayanan'
+          )
+        : []
+      if (cleaned.length !== parsed.length) {
+        localStorage.setItem('thenee_user_orders', JSON.stringify(cleaned))
+      }
+      return cleaned
     } catch {
       return []
     }
@@ -111,7 +125,7 @@ const AccountPage = ({ onBack, onLogout, initialTab = 'hub' }) => {
         try {
           const res = await orderService.getUserOrders(currentUser.id)
           const dbOrders = res?.data || (Array.isArray(res) ? res : null)
-          if (isMounted && dbOrders && dbOrders.length > 0) {
+          if (isMounted && Array.isArray(dbOrders)) {
             setOrdersList(dbOrders)
             localStorage.setItem('thenee_user_orders', JSON.stringify(dbOrders))
           }
@@ -127,7 +141,7 @@ const AccountPage = ({ onBack, onLogout, initialTab = 'hub' }) => {
               ...prev,
               ...profile,
               name: profile.full_name || prev.name,
-              points: profile.reward_points ?? profile.green_points ?? prev.points,
+              points: profile.reward_points ?? profile.green_points ?? prev.points ?? 0,
             }))
           }
         } catch (e) {
@@ -173,16 +187,18 @@ const AccountPage = ({ onBack, onLogout, initialTab = 'hub' }) => {
 
   // Saved Addresses
   const [addresses, setAddresses] = useState(() => {
-    try {
-      const saved = localStorage.getItem('thenee_addresses')
-      return saved ? JSON.parse(saved) : []
-    } catch {
-      return []
-    }
+    return getSavedAddresses(currentUser?.email, currentUser?.id)
   })
 
-  // New Address Form State
+  // Sync addresses whenever currentUser changes
+  useEffect(() => {
+    const loaded = getSavedAddresses(currentUser?.email, currentUser?.id)
+    setAddresses(loaded)
+  }, [currentUser])
+
+  // Address Modal & Form State
   const [showAddressModal, setShowAddressModal] = useState(false)
+  const [editingAddressId, setEditingAddressId] = useState(null)
   const [newAddr, setNewAddr] = useState({
     name: '',
     phone: '',
@@ -193,12 +209,22 @@ const AccountPage = ({ onBack, onLogout, initialTab = 'hub' }) => {
     type: 'Home',
   })
 
-  // Wishlist State
-  const [wishlist, setWishlist] = useState([
-    products.find((p) => p.id === 'bliss-tea') || products[0], // Thenee Bliss Tea
-    individualPodis[0], // Garlic Podi
-    individualPodis[2], // Moringa Podi
-  ])
+  // Wishlist State (loaded live from localStorage)
+  const [wishlist, setWishlist] = useState(() => {
+    try {
+      const saved = localStorage.getItem('thenee_user_wishlist')
+      return saved ? JSON.parse(saved) : []
+    } catch {
+      return []
+    }
+  })
+
+  // Sync wishlist updates to localStorage
+  useEffect(() => {
+    try {
+      localStorage.setItem('thenee_user_wishlist', JSON.stringify(wishlist))
+    } catch {}
+  }, [wishlist])
 
   // Profile Edit State
   const [profileForm, setProfileForm] = useState({
@@ -430,39 +456,69 @@ const AccountPage = ({ onBack, onLogout, initialTab = 'hub' }) => {
     showToast('Profile information saved successfully!')
   }
 
-  const handleAddAddress = (e) => {
+  const handleOpenAddAddress = () => {
+    setEditingAddressId(null)
+    setNewAddr({
+      name: currentUser?.name && !currentUser.name.includes('@') ? currentUser.name : '',
+      phone: currentUser?.contact ? currentUser.contact.replace(/\D/g, '').slice(-10) : '',
+      street: '',
+      city: '',
+      state: 'Tamil Nadu',
+      pincode: '',
+      type: 'Home',
+    })
+    setShowAddressModal(true)
+  }
+
+  const handleOpenEditAddress = (addr) => {
+    setEditingAddressId(addr.id)
+    setNewAddr({
+      name: addr.name || '',
+      phone: addr.phone || '',
+      street: addr.street || '',
+      city: addr.city || '',
+      state: addr.state || 'Tamil Nadu',
+      pincode: addr.pincode || '',
+      type: addr.type || 'Home',
+    })
+    setShowAddressModal(true)
+  }
+
+  const handleCloseAddressModal = () => {
+    setShowAddressModal(false)
+    setEditingAddressId(null)
+  }
+
+  const handleSaveAddressForm = (e) => {
     e.preventDefault()
-    if (!newAddr.name || !newAddr.phone || !newAddr.street || !newAddr.pincode) {
-      alert('Please fill out all required address fields.')
+    if (!newAddr.name.trim() || !newAddr.phone.trim() || !newAddr.street.trim() || !newAddr.city.trim() || !newAddr.pincode.trim()) {
+      showToast('Please fill out all required address fields.')
       return
     }
-    const created = {
-      ...newAddr,
-      id: 'addr-' + Date.now(),
-      isDefault: addresses.length === 0,
+
+    if (editingAddressId) {
+      const updated = updateAddress(editingAddressId, newAddr, currentUser?.email, currentUser?.id)
+      setAddresses(updated)
+      showToast('Address updated successfully! 🌿')
+    } else {
+      const updated = saveAddress(newAddr, currentUser?.email, currentUser?.id)
+      setAddresses(updated)
+      showToast('New delivery address added! 🌿')
     }
-    const updated = [...addresses, created]
-    setAddresses(updated)
-    localStorage.setItem('thenee_addresses', JSON.stringify(updated))
-    setShowAddressModal(false)
-    setNewAddr({ name: '', phone: '', street: '', city: '', state: 'Tamil Nadu', pincode: '', type: 'Home' })
-    showToast('New delivery address added!')
+
+    handleCloseAddressModal()
   }
 
   const handleSetDefaultAddress = (id) => {
-    const updated = addresses.map((a) => ({
-      ...a,
-      isDefault: a.id === id,
-    }))
+    const updated = setDefaultAddress(id, currentUser?.email, currentUser?.id)
     setAddresses(updated)
-    localStorage.setItem('thenee_addresses', JSON.stringify(updated))
-    showToast('Default address updated.')
+    showToast('Default delivery address updated.')
   }
 
   const handleDeleteAddress = (id) => {
-    const updated = addresses.filter((a) => a.id !== id)
+    if (!window.confirm('Are you sure you want to remove this delivery address?')) return
+    const updated = deleteAddress(id, currentUser?.email, currentUser?.id)
     setAddresses(updated)
-    localStorage.setItem('thenee_addresses', JSON.stringify(updated))
     showToast('Address removed.')
   }
 
@@ -482,6 +538,18 @@ const AccountPage = ({ onBack, onLogout, initialTab = 'hub' }) => {
   const activeShipments = ordersList.filter(
     (o) => o.status === 'Out for Delivery' || o.status === 'In Transit' || o.status === 'Order Confirmed' || o.status === 'Processing'
   ).length
+
+  // Live reward calculations
+  const userPts = typeof user.points === 'number' ? user.points : 0
+  const creditRupees = Math.floor(userPts / 2)
+  let nextTierTarget = 250
+  if (userPts >= 500) nextTierTarget = 1000
+  else if (userPts >= 250) nextTierTarget = 500
+  else if (userPts >= 100) nextTierTarget = 250
+  else nextTierTarget = 100
+
+  const ptsNeeded = Math.max(0, nextTierTarget - userPts)
+  const milestonePercent = Math.min(100, Math.round((userPts / nextTierTarget) * 100))
 
   return (
     <div className="account-page">
@@ -550,150 +618,239 @@ const AccountPage = ({ onBack, onLogout, initialTab = 'hub' }) => {
           {/* Hero Profile Summary Card */}
           <div className="profile-hub-hero">
             <div className="profile-hub-user-left">
-              <div className="profile-hub-avatar">
-                {user.avatar ? (
-                  <img src={user.avatar} alt={user.name || 'User'} className="profile-hub-avatar-img" referrerPolicy="no-referrer" />
-                ) : (
-                  (user.name || 'U').charAt(0).toUpperCase()
-                )}
+              <div className="profile-hub-avatar-wrap">
+                <div className="profile-hub-avatar">
+                  {user.avatar ? (
+                    <img src={user.avatar} alt={user.name || 'User'} className="profile-hub-avatar-img" referrerPolicy="no-referrer" />
+                  ) : (
+                    (user.name || 'U').charAt(0).toUpperCase()
+                  )}
+                </div>
+                <span className="hub-avatar-active-dot" title="Account Active" />
               </div>
+
               <div className="profile-hub-user-text">
-                <h2>{user.name || 'Valued Customer'}</h2>
-                <p>{user.contact || user.email || 'Tamil Nadu'}{user.email && user.contact ? ` • ${user.email}` : ''}</p>
-                <div className="profile-hub-pill-row">
-                  <span className="hub-badge-verified">🌿 Verified Wellness Member</span>
-                  <span className="hub-badge-tenkasi">Tenkasi Rural Roots</span>
+                <h2>Welcome, {user.name || 'Valued Customer'}</h2>
+
+                <div className="hub-user-contact-row">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
+                  </svg>
+                  <span>{user.contact || user.email || 'Tenkasi, Tamil Nadu'}</span>
+                  {user.email && user.contact && (
+                    <>
+                      <span>•</span>
+                      <span>{user.email}</span>
+                    </>
+                  )}
                 </div>
               </div>
             </div>
 
             <div className="profile-hub-metrics-strip">
-              <div className="hub-stat-item" onClick={() => navigateTab('rewards')}>
-                <span className="hub-stat-val">{user.points || 0} <small>pts</small></span>
-                <span className="hub-stat-lbl">Green Points (₹{Math.floor((user.points || 0) / 2)})</span>
+              {/* Stat 1: Green Points */}
+              <div className="hub-stat-item" onClick={() => navigateTab('rewards')} title="View Green Rewards & Coupons">
+                <div className="hub-stat-top-row">
+                  <span className="hub-stat-val">{userPts}</span>
+                  <span className="hub-stat-unit">PTS</span>
+                </div>
+                <span className="hub-stat-lbl">Green Points (₹{creditRupees})</span>
+                <span className="hub-stat-action">Redeem →</span>
               </div>
-              <div className="hub-stat-divider" />
-              <div className="hub-stat-item" onClick={() => navigateTab('orders')}>
-                <span className="hub-stat-val">
-                  {activeShipments > 0 ? `${activeShipments} Live` : `${ordersList.length} Total`}
-                </span>
-                <span className="hub-stat-lbl">
-                  {activeShipments > 0 ? 'Shipment in Transit' : 'Orders Placed'}
-                </span>
+
+              {/* Stat 2: Active Orders */}
+              <div className="hub-stat-item" onClick={() => navigateTab('orders')} title="View Orders & Tracking">
+                <div className="hub-stat-top-row">
+                  {activeShipments > 0 && <span className="pulse-dot-live" />}
+                  <span className="hub-stat-val">{activeShipments} Live</span>
+                </div>
+                <span className="hub-stat-lbl">In Transit</span>
+                <span className="hub-stat-action">Track →</span>
+              </div>
+
+              {/* Stat 3: Wishlist */}
+              <div className="hub-stat-item" onClick={() => navigateTab('wishlist')} title="View Herbal Wishlist">
+                <div className="hub-stat-top-row">
+                  <span className="hub-stat-val">{wishlist.length}</span>
+                  <span className="hub-stat-unit">{wishlist.length === 1 ? 'ITEM' : 'ITEMS'}</span>
+                </div>
+                <span className="hub-stat-lbl">Herbal Wishlist</span>
+                <span className="hub-stat-action">View →</span>
               </div>
             </div>
           </div>
 
           {/* Section Header */}
           <div className="profile-hub-section-header">
-            <h3>Account & Management Options</h3>
-            <p>Select any section below to manage your orders, addresses, rewards, and preferences:</p>
+            <span className="hub-section-eyebrow">WELLNESS & ACCOUNT PORTAL</span>
+            <h3>Account Dashboard & Services</h3>
+            <p>Manage your village-direct herbal orders, reward wallet, delivery destinations, and community impact:</p>
           </div>
 
-          {/* Diff Style Layout: Tactile Options Grid */}
-          <div className="profile-hub-options-grid">
-            {/* OPTION 1: Orders */}
-            <div className="hub-option-card" onClick={() => navigateTab('orders')}>
-              <div className="hub-icon-box bg-box-green">📦</div>
-              <div className="hub-option-info">
-                <div className="hub-option-title-row">
-                  <h4>My Orders & Live Tracking</h4>
-                  <span className={`hub-badge-pill ${activeShipments > 0 ? 'pill-live' : ''}`}>
-                    {activeShipments > 0 ? `${activeShipments} In Transit` : `${ordersList.length} Orders`}
+          {/* Modern Exact Bento Grid */}
+          <div className="profile-hub-bento-grid">
+            {/* ROW 1: FEATURED BENTO CARDS */}
+            {/* BENTO 1: Orders & Consignment Tracking (Left Card) */}
+            <div className="bento-card bento-card-featured bento-card-orders" onClick={() => navigateTab('orders')}>
+              <div className="bento-card-header">
+                <div className="bento-icon-box bento-icon-orders">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
+                    <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
+                    <line x1="12" y1="22.08" x2="12" y2="12" />
+                  </svg>
+                </div>
+                <div className="bento-badge-group">
+                  {activeShipments > 0 ? (
+                    <span className="bento-badge-pill pill-live-pulse">
+                      <span className="live-pulse-dot" /> {activeShipments} In Transit
+                    </span>
+                  ) : ordersList.length > 0 ? (
+                    <span className="bento-badge-pill pill-subtle">
+                      {ordersList.length} Total {ordersList.length === 1 ? 'Order' : 'Orders'}
+                    </span>
+                  ) : (
+                    <span className="bento-badge-pill pill-subtle">
+                      0 Active Orders
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              <div className="bento-card-body">
+                <h4>My Orders & Live Tracking</h4>
+                <p>Direct Speed Post dispatches from our Kadayam, Tenkasi herbal processing unit with real-time consignment updates.</p>
+              </div>
+
+              <div className="bento-orders-preview-strip">
+                <div className="bento-preview-tag">
+                  <span className="preview-label">DISPATCH STATUS</span>
+                  <span className="preview-val">
+                    {activeShipments > 0
+                      ? `${activeShipments} Order(s) In Transit`
+                      : ordersList.length > 0
+                      ? 'All Consignments Delivered'
+                      : 'No Active Dispatches'}
+                  </span>
+                </div>
+                <span className="bento-action-link">{ordersList.length > 0 ? 'Track Consignments →' : 'View Orders →'}</span>
+              </div>
+            </div>
+
+            {/* BENTO 2: Green Rewards & Herbal Wallet (Right Card) */}
+            <div className="bento-card bento-card-featured bento-card-rewards" onClick={() => navigateTab('rewards')}>
+              <div className="bento-card-header">
+                <div className="bento-icon-box bento-icon-rewards">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z" />
+                    <path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12" />
+                  </svg>
+                </div>
+                <div className="bento-badge-group">
+                  <span className="bento-badge-pill pill-gold-glint">
+                    🌿 {userPts} pts
                   </span>
                 </div>
               </div>
-              <span className="hub-arrow-chevron">➔</span>
-            </div>
 
-            {/* OPTION 2: Saved Addresses */}
-            <div className="hub-option-card" onClick={() => navigateTab('addresses')}>
-              <div className="hub-icon-box bg-box-blue">📍</div>
-              <div className="hub-option-info">
-                <div className="hub-option-title-row">
-                  <h4>Saved Delivery Addresses</h4>
-                  <span className="hub-badge-pill">{addresses.length} Addresses</span>
+              <div className="bento-card-body">
+                <h4>Green Rewards & Wallet</h4>
+                <p>Earn 1 point per ₹10 spent. Instant redeemable credit of ₹{creditRupees} at checkout.</p>
+              </div>
+
+              <div className="bento-rewards-meter-strip">
+                <div className="meter-label-row">
+                  <span>Next Milestone ({milestonePercent}%)</span>
+                  <strong>{ptsNeeded > 0 ? `${ptsNeeded} pts to ₹${Math.floor(nextTierTarget / 2)} Voucher` : 'Voucher Ready!'}</strong>
                 </div>
-              </div>
-              <span className="hub-arrow-chevron">➔</span>
-            </div>
-
-            {/* OPTION 3: Rewards & Coupons */}
-            <div className="hub-option-card" onClick={() => navigateTab('rewards')}>
-              <div className="hub-icon-box bg-box-gold">🌿</div>
-              <div className="hub-option-info">
-                <div className="hub-option-title-row">
-                  <h4>Green Rewards & Coupons</h4>
-                  <span className="hub-badge-pill pill-gold">{user.points} pts</span>
+                <div className="meter-progress-bar">
+                  <div className="meter-progress-fill" style={{ width: `${milestonePercent}%` }} />
                 </div>
+                <span className="bento-action-link">Redeem Points & Coupons →</span>
               </div>
-              <span className="hub-arrow-chevron">➔</span>
             </div>
 
-            {/* OPTION 4: Wishlist */}
-            <div className="hub-option-card" onClick={() => navigateTab('wishlist')}>
-              <div className="hub-icon-box bg-box-rose">❤️</div>
-              <div className="hub-option-info">
-                <div className="hub-option-title-row">
-                  <h4>My Herbal Wishlist</h4>
-                  <span className="hub-badge-pill">{wishlist.length} Items</span>
+            {/* ROW 2: CORE FOUR UTILITY TILES */}
+            {/* BENTO 3: Saved Delivery Addresses */}
+            <div className="bento-card bento-card-utility" onClick={() => navigateTab('addresses')}>
+              <div className="bento-card-header">
+                <div className="bento-icon-box bento-icon-blue">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" />
+                    <circle cx="12" cy="10" r="3" />
+                  </svg>
                 </div>
+                <span className="bento-badge-pill pill-subtle">{addresses.length || 0} Saved</span>
               </div>
-              <span className="hub-arrow-chevron">➔</span>
+              <div className="bento-card-body">
+                <h4>Saved Addresses</h4>
+                <p>Doorstep shipping destinations, delivery contacts, and PIN codes across India.</p>
+              </div>
+              <div className="bento-card-footer">
+                <span className="bento-simple-link">Manage Addresses →</span>
+              </div>
             </div>
 
-            {/* OPTION 5: Wellness & Impact */}
-            <div className="hub-option-card" onClick={() => navigateTab('wellness')}>
-              <div className="hub-icon-box bg-box-teal">👩‍🌾</div>
-              <div className="hub-option-info">
-                <div className="hub-option-title-row">
-                  <h4>Wellness Health & Rural Impact</h4>
-                  <span className="hub-badge-pill">Tenkasi SHG</span>
+            {/* BENTO 4: Herbal Wishlist */}
+            <div className="bento-card bento-card-utility" onClick={() => navigateTab('wishlist')}>
+              <div className="bento-card-header">
+                <div className="bento-icon-box bento-icon-rose">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
+                  </svg>
                 </div>
+                <span className="bento-badge-pill pill-subtle">{wishlist.length} {wishlist.length === 1 ? 'Item' : 'Items'}</span>
               </div>
-              <span className="hub-arrow-chevron">➔</span>
+              <div className="bento-card-body">
+                <h4>My Herbal Wishlist</h4>
+                <p>Saved botanical teas, pure moringa powders, and hand-pounded podis.</p>
+              </div>
+              <div className="bento-card-footer">
+                <span className="bento-simple-link">View Wishlist →</span>
+              </div>
             </div>
 
-            {/* OPTION 6: Profile Settings */}
-            <div className="hub-option-card" onClick={() => navigateTab('profile')}>
-              <div className="hub-icon-box bg-box-slate">⚙️</div>
-              <div className="hub-option-info">
-                <div className="hub-option-title-row">
-                  <h4>Profile & Preferences</h4>
-                  <span className="hub-badge-pill">{user.language}</span>
+            {/* BENTO 5: Rural Women Impact */}
+            <div className="bento-card bento-card-utility" onClick={() => navigateTab('wellness')}>
+              <div className="bento-card-header">
+                <div className="bento-icon-box bento-icon-teal">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                    <circle cx="9" cy="7" r="4" />
+                    <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                  </svg>
                 </div>
+                <span className="bento-badge-pill pill-teal">Tenkasi SHG</span>
               </div>
-              <span className="hub-arrow-chevron">➔</span>
+              <div className="bento-card-body">
+                <h4>Rural Women Impact</h4>
+                <p>Empowering 50+ rural women entrepreneurs with sustainable village livelihoods.</p>
+              </div>
+              <div className="bento-card-footer">
+                <span className="bento-simple-link">Explore Mission →</span>
+              </div>
             </div>
 
-            {/* OPTION 7: Store Admin Console */}
-            <div className="hub-option-card card-admin-highlight" onClick={() => navigateTab('admin')}>
-              <div className="hub-icon-box" style={{ background: '#EDE7F6', color: '#673AB7', fontSize: '1.25rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>⚡</div>
-              <div className="hub-option-info">
-                <div className="hub-option-title-row">
-                  <h4>Store Admin Console</h4>
-                  <span className="hub-badge-pill pill-admin">Manage Orders</span>
+            {/* BENTO 6: Profile & Preferences */}
+            <div className="bento-card bento-card-utility" onClick={() => navigateTab('profile')}>
+              <div className="bento-card-header">
+                <div className="bento-icon-box bento-icon-slate">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="12" r="3" />
+                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
+                  </svg>
                 </div>
+                <span className="bento-badge-pill pill-subtle">{user.language || 'English'}</span>
               </div>
-              <span className="hub-arrow-chevron">➔</span>
+              <div className="bento-card-body">
+                <h4>Profile & Preferences</h4>
+                <p>Personal details, WhatsApp notification preferences, and account security.</p>
+              </div>
+              <div className="bento-card-footer">
+                <span className="bento-simple-link">Edit Settings →</span>
+              </div>
             </div>
-          </div>
-
-          {/* Bottom Help Banner */}
-          <div className="profile-hub-footer-help">
-            <a
-              href={`https://wa.me/${brandInfo.whatsapp.replace(/\D/g, '')}?text=Hello%20Thenee%2C%20I%20need%20assistance%20with%20my%20account.`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hub-whatsapp-btn"
-            >
-              <span className="hub-whatsapp-icon">💬</span>
-              <div>
-                <strong>Need Immediate Assistance?</strong>
-                <p>Chat directly on WhatsApp with our Manthiyoor, Tenkasi team: {brandInfo.whatsapp}</p>
-              </div>
-              <span className="hub-whatsapp-arrow">→</span>
-            </a>
           </div>
         </div>
       ) : (
@@ -711,7 +868,7 @@ const AccountPage = ({ onBack, onLogout, initialTab = 'hub' }) => {
             </button>
             <div className="subpage-title-box">
               <h2>{TAB_TITLES[activeTab] || 'Account Details'}</h2>
-              <span className="subpage-crumb-tag">My Account ➔ {TAB_TITLES[activeTab]}</span>
+              <span className="subpage-crumb-tag">My Account → {TAB_TITLES[activeTab]}</span>
             </div>
           </div>
 
@@ -823,7 +980,7 @@ const AccountPage = ({ onBack, onLogout, initialTab = 'hub' }) => {
                 <div>
                   <p>Manage your saved shipping addresses for fast checkout.</p>
                 </div>
-                <button className="btn-primary" onClick={() => setShowAddressModal(true)}>
+                <button className="btn-primary" onClick={handleOpenAddAddress}>
                   + Add New Address
                 </button>
               </div>
@@ -836,7 +993,7 @@ const AccountPage = ({ onBack, onLogout, initialTab = 'hub' }) => {
                     <p style={{ color: '#5C6E60', fontSize: '0.9rem', maxWidth: '360px', margin: '0 auto 20px' }}>
                       Save your home or work delivery address for fast 1-click checkout.
                     </p>
-                    <button className="btn-primary" onClick={() => setShowAddressModal(true)}>
+                    <button className="btn-primary" onClick={handleOpenAddAddress}>
                       + Add New Address
                     </button>
                   </div>
@@ -854,12 +1011,27 @@ const AccountPage = ({ onBack, onLogout, initialTab = 'hub' }) => {
                       <p className="addr-phone">Phone: {addr.phone}</p>
 
                       <div className="addr-actions">
+                        <button
+                          type="button"
+                          className="btn-addr-edit"
+                          onClick={() => handleOpenEditAddress(addr)}
+                        >
+                          ✏️ Edit
+                        </button>
                         {!addr.isDefault && (
-                          <button className="btn-addr-link" onClick={() => handleSetDefaultAddress(addr.id)}>
+                          <button
+                            type="button"
+                            className="btn-addr-link"
+                            onClick={() => handleSetDefaultAddress(addr.id)}
+                          >
                             Set as Default
                           </button>
                         )}
-                        <button className="btn-addr-delete" onClick={() => handleDeleteAddress(addr.id)}>
+                        <button
+                          type="button"
+                          className="btn-addr-delete"
+                          onClick={() => handleDeleteAddress(addr.id)}
+                        >
                           Remove
                         </button>
                       </div>
@@ -868,15 +1040,15 @@ const AccountPage = ({ onBack, onLogout, initialTab = 'hub' }) => {
                 )}
               </div>
 
-              {/* Add Address Modal */}
+              {/* Add / Edit Address Modal */}
               {showAddressModal && (
                 <div className="modal-backdrop-custom">
                   <div className="modal-box-custom">
                     <div className="modal-head">
-                      <h3>Add New Delivery Address</h3>
-                      <button className="modal-close-x" onClick={() => setShowAddressModal(false)}>✕</button>
+                      <h3>{editingAddressId ? 'Edit Delivery Address' : 'Add New Delivery Address'}</h3>
+                      <button className="modal-close-x" onClick={handleCloseAddressModal}>✕</button>
                     </div>
-                    <form onSubmit={handleAddAddress} className="modal-form-custom">
+                    <form onSubmit={handleSaveAddressForm} className="modal-form-custom">
                       <div className="form-group-row">
                         <div>
                           <label>Full Name *</label>
@@ -893,9 +1065,10 @@ const AccountPage = ({ onBack, onLogout, initialTab = 'hub' }) => {
                           <input
                             type="tel"
                             required
+                            maxLength={10}
                             placeholder="10-digit mobile"
                             value={newAddr.phone}
-                            onChange={(e) => setNewAddr({ ...newAddr, phone: e.target.value })}
+                            onChange={(e) => setNewAddr({ ...newAddr, phone: e.target.value.replace(/\D/g, '') })}
                           />
                         </div>
                       </div>
@@ -927,9 +1100,10 @@ const AccountPage = ({ onBack, onLogout, initialTab = 'hub' }) => {
                           <input
                             type="text"
                             required
+                            maxLength={6}
                             placeholder="6-digit pincode"
                             value={newAddr.pincode}
-                            onChange={(e) => setNewAddr({ ...newAddr, pincode: e.target.value })}
+                            onChange={(e) => setNewAddr({ ...newAddr, pincode: e.target.value.replace(/\D/g, '') })}
                           />
                         </div>
                       </div>
@@ -949,11 +1123,11 @@ const AccountPage = ({ onBack, onLogout, initialTab = 'hub' }) => {
                       </div>
 
                       <div className="modal-footer-actions">
-                        <button type="button" className="btn-secondary" onClick={() => setShowAddressModal(false)}>
+                        <button type="button" className="btn-secondary" onClick={handleCloseAddressModal}>
                           Cancel
                         </button>
                         <button type="submit" className="btn-primary">
-                          Save Address
+                          {editingAddressId ? 'Update Address' : 'Save Address'}
                         </button>
                       </div>
                     </form>
@@ -969,15 +1143,15 @@ const AccountPage = ({ onBack, onLogout, initialTab = 'hub' }) => {
               <div className="rewards-wallet-card">
                 <div className="wallet-left">
                   <span className="wallet-badge">🌿 Active Balance</span>
-                  <div className="wallet-points-val">{user.points} <span className="pts-label">Green Points</span></div>
-                  <p className="wallet-worth">Cash value: <strong>₹{Math.floor(user.points / 2)}.00</strong> (Redeemable at Checkout)</p>
+                  <div className="wallet-points-val">{userPts} <span className="pts-label">Green Points</span></div>
+                  <p className="wallet-worth">Cash value: <strong>₹{creditRupees}.00</strong> (Redeemable at Checkout)</p>
                 </div>
                 <div className="wallet-right">
                   <button
                     className="btn-redeem-wallet"
                     onClick={() => {
                       onBack()
-                      showToast(`₹${Math.floor(user.points / 2)} credit ready to use at checkout!`)
+                      showToast(`₹${creditRupees} credit ready to use at checkout!`)
                     }}
                   >
                     Shop & Redeem Points →
@@ -1218,7 +1392,6 @@ const AccountPage = ({ onBack, onLogout, initialTab = 'hub' }) => {
                       value={adminPinInput}
                       onChange={(e) => setAdminPinInput(e.target.value)}
                       style={{ padding: '12px 16px', borderRadius: '8px', border: '1px solid #CBD5E1', fontSize: '1rem', textAlign: 'center', letterSpacing: '2px' }}
-                      autoFocus
                     />
                     {adminPinError && <div style={{ color: '#DC2626', fontSize: '0.8rem', fontWeight: 600 }}>{adminPinError}</div>}
                     <button type="submit" className="btn-primary" style={{ padding: '12px', fontSize: '0.95rem' }}>
@@ -1494,8 +1667,20 @@ const AccountPage = ({ onBack, onLogout, initialTab = 'hub' }) => {
         </div>
       )}
 
-      {/* Footer with Powered by Creare Mind Credits */}
-      <Footer />
+      {/* Lightweight Powered by Creare Mind Credits (Full Footer not required in Account Page) */}
+      <footer className="account-credits-bar">
+        <span>© {new Date().getFullYear()} The Roots Enterprises • Kadayam, Tenkasi</span>
+        <span className="account-credits-dot">•</span>
+        <a
+          href="https://www.crearemind.in"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="account-crearemind-link"
+          title="Visit Creare Mind (opens in new tab)"
+        >
+          <span>POWERED BY</span> <strong>CREARE MIND</strong>
+        </a>
+      </footer>
 
       {/* Floating Toast Notification */}
       {toastMsg && (

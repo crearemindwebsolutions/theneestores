@@ -395,6 +395,7 @@ export function updateUserProfile({ email, name, phone }) {
     ...user,
     name: name?.trim() || user.name || cleanEmail.split('@')[0],
     phone: fullPhone,
+    profilePrompted: true,
   }
 
   saveUserToRegistry(updated)

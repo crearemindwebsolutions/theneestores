@@ -7,7 +7,6 @@ const TILES = [
     heading: 'Handcrafted Botanical Wellness',
     body: '100% pure village-sourced herbal teas & traditional food podis.',
     cta: 'Explore Products',
-    action: 'shop',
     icon: (
       <path
         d="M4 12.5 12.5 4h6a1.5 1.5 0 0 1 1.5 1.5v6L11.5 20 4 12.5Z M15.5 8.5h.01"
@@ -24,7 +23,6 @@ const TILES = [
     heading: 'Free Shipping Over ₹499',
     body: 'Free delivery across India on all orders above ₹499.',
     cta: 'Shop Now',
-    action: 'shop',
     icon: (
       <path
         d="M2 7h11v9H2V7Zm11 3h4l3 3v3h-7v-6ZM5.5 19a1.8 1.8 0 1 0 0-3.6 1.8 1.8 0 0 0 0 3.6Zm12 0a1.8 1.8 0 1 0 0-3.6 1.8 1.8 0 0 0 0 3.6Z"
@@ -39,7 +37,7 @@ const TILES = [
 
 const PromoOffers = () => {
   const sectionRef = useReveal([
-    { selector: '.promo-tile', y: 50, duration: 0.75, stagger: 0.14, start: 'top 82%' },
+    { selector: '.promo-tile', y: 40, duration: 0.75, stagger: 0.14, start: 'top 82%' },
   ])
 
   const handleNavigate = () => {
@@ -62,6 +60,7 @@ const PromoOffers = () => {
               <h3>{t.heading}</h3>
               <p>{t.body}</p>
               <button
+                type="button"
                 className="promo-tile-btn"
                 onClick={handleNavigate}
               >

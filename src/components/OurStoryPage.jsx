@@ -39,8 +39,8 @@ const IMPACT_NUMS = [
 const OurStoryPage = ({ onOpenAccount }) => {
   return (
     <div className="page-wrapper our-story-page">
-      <header className="page-header-nav-wrap">
-        <OfferMarquee />
+      <OfferMarquee />
+      <header className="site-header-sticky">
         <Navbar onOpenAccount={onOpenAccount} currentRoute="about" />
       </header>
 

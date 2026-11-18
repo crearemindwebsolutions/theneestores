@@ -2,8 +2,6 @@ import { useLayoutEffect, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
-import Navbar from './Navbar'
-import OfferMarquee from './OfferMarquee'
 import { products, brandInfo } from '../data/products'
 import { useCart } from '../context/CartContext'
 import './Hero.css'
@@ -18,7 +16,6 @@ const BG_TRANSITION = { duration: 0.6, ease: 'easeInOut' }
 const Hero = ({ onOpenAccount }) => {
   const [index, setIndex] = useState(0)
   const heroRef = useRef(null)
-  const bottleFlyRefs = useRef({})
   const touchStartX = useRef(null)
   const touchStartY = useRef(null)
   const touchStartTime = useRef(0)
@@ -61,227 +58,68 @@ const Hero = ({ onOpenAccount }) => {
     touchStartY.current = null
   }
 
-  // Flies the currently active bottle down out of the hero and into its
-  // matching card slot as the user scrolls (Both Desktop & Mobile)
+  // Ensure card images in catalog are always visible without any scroll flight interference
   useLayoutEffect(() => {
-    let cancelled = false
-    let rafId
-    const mm = gsap.matchMedia()
-
-    const setupFlight = (isMobile) => {
-      const flyEl = bottleFlyRefs.current[current.id]
-      const cardImg = document.querySelector(
-        `.bs-card-img[data-perfume-id="${current.id}"]`
-      )
-      const card = cardImg?.closest('.bs-card')
-
-      if (!flyEl || !cardImg || !card) {
-        rafId = requestAnimationFrame(() => {
-          if (!cancelled) setupFlight(isMobile)
-        })
-        return
-      }
-
-      document.querySelectorAll('.bs-card-img').forEach((img) => {
-        img.style.opacity = '1'
-      })
-
-      const heroImg = flyEl.querySelector('.hero-bottle-img')
-      const visualEl = flyEl.closest('.hero-visual') || heroRef.current
-
-      const waitForImg = (img) => {
-        if (!img) return Promise.resolve()
-        if (img.complete && img.naturalWidth > 0) return Promise.resolve()
-        return new Promise((resolve) => {
-          const onDone = () => {
-            img.removeEventListener('load', onDone)
-            img.removeEventListener('error', onDone)
-            resolve()
-          }
-          img.addEventListener('load', onDone)
-          img.addEventListener('error', onDone)
-        })
-      }
-
-      Promise.all([
-        new Promise((resolve) => setTimeout(resolve, 150)),
-        document.fonts?.ready ?? Promise.resolve(),
-        waitForImg(cardImg),
-        waitForImg(heroImg),
-      ]).then(() => {
-        if (cancelled) return
-
-        ScrollTrigger.refresh()
-
-        let cachedTransform = null
-        const calcTransform = () => {
-          const vRect = visualEl.getBoundingClientRect()
-          const cRect = cardImg.getBoundingClientRect()
-
-          if (!vRect.width || !cRect.width) return { x: 0, y: 0, scale: 1 }
-
-          // Compute centers in page coordinates (invariant to current scroll position)
-          const vCenterX = vRect.left + window.scrollX + vRect.width / 2
-          const vCenterY = vRect.top + window.scrollY + vRect.height / 2
-
-          const cCenterX = cRect.left + window.scrollX + cRect.width / 2
-          const cCenterY = cRect.top + window.scrollY + cRect.height / 2
-
-          const targetX = cCenterX - vCenterX
-          const targetY = cCenterY - vCenterY
-
-          const heroH = heroImg?.offsetHeight || vRect.height * 0.9
-          const cardH = cardImg.offsetHeight || cRect.height
-          const targetScale = heroH > 0 && cardH > 0 ? cardH / heroH : 0.5
-
-          return { x: targetX, y: targetY, scale: targetScale }
-        }
-
-        cachedTransform = calcTransform()
-        gsap.set(flyEl, {
-          zIndex: 300,
-          opacity: 1,
-          transformOrigin: '50% 50%',
-          willChange: 'transform',
-        })
-
-        gsap.to(flyEl, {
-          x: () => (cachedTransform ? cachedTransform.x : 0),
-          y: () => (cachedTransform ? cachedTransform.y : 0),
-          scale: () => (cachedTransform ? cachedTransform.scale : 1),
-          ease: 'none',
-          scrollTrigger: {
-            trigger: heroRef.current,
-            start: isMobile ? 'top 10px' : 'top top',
-            endTrigger: card,
-            end: isMobile ? 'top 80px' : 'top 140px',
-            scrub: isMobile ? 0.15 : true,
-            invalidateOnRefresh: true,
-            onRefresh: () => {
-              cachedTransform = calcTransform()
-            },
-            onUpdate: (self) => {
-              const isMidFlight = self.progress > 0.08 && self.progress < 0.95
-              heroRef.current.style.zIndex = isMidFlight ? '30' : '10'
-
-              if (heroImg && !isMobile) {
-                heroImg.style.animationPlayState =
-                  self.progress > 0 ? 'paused' : 'running'
-              }
-
-              if (self.progress >= 0.95) {
-                cardImg.style.opacity = '1'
-                flyEl.style.opacity = '0'
-              } else if (self.progress > 0.08) {
-                cardImg.style.opacity = '0'
-                flyEl.style.opacity = '1'
-              } else {
-                cardImg.style.opacity = '1'
-                flyEl.style.opacity = '1'
-              }
-            },
-            onLeave: () => {
-              cardImg.style.opacity = '1'
-              flyEl.style.opacity = '0'
-              heroRef.current.style.zIndex = '10'
-            },
-            onLeaveBack: () => {
-              cardImg.style.opacity = '1'
-              flyEl.style.opacity = '1'
-              heroRef.current.style.zIndex = '10'
-            },
-            onEnterBack: () => {
-              cardImg.style.opacity = '1'
-              flyEl.style.opacity = '1'
-              heroRef.current.style.zIndex = '30'
-            },
-          },
-        })
-      })
-    }
-
-    mm.add('(max-width: 860px)', () => {
-      // On mobile screens, disable flight so cards always display their photos reliably
-      document.querySelectorAll('.bs-card-img').forEach((img) => {
-        img.style.opacity = '1'
-      })
+    document.querySelectorAll('.bs-card-img').forEach((img) => {
+      img.style.opacity = '1'
     })
-
-    mm.add('(min-width: 861px)', () => {
-      setupFlight(false)
-    })
-
-    return () => {
-      cancelled = true
-      if (rafId) cancelAnimationFrame(rafId)
-      mm.revert()
-      document.querySelectorAll('.bs-card-img').forEach((img) => {
-        img.style.opacity = '1'
-      })
-      const flyEl = bottleFlyRefs.current[current.id]
-      if (flyEl) {
-        flyEl.style.opacity = ''
-        gsap.set(flyEl, { zIndex: '', x: 0, y: 0, scale: 1, willChange: '' })
-      }
-      if (heroRef.current) heroRef.current.style.zIndex = ''
-    }
   }, [index, current.id])
 
   return (
     <section id="home" className="hero" ref={heroRef}>
-      <motion.div
-        className="hero-bg-layer"
-        animate={{ backgroundColor: current.bgColor }}
-        transition={BG_TRANSITION}
-      >
-        <motion.div
-          className="hero-circle hero-circle--left"
-          animate={{ backgroundColor: current.circleColor }}
-          transition={BG_TRANSITION}
-        />
-        <motion.div
-          className="hero-circle hero-circle--right"
-          animate={{ backgroundColor: current.circleColor }}
-          transition={BG_TRANSITION}
-        />
-      </motion.div>
-
-      <OfferMarquee />
-      <Navbar onOpenAccount={onOpenAccount} currentRoute="home" />
+      {/* Decorative Botanical Background Watermark */}
+      <div className="hero-botanical-bg" aria-hidden="true">
+        <svg viewBox="0 0 1440 800" fill="none" preserveAspectRatio="xMidYMid slice" className="hero-botanical-svg">
+          <g opacity="0.32" stroke="#BDCBBF" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round">
+            {/* Center-left botanical foliage */}
+            <path d="M420 780 C440 620 510 480 620 380 C680 320 740 280 820 250" />
+            <path d="M540 450 C520 400 480 380 430 390 C460 420 490 440 540 450 Z" fill="#D6E0D7" fillOpacity="0.4" />
+            <path d="M580 410 C610 370 650 360 690 380 C660 400 620 410 580 410 Z" fill="#D6E0D7" fillOpacity="0.4" />
+            <path d="M640 360 C640 310 610 280 560 280 C580 320 600 340 640 360 Z" fill="#D6E0D7" fillOpacity="0.4" />
+            <path d="M700 310 C740 270 780 270 820 290 C780 310 740 310 700 310 Z" fill="#D6E0D7" fillOpacity="0.4" />
+            <path d="M750 270 C760 220 740 190 700 180 C710 220 730 250 750 270 Z" fill="#D6E0D7" fillOpacity="0.4" />
+            <path d="M800 240 C840 200 890 210 920 240 C880 250 840 250 800 240 Z" fill="#D6E0D7" fillOpacity="0.4" />
+            {/* Left subtle background leaves */}
+            <path d="M80 820 C140 680 240 560 380 480" />
+            <path d="M220 600 C190 560 150 550 110 560 C140 590 180 600 220 600 Z" fill="#D6E0D7" fillOpacity="0.3" />
+            <path d="M280 540 C310 490 350 480 390 500 C360 520 320 530 280 540 Z" fill="#D6E0D7" fillOpacity="0.3" />
+            <path d="M340 490 C340 430 310 400 260 400 C280 440 310 470 340 490 Z" fill="#D6E0D7" fillOpacity="0.3" />
+            {/* Right subtle background leaves */}
+            <path d="M1120 760 C1160 580 1240 420 1380 320" />
+            <path d="M1190 540 C1160 490 1110 480 1060 490 C1100 520 1150 540 1190 540 Z" fill="#D6E0D7" fillOpacity="0.3" />
+            <path d="M1250 460 C1290 410 1340 410 1380 430 C1340 450 1300 460 1250 460 Z" fill="#D6E0D7" fillOpacity="0.3" />
+          </g>
+        </svg>
+      </div>
 
       <div className="hero-main">
         <div className="hero-body">
-          <motion.div
-            className="hero-text"
-            animate={{ color: current.textColor }}
-            transition={BG_TRANSITION}
-          >
-            <h1>
-              <span className="hero-title-word">
-                THENEE
-                <svg className="hero-title-leaf" width="22" height="22" viewBox="0 0 24 24" fill="none">
-                  <path d="M4 20c0-8 6-14 14-14 0 8-6 14-14 14Z" fill="#C6A15B" />
-                </svg>
-              </span>
-              <br />
-              <span className="hero-title-subtext">{current.name}</span>
-            </h1>
+          <div className="hero-text">
+            <div className="hero-title-group">
+              <span className="hero-brand-name">THENEE</span>
+              <h1 className="hero-product-heading">{current.name}</h1>
+            </div>
 
-            <motion.p animate={{ color: current.subTextColor }} transition={BG_TRANSITION}>
+            <p className="hero-desc">
               {current.description}
-            </motion.p>
+            </p>
 
-            {/* Quick pricing & benefits summary */}
-            <div className="hero-price-tag">
-              <span className="hero-price-now">₹{current.price}</span>
-              <span className="hero-price-orig">₹{current.originalPrice}</span>
-              <span className="hero-volume-badge">{current.volume}</span>
-              <span className="hero-rating-badge">★ {current.rating} ({current.reviews}+)</span>
+            {/* Quick pricing & specifications row */}
+            <div className="hero-meta-row">
+              <div className="hero-price-wrap">
+                <span className="hero-price-now">₹{current.price}</span>
+                {current.originalPrice > current.price && (
+                  <span className="hero-price-orig">₹{current.originalPrice}</span>
+                )}
+              </div>
+              <span className="hero-pill-badge">{current.volume || '75g Floral Blend'}</span>
+              <span className="hero-rating-badge">★ {current.rating || 4.95} ({current.reviews || 620}+)</span>
             </div>
 
             <div className="hero-actions">
               <button
-                className="btn btn-cream"
+                type="button"
+                className="btn-hero-outline"
                 onClick={() => {
                   addToCart(current)
                   openCart()
@@ -292,57 +130,62 @@ const Hero = ({ onOpenAccount }) => {
             </div>
 
             <div className="hero-nav">
-              <button className="hero-arrow" onClick={prev} aria-label="Previous product">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                  <path d="M15 6l-6 6 6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              <button type="button" className="hero-arrow-btn" onClick={prev} aria-label="Previous product">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M15 18l-6-6 6-6" />
                 </svg>
               </button>
-              <span className="hero-nav-count">
+              <span className="hero-nav-counter">
                 {String(index + 1).padStart(2, '0')} / {String(len).padStart(2, '0')}
               </span>
-              <button className="hero-arrow" onClick={next} aria-label="Next product">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                  <path d="M9 6l6 6-6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              <button type="button" className="hero-arrow-btn" onClick={next} aria-label="Next product">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M9 18l6-6-6-6" />
                 </svg>
               </button>
-              <span className="hero-family-count">
+              <span className="hero-family-trust">
                 Trusted by <strong>16,000+</strong> families
               </span>
             </div>
-          </motion.div>
+          </div>
 
           <div className="hero-right">
-            <div
-              className="hero-visual"
-              onTouchStart={handleTouchStart}
-              onTouchEnd={handleTouchEnd}
-              role="region"
-              aria-label="Product image carousel - swipe left or right"
-            >
-              <div className="hero-visual-bottle-layer">
-                {products.map((p, i) => (
-                  <div
-                    key={p.id}
-                    className={`hero-bottle-fly hero-bottle-fly--${p.id}`}
-                    data-perfume-id={p.id}
-                    ref={(el) => (bottleFlyRefs.current[p.id] = el)}
-                  >
-                    <motion.img
-                      src={p.bottle}
-                      alt={p.name}
-                      className={`hero-bottle-img hero-bottle-img--${p.id}`}
-                      animate={{ opacity: i === index ? 1 : 0 }}
-                      transition={{ duration: 0.3 }}
-                    />
-                  </div>
-                ))}
+            {/* Large Circular Backdrop */}
+            <div className="hero-center-circle-backdrop">
+              <div
+                className="hero-visual"
+                onTouchStart={handleTouchStart}
+                onTouchEnd={handleTouchEnd}
+                role="region"
+                aria-label="Product image carousel - swipe left or right"
+              >
+                <div className="hero-visual-bottle-layer">
+                  {products.map((p, i) => (
+                    <div
+                      key={p.id}
+                      className={`hero-bottle-wrap hero-bottle-wrap--${p.id}`}
+                      style={{ display: i === index ? 'flex' : 'none' }}
+                    >
+                      <motion.img
+                        src={p.bottle}
+                        alt={p.name}
+                        className={`hero-bottle-img hero-bottle-img--${p.id}`}
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ duration: 0.35, ease: 'easeOut' }}
+                      />
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
 
-            <div className="hero-badges">
-              <div className="hero-badge">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                  <path d="M4 20c0-8 6-14 14-14 0 8-6 14-14 14Z" className="hero-badge-icon-leaf" />
+            {/* Circular Outline Badges */}
+            <div className="hero-trust-badges-vertical">
+              <div className="hero-circle-badge">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z" />
+                  <path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12" />
                 </svg>
                 <span>
                   100%
@@ -350,12 +193,10 @@ const Hero = ({ onOpenAccount }) => {
                   Organic
                 </span>
               </div>
-              <div className="hero-badge">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                  <path
-                    d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"
-                    className="hero-badge-icon-drop"
-                  />
+
+              <div className="hero-circle-badge">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
                 </svg>
                 <span>
                   Handmade

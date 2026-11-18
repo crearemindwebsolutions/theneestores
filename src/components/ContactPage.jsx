@@ -1,18 +1,38 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Navbar from './Navbar'
 import OfferMarquee from './OfferMarquee'
-import Footer from './Footer'
 import { brandInfo } from '../data/products'
-import { inquiryService } from '../lib/supabase'
+import { inquiryService, supabase, profileService } from '../lib/supabase'
 import { sendInquiryEmails } from '../lib/emailService'
 import './PagesShared.css'
 import './ContactPage.css'
 
+
 const INQUIRY_TYPES = [
-  { id: 'Retail Order & Tracking', label: 'Order Tracking & Delivery Status' },
-  { id: 'Herbal Wellness Guidance', label: 'Herbal Wellness Guidance' },
-  { id: 'Clinic & Ayurvedic Wholesale', label: 'Clinic & Ayurvedic Wholesale' },
-  { id: 'Corporate Gift Hampers', label: 'Corporate Gift Hampers' },
+  {
+    id: 'Retail Order & Tracking',
+    activeLabel: 'Order Tracking & Delivery Status',
+    subLabel: 'Order Tracking & Delivery',
+    icon: '📦',
+  },
+  {
+    id: 'Herbal Wellness Guidance',
+    activeLabel: 'Herbal Wellness Guidance',
+    subLabel: 'Herbal Wellness Guidance',
+    icon: '🌿',
+  },
+  {
+    id: 'Clinic & Ayurvedic Wholesale',
+    activeLabel: 'Clinic & Ayurvedic Wholesale',
+    subLabel: 'Clinic & Wholesale',
+    icon: '🩺',
+  },
+  {
+    id: 'Corporate Gift Hampers',
+    activeLabel: 'Corporate Gift Hampers',
+    subLabel: 'Corporate Gift Hampers',
+    icon: '🎁',
+  },
 ]
 
 const FAQS = [
@@ -50,6 +70,27 @@ const ContactPage = ({ onOpenAccount }) => {
   const [toastMsg, setToastMsg] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
 
+  const activeType = INQUIRY_TYPES.find((t) => t.id === form.type) || INQUIRY_TYPES[0]
+  const otherTypes = INQUIRY_TYPES.filter((t) => t.id !== activeType.id)
+
+  // Prefill contact details if user is signed in
+  useEffect(() => {
+    if (!supabase) return
+    supabase.auth.getUser().then(({ data }) => {
+      const u = data?.user
+      if (u) {
+        profileService.getProfile(u.id).then(({ data: prof }) => {
+          setForm((prev) => ({
+            ...prev,
+            name: prev.name || prof?.full_name || u.user_metadata?.full_name || '',
+            phone: prev.phone || prof?.phone || '',
+            email: prev.email || u.email || '',
+          }))
+        }).catch(() => {})
+      }
+    }).catch(() => {})
+  }, [])
+
   const handleSubmit = async (e) => {
     e.preventDefault()
     if (!form.name || !form.phone || !form.message) return
@@ -71,209 +112,271 @@ const ContactPage = ({ onOpenAccount }) => {
 
   return (
     <div className="page-wrapper contact-page">
-      <header className="page-header-nav-wrap">
-        <OfferMarquee />
+      <OfferMarquee />
+      <header className="site-header-sticky">
         <Navbar onOpenAccount={onOpenAccount} currentRoute="contact" />
       </header>
 
-      {/* Hero Banner */}
-      <section className="contact-hero-banner">
-        <div className="page-breadcrumb">
-          <a href="#home">Home</a>
-          <span className="page-breadcrumb-sep">➔</span>
-          <span>Contact</span>
-        </div>
-        <div className="contact-hero-content">
-          <span className="contact-hero-tag">Kadayam • Tenkasi Heritage</span>
-          <h1 className="contact-hero-title">Get in Touch with Our Village Team</h1>
-          <p className="contact-hero-desc">
-            Have questions about our botanical teas, delivery tracking, or clinic bulk supply?
-            Our artisans and support team in Kadayam, Tenkasi are here to assist you with warmth.
-          </p>
-        </div>
+      {/* Main Container Styled According to Reference Design */}
+      <main className="contact-theme-container">
+        {/* Top Brand Header */}
+        <div className="contact-brand-hero">
+          <div className="contact-brand-logo-row">
+            <svg className="contact-leaf-icon" width="32" height="32" viewBox="0 0 24 24" fill="none">
+              <path
+                d="M12 2C6.48 2 2 6.48 2 12c0 3.5 1.8 6.57 4.54 8.35C6.19 19.34 6 18.2 6 17c0-4.41 3.59-8 8-8 1.2 0 2.34.19 3.35.54C15.57 6.8 12.5 5 9 5c-.34 0-.67.02-1 .06C9.17 3.23 10.5 2 12 2z"
+                fill="#163826"
+              />
+              <path
+                d="M17 9c-3.86 0-7 3.14-7 7 0 1.29.35 2.5 1 3.53C12.54 20.35 14.18 21 16 21c3.86 0 7-3.14 7-7 0-1.82-.65-3.46-1.47-5-.84.6-1.92 1-3.53 1z"
+                fill="#2E5C42"
+              />
+            </svg>
+            <div className="contact-brand-title-wrap">
+              <h1 className="contact-brand-title">THENEE</h1>
+              <span className="contact-brand-subtitle">Ayurvedic herbal store</span>
+            </div>
+          </div>
 
-        <div className="contact-trust-strip">
-          <span className="contact-trust-item">⚡ 2-Hour Response Time</span>
-          <span className="contact-trust-item">💬 WhatsApp Direct Support</span>
-          <span className="contact-trust-item">📦 All-India Daily Dispatch</span>
-          <span className="contact-trust-item">📍 Foothills of Western Ghats</span>
-        </div>
-      </section>
-
-      <main className="contact-main-content">
-        {/* 2-Column Main Layout: Message Form (Left) & Heritage Showcase (Right) */}
-        <section className="contact-main-split">
-          {/* Left: Interactive Form */}
-          <div className="contact-form-panel">
-            <div className="panel-header">
-              <span className="panel-kicker">Direct Assistance</span>
-              <h2>Send Us a Message</h2>
-              <p>Choose an inquiry type and our Kadayam team will get back to you promptly:</p>
+          {/* 4 Trust Badges Horizontal Strip */}
+          <div className="contact-trust-pill-strip">
+            <div className="trust-pill-item">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10" />
+                <polyline points="12 6 12 12 16 14" />
+              </svg>
+              <span>2-Hour Response Time</span>
             </div>
 
-            <form onSubmit={handleSubmit} className="contact-form-modern">
-              {/* Inquiry Type Select Dropdown */}
-              <div className="form-field">
-                <label className="form-label" htmlFor="inquiry-type-select">
-                  What is this regarding? *
-                </label>
-                <div className="form-select-wrap">
-                  <select
-                    id="inquiry-type-select"
-                    className="form-select"
-                    value={form.type}
-                    onChange={(e) => setForm({ ...form, type: e.target.value })}
+            <div className="trust-pill-item">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
+              </svg>
+              <span>WhatsApp Direct Support</span>
+            </div>
+
+            <div className="trust-pill-item">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="1" y="3" width="15" height="13" />
+                <polygon points="16 8 20 8 23 11 23 16 16 16 16 8" />
+                <circle cx="5.5" cy="18.5" r="2.5" />
+                <circle cx="18.5" cy="18.5" r="2.5" />
+              </svg>
+              <span>All-India Daily Dispatch</span>
+            </div>
+
+            <div className="trust-pill-item">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="m8 3 4 8 5-5 5 15H2L8 3z" />
+              </svg>
+              <span>Foothills of Western Ghats</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Center Contact Message Card */}
+        <section className="contact-main-card">
+          <div className="card-kicker">DIRECT ASSISTANCE</div>
+          <h2 className="card-heading">Send Us a Message</h2>
+          <p className="card-subheading">Choose an inquiry type</p>
+
+          <form onSubmit={handleSubmit} className="contact-card-form">
+            {/* Inquiry Type Box (Sage Green Selected Top Pill + White Sub-Pills) */}
+            <div className="inquiry-type-box">
+              <span className="inquiry-box-label">Inquiry type</span>
+
+              {/* Top Active Pill */}
+              <div className="inquiry-active-pill">
+                <div className="pill-left-content">
+                  <span className="pill-icon">{activeType.icon}</span>
+                  <span className="pill-label">{activeType.activeLabel}</span>
+                </div>
+                <div className="pill-check-circle" title="Selected">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
+                </div>
+              </div>
+
+              {/* Sub-Pills (3 Options in Row) */}
+              <div className="inquiry-options-row">
+                {otherTypes.map((t) => (
+                  <button
+                    key={t.id}
+                    type="button"
+                    className="inquiry-sub-pill"
+                    onClick={() => setForm({ ...form, type: t.id })}
+                    title={t.activeLabel}
                   >
-                    {INQUIRY_TYPES.map((t) => (
-                      <option key={t.id} value={t.id}>
-                        {t.label}
-                      </option>
-                    ))}
-                  </select>
-                  <div className="form-select-arrow" aria-hidden="true">
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                      <polyline points="6 9 12 15 18 9" />
-                    </svg>
-                  </div>
-                </div>
+                    <span className="sub-pill-icon">{t.icon}</span>
+                    <span className="sub-pill-label">{t.subLabel}</span>
+                  </button>
+                ))}
               </div>
+            </div>
 
-              {/* 2-column: Name & Phone */}
-              <div className="form-row-2">
-                <div className="form-field">
-                  <label className="form-label">Full Name *</label>
-                  <input
-                    type="text"
-                    className="form-input"
-                    placeholder="e.g. Meenakshi Sundaram"
-                    value={form.name}
-                    onChange={(e) => setForm({ ...form, name: e.target.value })}
-                    required
-                  />
-                </div>
-                <div className="form-field">
-                  <label className="form-label">Mobile Number / WhatsApp *</label>
-                  <input
-                    type="tel"
-                    className="form-input"
-                    placeholder="+91 98765 43210"
-                    value={form.phone}
-                    onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                    required
-                  />
-                </div>
-              </div>
+            {/* Input Row 1: Full Name */}
 
-              {/* Single row: Email */}
-              <div className="form-field">
-                <label className="form-label">Email Address (Optional)</label>
+            {/* Input Row 1: Full Name */}
+            <div className="contact-input-field">
+              <label className="input-label">Full Name *</label>
+              <div className="input-wrap">
+                <svg className="field-svg-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                  <circle cx="12" cy="7" r="4" />
+                </svg>
                 <input
-                  type="email"
-                  className="form-input"
-                  placeholder="yourname@gmail.com"
-                  value={form.email}
-                  onChange={(e) => setForm({ ...form, email: e.target.value })}
-                />
-              </div>
-
-              {/* Message textarea */}
-              <div className="form-field">
-                <label className="form-label">Your Message / Requirements *</label>
-                <textarea
-                  className="form-textarea"
-                  rows="4"
-                  placeholder="Please describe your question, required quantity, or delivery address..."
-                  value={form.message}
-                  onChange={(e) => setForm({ ...form, message: e.target.value })}
+                  type="text"
+                  placeholder="e.g. Meenakshi Sundaram"
+                  value={form.name}
+                  onChange={(e) => setForm({ ...form, name: e.target.value })}
                   required
                 />
               </div>
+            </div>
 
-              <button
-                type="submit"
-                className="btn-submit-contact"
-                disabled={isSubmitting}
-              >
-                {isSubmitting ? 'Sending Message...' : 'Send Message to Tenkasi Unit ➔'}
-              </button>
-            </form>
-          </div>
+            {/* Input Row 2: Phone */}
+            <div className="contact-input-field">
+              <label className="input-label">Phone *</label>
+              <div className="input-wrap">
+                <svg className="field-svg-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
+                </svg>
+                <input
+                  type="tel"
+                  placeholder="+91 98XXX XXXXX"
+                  value={form.phone}
+                  onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                  required
+                />
+              </div>
+            </div>
 
-          {/* Right: Heritage Showcase & Dispatch Guarantee */}
-          <div className="contact-showcase-panel">
-            <div className="heritage-story-card">
-              <span className="heritage-card-badge">TENKASI HERITAGE</span>
-              <h3>Crafted at the Foothills of Western Ghats</h3>
-              <p>
-                Our processing center in Manthiyoor Village, Kadayam is powered by skilled rural women artisans.
-                We harvest mountain botanicals, shade-dry at natural ambient temperatures, and stone-grind with zero friction heat.
-              </p>
-
-              <div className="heritage-features-list">
-                <div className="heritage-feat-item">
-                  <span className="feat-check">✓</span>
-                  <div>
-                    <strong>100% Unadulterated Botanicals</strong>
-                    <p>Clean, chemical-free raw ingredients from village soils.</p>
-                  </div>
+            {/* Input Row 3: Email (Left) & Your Message (Right) */}
+            <div className="contact-split-row">
+              <div className="contact-input-field split-field email-field">
+                <label className="input-label">Email address (optional)</label>
+                <div className="input-wrap">
+                  <svg className="field-svg-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="2" y="4" width="20" height="16" rx="2" />
+                    <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
+                  </svg>
+                  <input
+                    type="email"
+                    placeholder="you@example.com"
+                    value={form.email}
+                    onChange={(e) => setForm({ ...form, email: e.target.value })}
+                  />
                 </div>
+              </div>
 
-                <div className="heritage-feat-item">
-                  <span className="feat-check">✓</span>
-                  <div>
-                    <strong>Shade-Drying Heritage</strong>
-                    <p>Gentle drying preserves volatile floral oils and medicinal potency.</p>
-                  </div>
-                </div>
-
-                <div className="heritage-feat-item">
-                  <span className="feat-check">✓</span>
-                  <div>
-                    <strong>Daily All-India Speed Dispatch</strong>
-                    <p>Packed fresh and sent via India Post Speed Post & BlueDart.</p>
-                  </div>
+              <div className="contact-input-field split-field msg-field">
+                <label className="input-label">Your Message *</label>
+                <div className="input-wrap textarea-wrap">
+                  <textarea
+                    rows="1"
+                    placeholder="Tell us about your inquiry..."
+                    value={form.message}
+                    onChange={(e) => setForm({ ...form, message: e.target.value })}
+                    required
+                  />
                 </div>
               </div>
             </div>
 
-            <div className="dispatch-guarantee-box">
-              <div className="dispatch-header">
-                <span className="dispatch-icon">🚚</span>
+            {/* Big Green Submit Button */}
+            <button
+              type="submit"
+              className="contact-submit-btn"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? 'Sending Message...' : 'Send Message'}
+            </button>
+
+            {/* Reassurance Footer */}
+            <div className="contact-reassurance-note">
+              <span className="reassurance-check-circle">✓</span>
+              <span>We usually respond within 2 hours via WhatsApp</span>
+            </div>
+          </form>
+        </section>
+
+        {/* Supporting Heritage & Direct Channels Row */}
+        <section className="contact-heritage-split">
+          <div className="heritage-story-box">
+            <span className="heritage-kicker">KADAYAM VILLAGE UNIT</span>
+            <h3>Pure Western Ghats Botanicals</h3>
+            <p>
+              Handcrafted with devotion by rural women SHG artisans in Manthiyoor, Kadayam, Tenkasi District.
+              We shade-dry fresh mountain botanicals at natural room temperatures and stone-mill them with zero artificial additives.
+            </p>
+            <div className="heritage-bullets">
+              <div className="heritage-bullet-item">
+                <span className="bullet-check">✓</span>
+                <span>FSSAI Certified Unit (Lic: {brandInfo.fssai})</span>
+              </div>
+              <div className="heritage-bullet-item">
+                <span className="bullet-check">✓</span>
+                <span>Direct daily dispatch via Speed Post across all Indian PIN codes</span>
+              </div>
+              <div className="heritage-bullet-item">
+                <span className="bullet-check">✓</span>
+                <span>Doctor, clinic, and organic store wholesale supplies welcomed</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="contact-channels-box">
+            <span className="heritage-kicker">DIRECT CHANNELS</span>
+            <h3>Need Instant Assistance?</h3>
+            <p>You can also reach our Kadayam support desk directly via WhatsApp or phone:</p>
+            <div className="direct-channels-list">
+              <a href="https://wa.me/917550248005" target="_blank" rel="noopener noreferrer" className="channel-pill">
+                <span className="channel-icon">💬</span>
                 <div>
-                  <h4>Live Support & Fast Dispatch</h4>
-                  <p>Orders before 2:00 PM are dispatched the same day.</p>
+                  <strong>WhatsApp Chat Support</strong>
+                  <span>+91 75502 48005 (Immediate Reply)</span>
                 </div>
-              </div>
-              <div className="dispatch-pills-row">
-                <span>Free delivery on ₹499+</span>
-                <span>Tamper-proof glass & pouch packs</span>
-                <span>Speedy live tracking</span>
-              </div>
+              </a>
+              <a href="tel:+917550248005" className="channel-pill">
+                <span className="channel-icon">📞</span>
+                <div>
+                  <strong>Direct Calling Desk</strong>
+                  <span>+91 75502 48005 (10 AM - 7 PM)</span>
+                </div>
+              </a>
+              <a href="mailto:crearemindwebsolutions@gmail.com" className="channel-pill">
+                <span className="channel-icon">✉️</span>
+                <div>
+                  <strong>Official Email Desk</strong>
+                  <span>crearemindwebsolutions@gmail.com</span>
+                </div>
+              </a>
             </div>
           </div>
         </section>
 
-        {/* FAQ Accordion Section */}
-        <section className="contact-faq-wrap">
-          <div className="faq-intro">
-            <span className="panel-kicker">Need Quick Answers?</span>
-            <h2>Frequently Asked Questions</h2>
-            <p>Everything you need to know about our products, delivery timelines, and wholesale:</p>
+        {/* FAQ Accordion Section in the Same Elegant Theme */}
+        <section className="contact-faq-section">
+          <div className="faq-header-center">
+            <span className="card-kicker">HAVE QUESTIONS?</span>
+            <h2 className="card-heading">Frequently Asked Questions</h2>
+            <p className="card-subheading">Common queries on orders, delivery timelines, and botanical purity:</p>
           </div>
 
-          <div className="faq-accordion-list">
+          <div className="faq-cards-stack">
             {FAQS.map((faq, idx) => (
               <div
                 key={idx}
-                className={`faq-card-modern ${openFaq === idx ? 'is-active' : ''}`}
+                className={`faq-theme-card ${openFaq === idx ? 'is-open' : ''}`}
                 onClick={() => setOpenFaq(openFaq === idx ? -1 : idx)}
               >
-                <div className="faq-card-question">
+                <div className="faq-theme-card-top">
                   <h4>{faq.q}</h4>
-                  <span className="faq-card-plus">{openFaq === idx ? '−' : '+'}</span>
+                  <span className="faq-toggle-icon">{openFaq === idx ? '−' : '+'}</span>
                 </div>
                 {openFaq === idx && (
-                  <div className="faq-card-answer">
+                  <div className="faq-theme-card-body">
                     <p>{faq.a}</p>
                   </div>
                 )}
@@ -283,6 +386,28 @@ const ContactPage = ({ onOpenAccount }) => {
         </section>
       </main>
 
+      {/* Ending Credit Bar */}
+      <footer className="contact-credit-bar">
+        <div className="contact-credit-inner">
+          <span className="contact-copy-text">
+            © {new Date().getFullYear()} THENEE. All rights reserved.
+          </span>
+          <div className="contact-credit-links">
+            <span className="contact-made-in-india">Made in India</span>
+            <span className="contact-credit-sep">•</span>
+            <a
+              href="https://www.crearemind.in"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="contact-crearemind-link"
+              title="Visit Creare Mind (opens in new tab)"
+            >
+              POWERED BY <strong>CREARE MIND</strong>
+            </a>
+          </div>
+        </div>
+      </footer>
+
       {/* Floating Toast Notification */}
       {toastMsg && (
         <div className="cart-toast" role="status" aria-live="polite">
@@ -290,8 +415,6 @@ const ContactPage = ({ onOpenAccount }) => {
           <span>{toastMsg}</span>
         </div>
       )}
-
-      <Footer />
     </div>
   )
 }

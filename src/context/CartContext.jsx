@@ -56,7 +56,7 @@ export const CartProvider = ({ children }) => {
         try {
           localStorage.removeItem('thenee_oauth_pending')
           localStorage.removeItem('thenee_auth_redirect')
-        } catch {}
+        } catch { }
         if (window.history && window.history.replaceState) {
           window.history.replaceState(null, '', window.location.origin + window.location.pathname + '#login')
         } else {
@@ -72,21 +72,61 @@ export const CartProvider = ({ children }) => {
     const syncSessionUser = (session) => {
       if (!session?.user) return false
       const u = session.user
+
+      let savedContact = ''
+      let savedName = ''
+      let isPrompted = false
+      try {
+        const storedAuth = JSON.parse(localStorage.getItem('thenee_auth_user') || '{}')
+        const storedUser = JSON.parse(localStorage.getItem('thenee_user') || '{}')
+        savedContact = storedAuth.contact || storedUser.contact || storedAuth.phone || storedUser.phone || ''
+        savedName = storedAuth.name || storedUser.name || ''
+        isPrompted = Boolean(storedAuth.profilePrompted || storedUser.profilePrompted)
+      } catch { }
+
+      const cleanEmail = (u.email || '').toLowerCase().trim()
+      try {
+        const rawUsers = localStorage.getItem('thenee_registered_users')
+        if (rawUsers) {
+          const usersList = JSON.parse(rawUsers)
+          const found = usersList.find((usr) => (usr.email || '').toLowerCase().trim() === cleanEmail)
+          if (found?.phone) savedContact = found.phone
+          if (found?.name) savedName = found.name
+          if (found?.profilePrompted) isPrompted = true
+        }
+      } catch { }
+
+      const resolvedName =
+        (savedName && !savedName.includes('@'))
+          ? savedName
+          : u.user_metadata?.full_name || u.user_metadata?.name || u.email?.split('@')[0] || 'Member'
+
+      const resolvedContact = u.phone || u.user_metadata?.phone || savedContact || ''
+
+      let existingPoints = 0
+      try {
+        const savedUser = JSON.parse(localStorage.getItem('thenee_auth_user') || localStorage.getItem('thenee_user') || '{}')
+        if (typeof savedUser?.points === 'number') {
+          existingPoints = savedUser.points
+        }
+      } catch {}
+
       const userData = {
         id: u.id,
-        name: u.user_metadata?.full_name || u.user_metadata?.name || u.email?.split('@')[0] || 'Member',
-        email: u.email || '',
-        contact: u.phone || u.user_metadata?.phone || '',
+        name: resolvedName,
+        email: cleanEmail,
+        contact: resolvedContact,
+        profilePrompted: isPrompted,
         avatar: u.user_metadata?.avatar_url || u.user_metadata?.picture || '',
         authProvider: u.app_metadata?.provider || 'google',
         joinedDate: new Date(u.created_at || Date.now()).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }),
-        points: 100,
+        points: existingPoints,
       }
 
       try {
         localStorage.setItem('thenee_auth_user', JSON.stringify(userData))
         localStorage.setItem('thenee_user', JSON.stringify(userData))
-      } catch {}
+      } catch { }
 
       if (isMounted) {
         setCurrentUser(userData)
@@ -105,7 +145,7 @@ export const CartProvider = ({ children }) => {
           try {
             localStorage.removeItem('thenee_oauth_pending')
             localStorage.removeItem('thenee_auth_redirect')
-          } catch {}
+          } catch { }
 
           // Clean URL parameters in browser history
           if (window.history && window.history.replaceState) {
@@ -168,7 +208,7 @@ export const CartProvider = ({ children }) => {
           localStorage.removeItem('thenee_user')
           localStorage.removeItem('thenee_oauth_pending')
           localStorage.removeItem('thenee_auth_redirect')
-        } catch {}
+        } catch { }
         if (isMounted) {
           setCurrentUser(null)
           setAuthLoading(false)
@@ -182,7 +222,7 @@ export const CartProvider = ({ children }) => {
         setAuthLoading(false)
         try {
           localStorage.removeItem('thenee_oauth_pending')
-        } catch {}
+        } catch { }
       }
     }, 4000)
 
@@ -207,7 +247,7 @@ export const CartProvider = ({ children }) => {
   const logoutUser = () => {
     try {
       if (isSupabaseConfigured) {
-        authService.signOut().catch(() => {})
+        authService.signOut().catch(() => { })
       }
       localStorage.removeItem('thenee_auth_user')
       localStorage.removeItem('thenee_user')

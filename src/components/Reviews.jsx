@@ -36,44 +36,37 @@ const REVIEWS = [
   },
 ]
 
-const Star = ({ filled }) => (
-  <svg width="15" height="15" viewBox="0 0 24 24" fill={filled ? '#C6A15B' : 'none'}>
-    <path
-      d="M12 2.5l2.9 6.4 7 .7-5.3 4.7 1.6 6.9-6.2-3.7-6.2 3.7 1.6-6.9L2.1 9.6l7-.7L12 2.5Z"
-      stroke="#C6A15B"
-      strokeWidth="1.2"
-      strokeLinejoin="round"
-    />
-  </svg>
-)
-
 const Reviews = () => {
   const sectionRef = useReveal([
-    { selector: '.reviews-kicker, .reviews-heading', y: 40, duration: 0.8 },
-    { selector: '.review-card', y: 60, scale: 0.9, duration: 0.7, stagger: 0.1, start: 'top 78%' },
+    { selector: '.reviews-kicker, .reviews-heading', y: 30, duration: 0.7 },
+    { selector: '.review-card', y: 50, duration: 0.75, stagger: 0.1, start: 'top 80%' },
   ])
 
   return (
     <section className="reviews" id="reviews" ref={sectionRef}>
-      <span className="reviews-kicker">16,000+ Customer Family</span>
-      <h2 className="reviews-heading">Loved By Health-Conscious Homes Across India</h2>
-      <div className="reviews-grid">
-        {REVIEWS.map((r) => (
-          <div className="review-card" key={r.name}>
-            <img src={r.image} alt={r.name} className="review-photo" />
-            <div className="review-body">
-              <div className="review-stars">
-                {Array.from({ length: 5 }, (_, i) => (
-                  <Star key={i} filled={i < r.rating} />
-                ))}
+      <div className="reviews-container">
+        <span className="reviews-kicker">16,000+ Customer Family</span>
+        <h2 className="reviews-heading">Loved By Health-Conscious Homes Across India</h2>
+        <div className="reviews-grid">
+          {REVIEWS.map((r) => (
+            <div className="review-card" key={r.name}>
+              <div className="review-photo-wrap">
+                <img src={r.image} alt={r.name} className="review-photo" />
               </div>
-              <span className="review-product-tag">{r.product}</span>
-              <p className="review-text">&ldquo;{r.text}&rdquo;</p>
-              <span className="review-name">{r.name}</span>
-              <span className="review-role">Verified Buyer • {r.location}</span>
+              <div className="review-body">
+                <div className="review-stars">
+                  {'★'.repeat(r.rating)}
+                </div>
+                <span className="review-product-tag">{r.product}</span>
+                <p className="review-text">&ldquo;{r.text}&rdquo;</p>
+                <div className="review-author">
+                  <span className="review-name">{r.name}</span>
+                  <span className="review-role">Verified Buyer • {r.location}</span>
+                </div>
+              </div>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
     </section>
   )

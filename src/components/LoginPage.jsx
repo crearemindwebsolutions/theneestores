@@ -70,7 +70,6 @@ const FourDigitOtpInput = ({ value, onChange, onComplete }) => {
           value={digits[idx]}
           onChange={(e) => handleDigitChange(idx, e.target.value)}
           onKeyDown={(e) => handleKeyDown(idx, e)}
-          autoFocus={idx === 0}
         />
       ))}
     </div>
@@ -595,7 +594,6 @@ const LoginPage = ({ onLoginSuccess, onBack, redirectTarget }) => {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
-                    autoFocus
                   />
                 </div>
 
@@ -693,7 +691,6 @@ const LoginPage = ({ onLoginSuccess, onBack, redirectTarget }) => {
                   value={signupForm.name}
                   onChange={(e) => setSignupForm({ ...signupForm, name: e.target.value })}
                   required
-                  autoFocus
                 />
               </div>
 
@@ -846,7 +843,6 @@ const LoginPage = ({ onLoginSuccess, onBack, redirectTarget }) => {
                   value={forgotEmail}
                   onChange={(e) => setForgotEmail(e.target.value)}
                   required
-                  autoFocus
                 />
                 <span className="pro-field-hint">We will send a 4-digit password reset code to this email</span>
               </div>

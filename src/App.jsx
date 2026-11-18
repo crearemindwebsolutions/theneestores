@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import useLenis from './lib/useLenis'
 import Loader from './components/Loader'
+import Navbar from './components/Navbar'
+import OfferMarquee from './components/OfferMarquee'
 import Hero from './components/Hero'
 import BestSellers from './components/BestSellers'
 import AboutUs from './components/AboutUs'
@@ -102,6 +104,33 @@ const AuthLoadingScreen = () => (
     </p>
   </div>
 )
+
+const STORAGE_KEY_PROMPTED_ACCOUNTS = 'thenee_google_prompted_accounts'
+
+function hasAccountBeenPrompted(email) {
+  if (!email) return true
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY_PROMPTED_ACCOUNTS)
+    const list = raw ? JSON.parse(raw) : []
+    const clean = email.toLowerCase().trim()
+    return list.includes(clean)
+  } catch {
+    return false
+  }
+}
+
+function markAccountAsPrompted(email) {
+  if (!email) return
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY_PROMPTED_ACCOUNTS)
+    const list = raw ? JSON.parse(raw) : []
+    const clean = email.toLowerCase().trim()
+    if (!list.includes(clean)) {
+      list.push(clean)
+      localStorage.setItem(STORAGE_KEY_PROMPTED_ACCOUNTS, JSON.stringify(list))
+    }
+  } catch {}
+}
 
 const AppContent = () => {
   const [route, setRoute] = useState(parseRouteFromHash)
@@ -260,7 +289,11 @@ const AppContent = () => {
       {route === 'contact' && <ContactPage onOpenAccount={navigateToAccount} />}
 
       {route === 'home' && (
-        <>
+        <div className="home-page-wrapper">
+          <OfferMarquee />
+          <header className="site-header-sticky">
+            <Navbar onOpenAccount={navigateToAccount} currentRoute="home" />
+          </header>
           <Hero onOpenAccount={navigateToAccount} />
           <BestSellers />
           <OfferGallery />
@@ -270,21 +303,36 @@ const AppContent = () => {
           <Reviews />
           <PromoOffers />
           <Footer />
-        </>
+        </div>
       )}
 
       <CartDrawer />
       <ProductModal />
 
-      {/* Compulsory Profile Completion for Google Users without Name / Phone */}
-      {isLoggedIn && currentUser && (!currentUser.contact || currentUser.contact.trim() === '' || !currentUser.name || currentUser.name.trim() === '' || currentUser.name.includes('@')) && (
-        <ProfileCompletionModal
-          currentUser={currentUser}
-          onComplete={(updatedUser) => {
-            loginUser(updatedUser)
-          }}
-        />
-      )}
+      {/* 1-Time Profile Completion for Google Sign-Up Users (Prompts only 1 time per account) */}
+      {isLoggedIn &&
+        currentUser?.email &&
+        !currentUser.profilePrompted &&
+        !hasAccountBeenPrompted(currentUser.email) &&
+        (!currentUser.contact || currentUser.contact.trim() === '' || !currentUser.name || currentUser.name.trim() === '' || currentUser.name.includes('@')) && (
+          <ProfileCompletionModal
+            currentUser={currentUser}
+            onComplete={(updatedUser) => {
+              markAccountAsPrompted(currentUser.email)
+              loginUser({
+                ...updatedUser,
+                profilePrompted: true,
+              })
+            }}
+            onClose={() => {
+              markAccountAsPrompted(currentUser.email)
+              loginUser({
+                ...currentUser,
+                profilePrompted: true,
+              })
+            }}
+          />
+        )}
 
       {/* Cart toast notification */}
       {toastMessage && (

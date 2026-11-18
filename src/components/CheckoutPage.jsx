@@ -3,6 +3,7 @@ import { useCart } from '../context/CartContext'
 import { brandInfo } from '../data/products'
 import { orderService } from '../lib/supabase'
 import { sendOrderConfirmationEmail, sendAdminOrderAlertEmail } from '../lib/emailService'
+import { getSavedAddresses, saveAddress, updateAddress } from '../lib/addressService'
 import { ImageWithSkeleton } from './Skeleton'
 import './CheckoutPage.css'
 
@@ -27,6 +28,13 @@ const CheckoutPage = ({ onBack, onOpenAccount }) => {
   const [isProcessingPayment, setIsProcessingPayment] = useState(false)
   const [confirmedOrder, setConfirmedOrder] = useState(null)
 
+  // Saved addresses list & selection state
+  const [savedAddresses, setSavedAddresses] = useState([])
+  const [selectedAddressId, setSelectedAddressId] = useState(null)
+  const [isAddingNewAddress, setIsAddingNewAddress] = useState(false)
+  const [isEditingAddress, setIsEditingAddress] = useState(false)
+  const [saveForFuture, setSaveForFuture] = useState(true)
+
   // Shipping details state (pre-filled from user or saved address)
   const [shippingForm, setShippingForm] = useState({
     name: '',
@@ -41,8 +49,10 @@ const CheckoutPage = ({ onBack, onOpenAccount }) => {
   // Load existing user & address data on mount
   useEffect(() => {
     try {
+      const addrs = getSavedAddresses(currentUser?.email, currentUser?.id)
+      setSavedAddresses(addrs)
+
       const savedUser = localStorage.getItem('thenee_user')
-      const savedAddresses = localStorage.getItem('thenee_addresses')
       let name = currentUser?.name || ''
       let phone = currentUser?.contact || ''
       let email = currentUser?.email || ''
@@ -52,28 +62,84 @@ const CheckoutPage = ({ onBack, onOpenAccount }) => {
       let pincode = ''
 
       if (savedUser) {
-        const u = JSON.parse(savedUser)
-        if (u.name && !name) name = u.name
-        if (u.contact && !phone) phone = u.contact
-        if (u.email && !email) email = u.email
+        try {
+          const u = JSON.parse(savedUser)
+          if (u.name && !name) name = u.name
+          if (u.contact && !phone) phone = u.contact
+          if (u.email && !email) email = u.email
+        } catch {}
       }
-      if (savedAddresses) {
-        const addrs = JSON.parse(savedAddresses)
+
+      if (Array.isArray(addrs) && addrs.length > 0) {
         const def = addrs.find((a) => a.isDefault) || addrs[0]
         if (def) {
+          setSelectedAddressId(def.id)
           if (def.name) name = def.name
           if (def.phone) phone = def.phone
+          if (def.email) email = def.email
           if (def.street) street = def.street
           if (def.city) city = def.city
           if (def.state) state = def.state
           if (def.pincode) pincode = def.pincode
+          setIsAddingNewAddress(false)
+          setIsEditingAddress(false)
         }
+      } else {
+        setIsAddingNewAddress(true)
+        setIsEditingAddress(true)
       }
+
       setShippingForm({ name, phone, email, street, city, state, pincode })
     } catch {
-      // fallback
+      setIsAddingNewAddress(true)
+      setIsEditingAddress(true)
     }
   }, [currentUser])
+
+  // Select an existing address
+  const handleSelectAddress = (addr) => {
+    setSelectedAddressId(addr.id)
+    setIsAddingNewAddress(false)
+    setIsEditingAddress(false)
+    setShippingForm({
+      name: addr.name || currentUser?.name || '',
+      phone: addr.phone || currentUser?.contact || '',
+      email: addr.email || currentUser?.email || '',
+      street: addr.street || '',
+      city: addr.city || '',
+      state: addr.state || 'Tamil Nadu',
+      pincode: addr.pincode || '',
+    })
+  }
+
+  // Add a brand new address directly during checkout
+  const handleStartAddNewAddress = () => {
+    setSelectedAddressId(null)
+    setIsAddingNewAddress(true)
+    setIsEditingAddress(true)
+    setShippingForm({
+      name: currentUser?.name && !currentUser.name.includes('@') ? currentUser.name : '',
+      phone: currentUser?.contact ? currentUser.contact.replace(/\D/g, '').slice(-10) : '',
+      email: currentUser?.email || '',
+      street: '',
+      city: '',
+      state: 'Tamil Nadu',
+      pincode: '',
+    })
+  }
+
+  // Cancel adding new address and switch back to saved address
+  const handleCancelAddNewAddress = () => {
+    if (savedAddresses.length > 0) {
+      const target = savedAddresses.find((a) => a.id === selectedAddressId) || savedAddresses[0]
+      handleSelectAddress(target)
+    }
+  }
+
+  // Toggle editing fields for selected address
+  const handleToggleEditAddress = () => {
+    setIsEditingAddress((prev) => !prev)
+  }
 
   // Apply Coupon
   const handleApplyCoupon = (codeToApply) => {
@@ -101,6 +167,53 @@ const CheckoutPage = ({ onBack, onOpenAccount }) => {
     }
 
     setIsProcessingPayment(true)
+
+    // Automatically store address in database / address book for future orders
+    try {
+      if (savedAddresses.length === 0 || isAddingNewAddress) {
+        if (saveForFuture || savedAddresses.length === 0) {
+          const updated = saveAddress(
+            {
+              name: shippingForm.name,
+              phone: shippingForm.phone,
+              email: shippingForm.email,
+              street: shippingForm.street,
+              city: shippingForm.city,
+              state: shippingForm.state,
+              pincode: shippingForm.pincode,
+              type: 'Home',
+              isDefault: savedAddresses.length === 0,
+            },
+            currentUser?.email,
+            currentUser?.id
+          )
+          if (Array.isArray(updated) && updated.length > 0) {
+            setSavedAddresses(updated)
+            setSelectedAddressId(updated[0].id)
+          }
+        }
+      } else if (selectedAddressId && isEditingAddress && saveForFuture) {
+        const updated = updateAddress(
+          selectedAddressId,
+          {
+            name: shippingForm.name,
+            phone: shippingForm.phone,
+            email: shippingForm.email,
+            street: shippingForm.street,
+            city: shippingForm.city,
+            state: shippingForm.state,
+            pincode: shippingForm.pincode,
+          },
+          currentUser?.email,
+          currentUser?.id
+        )
+        if (Array.isArray(updated) && updated.length > 0) {
+          setSavedAddresses(updated)
+        }
+      }
+    } catch (saveErr) {
+      console.warn('Address auto-save notice:', saveErr)
+    }
 
     const orderId = `#THN-${Math.floor(80000 + Math.random() * 19000)}`
     const awbId = `INP${Math.floor(800000000 + Math.random() * 190000000)}TN`
@@ -403,85 +516,204 @@ const CheckoutPage = ({ onBack, onOpenAccount }) => {
                   </div>
                 </div>
 
-                <div className="checkout-form-grid">
-                  <div className="form-field-row">
-                    <div className="form-field">
-                      <label>Full Name *</label>
-                      <input
-                        type="text"
-                        value={shippingForm.name}
-                        onChange={(e) => setShippingForm({ ...shippingForm, name: e.target.value })}
-                        placeholder="Receiver's Full Name"
-                        required
-                      />
+                {/* SAVED ADDRESS SELECTOR (When saved addresses exist) */}
+                {savedAddresses.length > 0 && (
+                  <div className="checkout-saved-addresses-block">
+                    <div className="checkout-addresses-header-row">
+                      <span className="checkout-saved-badge">
+                        📍 Saved in your Address Book ({savedAddresses.length})
+                      </span>
+                      {!isAddingNewAddress ? (
+                        <button
+                          type="button"
+                          className="checkout-add-new-pill-btn"
+                          onClick={handleStartAddNewAddress}
+                        >
+                          + Add New Address
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          className="checkout-cancel-new-btn"
+                          onClick={handleCancelAddNewAddress}
+                        >
+                          ← Use Saved Address
+                        </button>
+                      )}
                     </div>
-                    <div className="form-field">
-                      <label>Mobile Number (+91) *</label>
-                      <input
-                        type="tel"
-                        value={shippingForm.phone}
-                        onChange={(e) => setShippingForm({ ...shippingForm, phone: e.target.value })}
-                        placeholder="10-digit mobile number"
-                        required
-                      />
-                    </div>
-                  </div>
 
-                  <div className="form-field">
-                    <label>Email Address (For Order Tracking Receipt)</label>
-                    <input
-                      type="email"
-                      value={shippingForm.email}
-                      onChange={(e) => setShippingForm({ ...shippingForm, email: e.target.value })}
-                      placeholder="yourname@gmail.com"
-                    />
-                  </div>
+                    {!isAddingNewAddress && (
+                      <div className="checkout-address-cards-grid">
+                        {savedAddresses.map((addr) => {
+                          const isSelected = selectedAddressId === addr.id
+                          return (
+                            <div
+                              key={addr.id}
+                              className={`checkout-addr-card ${isSelected ? 'is-selected' : ''}`}
+                              onClick={() => handleSelectAddress(addr)}
+                            >
+                              <div className="checkout-addr-card-top">
+                                <div className="checkout-addr-radio-wrap">
+                                  <span className={`checkout-addr-radio ${isSelected ? 'checked' : ''}`} />
+                                  <span className="checkout-addr-type-chip">{addr.type || 'Home'}</span>
+                                  {addr.isDefault && <span className="checkout-addr-def-chip">Default</span>}
+                                </div>
+                                {isSelected && (
+                                  <button
+                                    type="button"
+                                    className="checkout-addr-edit-btn"
+                                    onClick={(e) => {
+                                      e.stopPropagation()
+                                      handleToggleEditAddress()
+                                    }}
+                                  >
+                                    {isEditingAddress ? 'Done Editing' : '✏️ Modify for this order'}
+                                  </button>
+                                )}
+                              </div>
 
-                  <div className="form-field">
-                    <label>House / Flat / Street Address *</label>
-                    <input
-                      type="text"
-                      value={shippingForm.street}
-                      onChange={(e) => setShippingForm({ ...shippingForm, street: e.target.value })}
-                      placeholder="Door no., Apartment, Street name, Landmark"
-                      required
-                    />
-                  </div>
+                              <div className="checkout-addr-card-body">
+                                <strong className="checkout-addr-name">{addr.name}</strong>
+                                <p className="checkout-addr-line">{addr.street}</p>
+                                <p className="checkout-addr-line">
+                                  {addr.city}, {addr.state} - <strong>{addr.pincode}</strong>
+                                </p>
+                                <p className="checkout-addr-phone">📞 +91 {addr.phone}</p>
+                              </div>
 
-                  <div className="form-field-row three-cols">
+                              {isSelected && !isEditingAddress && (
+                                <div className="checkout-addr-selected-tag">
+                                  ✓ Selected for Delivery
+                                </div>
+                              )}
+                            </div>
+                          )
+                        })}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* FORM FIELDS: Shown when adding new, editing selected, or no saved addresses */}
+                {(savedAddresses.length === 0 || isAddingNewAddress || isEditingAddress) && (
+                  <div className="checkout-form-grid animated-fade-in">
+                    {isAddingNewAddress && savedAddresses.length > 0 && (
+                      <div className="checkout-adding-new-header">
+                        <div className="checkout-adding-new-title">
+                          <strong>➕ Entering New Delivery Address</strong>
+                          <span>This order will be dispatched to this new address.</span>
+                        </div>
+                      </div>
+                    )}
+
+                    {isEditingAddress && !isAddingNewAddress && (
+                      <div className="checkout-editing-hint">
+                        <span>✏️ You are modifying the delivery details for this order:</span>
+                      </div>
+                    )}
+
+                    <div className="form-field-row">
+                      <div className="form-field">
+                        <label>Full Name *</label>
+                        <input
+                          type="text"
+                          value={shippingForm.name}
+                          onChange={(e) => setShippingForm({ ...shippingForm, name: e.target.value })}
+                          placeholder="Receiver's Full Name"
+                          required
+                        />
+                      </div>
+                      <div className="form-field">
+                        <label>Mobile Number (+91) *</label>
+                        <input
+                          type="tel"
+                          maxLength={10}
+                          value={shippingForm.phone}
+                          onChange={(e) => setShippingForm({ ...shippingForm, phone: e.target.value.replace(/\D/g, '') })}
+                          placeholder="10-digit mobile number"
+                          required
+                        />
+                      </div>
+                    </div>
+
                     <div className="form-field">
-                      <label>City / Town *</label>
+                      <label>Email Address (For Order Tracking Receipt)</label>
+                      <input
+                        type="email"
+                        value={shippingForm.email}
+                        onChange={(e) => setShippingForm({ ...shippingForm, email: e.target.value })}
+                        placeholder="yourname@gmail.com"
+                      />
+                    </div>
+
+                    <div className="form-field">
+                      <label>House / Flat / Street Address *</label>
                       <input
                         type="text"
-                        value={shippingForm.city}
-                        onChange={(e) => setShippingForm({ ...shippingForm, city: e.target.value })}
-                        placeholder="e.g. Tenkasi"
+                        value={shippingForm.street}
+                        onChange={(e) => setShippingForm({ ...shippingForm, street: e.target.value })}
+                        placeholder="Door no., Apartment, Street name, Landmark"
                         required
                       />
                     </div>
-                    <div className="form-field">
-                      <label>State *</label>
-                      <input
-                        type="text"
-                        value={shippingForm.state}
-                        onChange={(e) => setShippingForm({ ...shippingForm, state: e.target.value })}
-                        placeholder="Tamil Nadu"
-                        required
-                      />
+
+                    <div className="form-field-row three-cols">
+                      <div className="form-field">
+                        <label>City / Town *</label>
+                        <input
+                          type="text"
+                          value={shippingForm.city}
+                          onChange={(e) => setShippingForm({ ...shippingForm, city: e.target.value })}
+                          placeholder="e.g. Tenkasi"
+                          required
+                        />
+                      </div>
+                      <div className="form-field">
+                        <label>State *</label>
+                        <input
+                          type="text"
+                          value={shippingForm.state}
+                          onChange={(e) => setShippingForm({ ...shippingForm, state: e.target.value })}
+                          placeholder="Tamil Nadu"
+                          required
+                        />
+                      </div>
+                      <div className="form-field">
+                        <label>Pincode *</label>
+                        <input
+                          type="text"
+                          maxLength={6}
+                          value={shippingForm.pincode}
+                          onChange={(e) => setShippingForm({ ...shippingForm, pincode: e.target.value.replace(/\D/g, '') })}
+                          placeholder="6-digit PIN"
+                          required
+                        />
+                      </div>
                     </div>
-                    <div className="form-field">
-                      <label>Pincode *</label>
-                      <input
-                        type="text"
-                        maxLength={6}
-                        value={shippingForm.pincode}
-                        onChange={(e) => setShippingForm({ ...shippingForm, pincode: e.target.value })}
-                        placeholder="6-digit PIN"
-                        required
-                      />
+
+                    <div className="checkout-save-address-row">
+                      <label className="checkout-save-checkbox-label">
+                        <input
+                          type="checkbox"
+                          checked={saveForFuture}
+                          onChange={(e) => setSaveForFuture(e.target.checked)}
+                        />
+                        <span>
+                          {savedAddresses.length === 0
+                            ? 'Save this address in my account for 1-tap reordering'
+                            : isAddingNewAddress
+                            ? 'Save this new address in my account for future orders'
+                            : 'Save these updates to my address book for future orders'}
+                        </span>
+                      </label>
+                      {savedAddresses.length === 0 && (
+                        <span className="checkout-auto-save-hint">
+                          🌿 Because this is your first delivery address, it will be automatically remembered so your future checkouts are instant. You can also add or edit addresses anytime in your Account page.
+                        </span>
+                      )}
                     </div>
                   </div>
-                </div>
+                )}
               </section>
             </div>
 

@@ -10,14 +10,16 @@
   color: var(--text-primary, #2A2A2A);
 }
 
+.site-header-sticky,
 .page-header-nav-wrap {
   position: sticky;
   top: 0;
-  z-index: 100;
+  z-index: 1000;
   background: rgba(255, 255, 255, 0.96);
-  backdrop-filter: blur(10px);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
   border-bottom: 1px solid var(--border-color, #E8EFE3);
-  box-shadow: 0 4px 20px rgba(49, 84, 58, 0.04);
+  box-shadow: 0 2px 14px rgba(49, 84, 58, 0.04);
 }
 
 /* Page Hero Banner */

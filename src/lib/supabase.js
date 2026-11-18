@@ -240,7 +240,7 @@ export const orderService = {
       .eq('user_id', userId)
       .order('created_at', { ascending: false })
 
-    if (error || !data || data.length === 0) {
+    if (error) {
       try {
         const local = JSON.parse(localStorage.getItem('thenee_user_orders') || '[]')
         return { data: local, error }
@@ -250,7 +250,7 @@ export const orderService = {
     }
 
     // Normalize database rows to match UI expectations
-    const normalized = data.map((row) => ({
+    const normalized = (data || []).map((row) => ({
       id: row.order_number || row.id,
       date: new Date(row.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
       items: row.items || [],
@@ -355,7 +355,7 @@ export const adminService = {
       }
     }
 
-    // Load locally saved orders
+    // Load locally saved orders (placed via CheckoutPage)
     let localOrders = []
     try {
       const all = JSON.parse(localStorage.getItem('thenee_all_orders') || '[]')
@@ -363,74 +363,7 @@ export const adminService = {
       localOrders = [...all, ...userList]
     } catch {}
 
-    // Initial store seed orders so admin dashboard is never empty and ready to test
-    const seedOrders = [
-      {
-        order_number: 'THN-884102',
-        customer_name: 'Dr. Anand Raman',
-        customer_phone: '+91 98412 55019',
-        customer_email: 'anand.raman@gmail.com',
-        items: [
-          { name: 'Thenee Herbal Tea', volume: '100g Pouch & Jar', price: 299, quantity: 2 },
-          { name: 'Garlic Powder', volume: '100g Pouch', price: 180, quantity: 1 },
-        ],
-        subtotal: 778,
-        discount: 50,
-        delivery_fee: 0,
-        total_amount: 728,
-        shipping_address: { street: '14, Anna Salai, Alwarpet', city: 'Chennai', state: 'Tamil Nadu', pincode: '600018' },
-        payment_method: 'UPI (GPay / PhonePe)',
-        payment_status: 'paid',
-        order_status: 'Dispatched',
-        tracking_awb: 'SP84729103IN',
-        courier: 'India Post Speed Post',
-        created_at: new Date(Date.now() - 24 * 3600 * 1000).toISOString(),
-      },
-      {
-        order_number: 'THN-884095',
-        customer_name: 'Meenakshi Sundaram',
-        customer_phone: '+91 94431 82040',
-        customer_email: 'meena.sundaram@yahoo.com',
-        items: [
-          { name: 'Traditional Food Podis (Set of 4 Jars)', volume: '4 × 100g Glass Jars', price: 699, quantity: 1 },
-          { name: 'Thenee Bliss Tea', volume: '75g Floral Blend', price: 349, quantity: 1 },
-        ],
-        subtotal: 1048,
-        discount: 100,
-        delivery_fee: 0,
-        total_amount: 948,
-        shipping_address: { street: '42, West Car Street', city: 'Madurai', state: 'Tamil Nadu', pincode: '625001' },
-        payment_method: 'Online Payment',
-        payment_status: 'paid',
-        order_status: 'Confirmed',
-        tracking_awb: '',
-        courier: 'India Post Speed Post',
-        created_at: new Date(Date.now() - 6 * 3600 * 1000).toISOString(),
-      },
-      {
-        order_number: 'THN-883981',
-        customer_name: 'Suresh Narayanan',
-        customer_phone: '+91 97890 12345',
-        customer_email: 'suresh.n@outlook.com',
-        items: [
-          { name: 'Pure Moringa Powder', volume: '150g Natural Pouch', price: 249, quantity: 3 },
-        ],
-        subtotal: 747,
-        discount: 0,
-        delivery_fee: 0,
-        total_amount: 747,
-        shipping_address: { street: '88, 100ft Road, Indiranagar', city: 'Bengaluru', state: 'Karnataka', pincode: '560038' },
-        payment_method: 'Credit Card',
-        payment_status: 'paid',
-        order_status: 'Delivered',
-        tracking_awb: 'SP72019483IN',
-        courier: 'India Post Speed Post',
-        created_at: new Date(Date.now() - 4 * 24 * 3600 * 1000).toISOString(),
-      },
-    ]
-
     const orderMap = new Map()
-    seedOrders.forEach((so) => orderMap.set(so.order_number, so))
 
     localOrders.forEach((lo) => {
       const num = lo.order_number || lo.order_id || lo.id

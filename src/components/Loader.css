@@ -1,127 +1,176 @@
+/* ==========================================================================
+   Intro Loader Screen - Minimalist Warm Ivory Botanical Aesthetic
+   ========================================================================== */
+
 .loader {
   position: fixed;
   inset: 0;
   z-index: 100000;
-  background: var(--bg-main);
+  background: #FAF9F6;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: transform 0.75s cubic-bezier(0.85, 0, 0.15, 1);
+  transition: opacity 0.65s cubic-bezier(0.85, 0, 0.15, 1), transform 0.65s cubic-bezier(0.85, 0, 0.15, 1);
 }
 
 .loader.is-exiting {
-  transform: translateY(-100%);
+  opacity: 0;
+  transform: translateY(-20px);
   pointer-events: none;
 }
 
+/* 4-Corner Watercolor Botanical Watermarks */
+.loader-botanical-bg {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  overflow: hidden;
+}
+
+.loader-botanical-svg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
 .loader-inner {
+  position: relative;
+  z-index: 2;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 20px;
+  text-align: center;
 }
 
 .loader-logo {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 16px;
+  margin-bottom: 22px;
 }
 
 .loader-logo-img {
-  width: 64px;
-  height: 64px;
+  width: 54px;
+  height: 54px;
   border-radius: 50%;
-  border: 1.5px solid var(--border-color);
-  background: #FFFFFF;
-  box-shadow: 0 8px 24px rgba(49, 84, 58, 0.12);
+  object-fit: cover;
+  display: block;
+  box-shadow: 0 4px 14px rgba(31, 63, 41, 0.12);
 }
 
 .loader-brand-title {
   display: flex;
   flex-direction: column;
+  text-align: left;
 }
 
-.loader-brand-title span {
-  font-family: var(--font-body);
-  font-size: 2.1rem;
-  font-weight: 800;
-  color: var(--color-primary);
-  line-height: 1;
-  letter-spacing: 0.08em;
+.loader-brand-title .loader-brand-name {
+  font-family: var(--font-serif, 'Playfair Display', serif);
+  font-style: italic;
+  font-size: 2.5rem;
+  font-weight: 600;
+  color: #1F3F29;
+  line-height: 1.05;
+  letter-spacing: 0.02em;
 }
 
 .loader-brand-title small {
-  font-size: 0.8rem;
-  color: var(--color-secondary);
-  font-weight: 600;
-  letter-spacing: 0.02em;
+  font-family: var(--font-body, 'Poppins', sans-serif);
+  font-size: 0.88rem;
+  color: #586F5F;
+  font-weight: 400;
+  letter-spacing: 0.08em;
   margin-top: 4px;
+  line-height: 1.2;
 }
 
 .loader-bar {
-  width: 220px;
-  height: 4px;
-  background: var(--border-color);
+  position: relative;
+  width: 260px;
+  height: 3px;
+  background: #EAE3D5;
   border-radius: 999px;
-  overflow: hidden;
+  overflow: visible;
+  margin-bottom: 18px;
 }
 
 .loader-bar-fill {
-  width: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
   height: 100%;
-  background: linear-gradient(90deg, var(--color-accent), var(--color-primary));
+  width: 0%;
+  background: #1F3F29;
   border-radius: 999px;
-  transform: translateX(-100%);
-  animation: load 1.2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  animation: loadProgress 1.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.loader-bar-dot {
+  position: absolute;
+  right: -3.5px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 7px;
+  height: 7px;
+  background: #C49E60;
+  border-radius: 50%;
+  box-shadow: 0 0 4px rgba(196, 158, 96, 0.5);
+  display: block;
 }
 
 .loader-kicker {
-  font-size: 0.75rem;
-  color: var(--text-secondary);
-  letter-spacing: 0.05em;
+  font-family: var(--font-body, 'Poppins', sans-serif);
+  font-size: 0.68rem;
+  color: #4F6456;
+  letter-spacing: 0.18em;
   text-transform: uppercase;
   font-weight: 600;
+  line-height: 1;
 }
 
-@keyframes load {
-  0% { transform: translateX(-100%); }
-  50% { transform: translateX(-30%); }
-  100% { transform: translateX(0%); }
-}
-
-/* Mobile Responsiveness - Compact & Smaller Intro */
-@media (max-width: 600px) {
-  .loader-inner {
-    gap: 12px;
+@keyframes loadProgress {
+  0% {
+    width: 0%;
   }
+  65% {
+    width: 60%;
+  }
+  100% {
+    width: 100%;
+  }
+}
 
+/* Mobile Responsiveness */
+@media (max-width: 600px) {
   .loader-logo {
-    gap: 10px;
+    gap: 12px;
+    margin-bottom: 16px;
   }
 
   .loader-logo-img {
     width: 44px;
     height: 44px;
-    box-shadow: 0 4px 14px rgba(49, 84, 58, 0.1);
   }
 
-  .loader-brand-title span {
-    font-size: 1.45rem;
-    letter-spacing: 0.06em;
+  .loader-brand-title .loader-brand-name {
+    font-size: 1.85rem;
+    letter-spacing: 0.01em;
   }
 
   .loader-brand-title small {
-    font-size: 0.65rem;
-    margin-top: 2px;
+    font-size: 0.78rem;
+    margin-top: 3px;
   }
 
   .loader-bar {
-    width: 150px;
+    width: 170px;
     height: 3px;
+    margin-bottom: 14px;
   }
 
   .loader-kicker {
-    font-size: 0.6rem;
-    letter-spacing: 0.04em;
+    font-size: 0.62rem;
+    letter-spacing: 0.12em;
   }
 }
