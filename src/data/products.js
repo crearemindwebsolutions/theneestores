@@ -224,7 +224,20 @@ export const individualPodis = [
     cardImage: '/images/custom_thenee/garlic-podi.jpg',
     shortDesc: 'Roasted village garlic for hot steamed rice & ghee.',
     desc: 'A flavorful, aromatic blend rich in natural antioxidants. Known to support gut health, lower bad cholesterol, and boost daily immunity while providing a rich, savory kick.',
+    description: 'THENEE Garlic Powder is a traditional hand-roasted digestive blend made from authentic village garlic and spices. Slow-roasted over firewood in Kadayam, it protects gut microflora, reduces acidity, and brings authentic South Indian home aroma to hot steamed rice with country ghee.',
     benefits: ['Supports gut health', 'Lowers bad cholesterol', 'Boosts daily immunity', 'Rich savory kick'],
+    keyBenefits: [
+      { title: 'Supports Gut & Digestive Health', desc: 'Natural allicin in roasted garlic calms acid reflux, reduces bloating, and improves gut microflora.' },
+      { title: 'Lowers Bad Cholesterol', desc: 'Promotes heart health and healthy lipid profiles when consumed as part of daily meals.' },
+      { title: 'Boosts Natural Immunity', desc: 'Rich in sulfur compounds and plant antioxidants to protect against seasonal infections.' },
+      { title: 'Savory & Comforting Kick', desc: 'Aromatic roasted garlic flavor that pairs perfectly with hot rice, idli, dosai, or curries.' },
+    ],
+    howToUse: [
+      'Mix 1–2 teaspoons with warm cooked rice and a spoonful of cold-pressed sesame oil or pure ghee.',
+      'Sprinkle generously over hot crispy dosas, idlis, or uthappams.',
+      'Add as a natural digestive seasoning to rasam, vegetable stir-fries, and dal.',
+    ],
+    ingredients: 'Country Garlic, Roasted Gram (Urad Dal, Chana Dal), Red Chilies, Cumin, Asafoetida (Hing), Himalayan Rock Salt',
   },
   {
     id: 'curry-leaves-podi',
@@ -244,7 +257,20 @@ export const individualPodis = [
     cardImage: '/images/custom_thenee/curry-leaves-podi.jpg',
     shortDesc: 'Freshly ground curry leaves rich in natural iron.',
     desc: 'Loaded with iron, essential vitamins, and plant antioxidants. Helps improve vision, promotes hair growth, and supports smooth digestion.',
+    description: 'THENEE Curry Leaves Powder is handcrafted from fresh, tender village curry leaves harvested from the foothills of the Western Ghats. Sun-dried and gently roasted with traditional pulses, it is naturally loaded with plant-based iron, essential vitamins, and potent antioxidants to nurture hair growth, vision, and iron levels.',
     benefits: ['Rich in natural iron', 'Promotes dense hair growth', 'Enhances vision', 'Aids smooth digestion'],
+    keyBenefits: [
+      { title: 'Rich in Natural Plant Iron', desc: 'Naturally combats iron deficiency and improves hemoglobin without synthetic supplements.' },
+      { title: 'Promotes Dense Hair Growth', desc: 'High beta-carotene and amino acid content nourish hair follicles and prevent premature graying.' },
+      { title: 'Enhances Vision & Eye Health', desc: 'Packed with natural Vitamin A to protect eye cells and relieve screen strain.' },
+      { title: 'Aids Smooth Daily Digestion', desc: 'Carminative properties stimulate digestive enzymes and soothe intestinal walls.' },
+    ],
+    howToUse: [
+      'Take 1–2 tablespoons with hot steamed rice and a spoonful of pure cow ghee or sesame oil for lunch.',
+      'Serve as a nutritious dry chutney side for soft idlis, dosas, and appams.',
+      'Stir into fresh buttermilk with a pinch of rock salt for a cooling, iron-rich afternoon drink.',
+    ],
+    ingredients: 'Fresh Mountain Curry Leaves, Urad Dal, Bengal Gram, Black Pepper, Cumin Seeds, Dry Red Chilies, Asafoetida, Rock Salt',
   },
   {
     id: 'moringa-podi',
@@ -264,7 +290,20 @@ export const individualPodis = [
     cardImage: '/images/custom_thenee/moringa-podi.jpg',
     shortDesc: 'Green superfood for natural metabolism & energy.',
     desc: 'A green superfood rich in essential minerals, protein, and vitamins. Aids in balancing heat, boosting metabolism, and enhancing natural energy.',
+    description: 'THENEE Moringa Leaves Podi is made from tender, shade-dried drumstick tree leaves sourced from pesticide-free village groves in Tenkasi. Renowned as nature’s most complete botanical multivitamin, it provides bioavailable calcium, plant protein, and essential minerals to balance core body heat and sustain day-long vitality.',
     benefits: ['Balances internal body heat', 'Boosts metabolism', 'Rich in natural protein', 'Pure village greens'],
+    keyBenefits: [
+      { title: 'Complete Green Multivitamin', desc: 'Loaded with 7x the Vitamin C of oranges and 4x the calcium of milk in natural plant form.' },
+      { title: 'Balances Internal Body Heat', desc: 'Gently cools the internal digestive tract and relieves heat-induced fatigue.' },
+      { title: 'Sustained Metabolic Energy', desc: 'Plant-based amino acids and chlorophyll provide clean stamina without caffeine.' },
+      { title: 'Joint & Bone Density Support', desc: 'High bio-calcium and phosphorus nurture bone strength and ease joint stiffness.' },
+    ],
+    howToUse: [
+      'Mix 1–2 teaspoons into steaming hot rice with a dollop of ghee or cold-pressed sesame oil.',
+      'Sprinkle over roasted vegetables, salads, or avocado toast for an instant superfood boost.',
+      'Mix into curd rice or buttermilk for a soothing, nutrient-dense meal finisher.',
+    ],
+    ingredients: 'Shade-Dried Moringa Leaves, Split Urad Dal, Chana Dal, Cumin, Pepper, Dry Red Chilies, Asafoetida, Rock Salt',
   },
   {
     id: 'sesame-podi',
@@ -284,7 +323,20 @@ export const individualPodis = [
     cardImage: '/images/custom_thenee/sesame-podi.jpg',
     shortDesc: 'Slow-roasted sesame rich in bone-healthy calcium.',
     desc: 'Made from premium roasted sesame seeds packed with healthy fats, calcium, and iron. Promotes bone strength, sustained energy, and heart health.',
+    description: 'THENEE Sesame Powder (Ellu Podi) is crafted from heritage black sesame seeds, slow-roasted in iron pans to preserve natural lignans and healthy fats. Revered in traditional village nutrition for building bone density, hormone balance, and deep cellular strength.',
     benefits: ['High natural calcium', 'Promotes bone density', 'Heart-healthy fats', 'Sustained energy'],
+    keyBenefits: [
+      { title: 'Highest Natural Plant Calcium', desc: 'One of the richest botanical sources of calcium, vital for bone density and joint mobility.' },
+      { title: 'Hormonal Balance & Vitality', desc: 'Natural sesamin lignans support healthy estrogen balance and cyclical wellness.' },
+      { title: 'Healthy Fats for Heart & Skin', desc: 'Monounsaturated and polyunsaturated fats nourish radiant skin and support cardiovascular flow.' },
+      { title: 'Rich Nutty Roasted Flavor', desc: 'Deep, earthy aroma and crunchy texture that elevates any simple traditional meal.' },
+    ],
+    howToUse: [
+      'Enjoy 1 spoonful mixed with hot rice and sesame oil at the beginning of lunch.',
+      'Perfect accompaniment for idli, dosai, or adai with a touch of cold-pressed oil.',
+      'Roll into small nutritious wellness balls with palm jaggery for an evening energy bite.',
+    ],
+    ingredients: 'Heritage Black Sesame Seeds, Roasted Urad Dal, Dry Red Chilies, Cumin, Pure Asafoetida, Sea Salt',
   },
 ]
 

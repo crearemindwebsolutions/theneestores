@@ -7,11 +7,8 @@ import LoginPage from './LoginPage'
 import Footer from './Footer'
 import './AccountPage.css'
 
-const COUPONS = [
-  { code: 'HERBALFIRST', discount: '15% OFF', desc: 'Valid on your first order above ₹399', minOrder: 399 },
-  { code: 'ROOTS50', discount: 'Flat ₹50 OFF', desc: 'Flat discount on all herbal teas & podis', minOrder: 499 },
-  { code: 'FREESHIP', discount: 'Free Shipping', desc: 'Zero delivery fee across Tamil Nadu', minOrder: 299 },
-]
+// Active coupon vouchers (demo codes removed until store owner creates active campaigns)
+const COUPONS = []
 
 const TAB_TITLES = {
   orders: 'My Orders & Consignments',
@@ -935,23 +932,33 @@ const AccountPage = ({ onBack, onLogout, initialTab = 'hub' }) => {
 
               <div className="content-section">
                 <h3>Active Herbal Vouchers & Coupons</h3>
-                <div className="coupons-grid">
-                  {COUPONS.map((c) => (
-                    <div className="coupon-card" key={c.code}>
-                      <div className="coupon-left">
-                        <span className="coupon-discount">{c.discount}</span>
-                        <strong className="coupon-code-pill">{c.code}</strong>
-                        <p className="coupon-desc">{c.desc}</p>
+                {COUPONS.length === 0 ? (
+                  <div className="empty-state-card" style={{ padding: '32px 20px', textAlign: 'center', background: '#FAFAFA', borderRadius: '14px', border: '1px dashed #D0DDD0' }}>
+                    <div style={{ fontSize: '2.2rem', marginBottom: '8px' }}>🎟️</div>
+                    <h4 style={{ fontSize: '1rem', color: '#1B3524', marginBottom: '4px' }}>No active coupon vouchers right now</h4>
+                    <p style={{ color: '#5C6E60', fontSize: '0.82rem', maxWidth: '360px', margin: '0 auto' }}>
+                      Seasonal discounts, festive voucher codes, and special promotions will appear here when announced.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="coupons-grid">
+                    {COUPONS.map((c) => (
+                      <div className="coupon-card" key={c.code}>
+                        <div className="coupon-left">
+                          <span className="coupon-discount">{c.discount}</span>
+                          <strong className="coupon-code-pill">{c.code}</strong>
+                          <p className="coupon-desc">{c.desc}</p>
+                        </div>
+                        <button
+                          className={`btn-copy-code ${copiedCoupon === c.code ? 'copied' : ''}`}
+                          onClick={() => handleCopyCoupon(c.code)}
+                        >
+                          {copiedCoupon === c.code ? '✓ Copied!' : 'Copy Code'}
+                        </button>
                       </div>
-                      <button
-                        className={`btn-copy-code ${copiedCoupon === c.code ? 'copied' : ''}`}
-                        onClick={() => handleCopyCoupon(c.code)}
-                      >
-                        {copiedCoupon === c.code ? '✓ Copied!' : 'Copy Code'}
-                      </button>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
               <div className="referral-banner">

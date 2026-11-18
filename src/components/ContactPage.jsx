@@ -97,65 +97,6 @@ const ContactPage = ({ onOpenAccount }) => {
       </section>
 
       <main className="contact-main-content">
-        {/* Quick Connect Cards Grid */}
-        <section className="contact-quick-grid">
-          {/* WhatsApp Card (Primary) */}
-          <div className="contact-quick-card card-whatsapp">
-            <div className="quick-card-icon-wrap wa-icon-wrap">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M12.031 2C6.495 2 2 6.495 2 12.031c0 1.905.534 3.684 1.46 5.203L2 22l4.908-1.423c1.467.848 3.169 1.332 5.003 1.332 5.536 0 10.031-4.495 10.031-10.031S17.567 2 12.031 2zm5.795 14.282c-.244.686-1.421 1.31-1.956 1.393-.509.079-1.157.112-3.344-.793-2.603-1.077-4.269-3.743-4.399-3.916-.13-.173-1.048-1.396-1.048-2.662 0-1.266.663-1.89.897-2.146.234-.256.512-.32.684-.32.171 0 .343.003.493.011.161.008.375-.061.587.448.221.53.754 1.838.819 1.97.065.132.109.287.022.46-.087.173-.13.28-.26.43-.13.152-.274.34-.391.456-.13.13-.265.27-.114.53.151.26.673 1.109 1.442 1.794.99.882 1.825 1.156 2.085 1.286.26.13.412.109.564-.065.152-.174.651-.758.825-1.018.174-.26.347-.217.586-.13.239.087 1.52.716 1.781.847.26.13.434.195.499.304.065.109.065.63-.179 1.316z" />
-              </svg>
-            </div>
-            <div className="quick-card-body">
-              <span className="quick-badge-live">Direct Chat</span>
-              <h3>WhatsApp Support</h3>
-              <p>Instant answers, custom gift hampers & reorders.</p>
-              <a
-                href={`https://wa.me/${brandInfo.whatsapp.replace(/\D/g, '')}?text=Hello%20THENEE%2C%20I%20have%20an%20inquiry.`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="btn-quick-wa"
-              >
-                Chat on WhatsApp ➔
-              </a>
-            </div>
-          </div>
-
-          {/* Phone Call Card */}
-          <div className="contact-quick-card">
-            <div className="quick-card-icon-wrap">📞</div>
-            <div className="quick-card-body">
-              <h3>Phone Hotline</h3>
-              <p>Mon to Sat • 9:00 AM to 7:00 PM</p>
-              <a href={`tel:${brandInfo.whatsapp}`} className="quick-card-link">
-                +91 75502 48005
-              </a>
-            </div>
-          </div>
-
-          {/* Email Card */}
-          <div className="contact-quick-card">
-            <div className="quick-card-icon-wrap">✉️</div>
-            <div className="quick-card-body">
-              <h3>Email Helpdesk</h3>
-              <p>For orders, clinic tie-ups & bulk invoices.</p>
-              <a href="mailto:theenenterprises2024@gmail.com" className="quick-card-link">
-                theenenterprises2024@gmail.com
-              </a>
-            </div>
-          </div>
-
-          {/* Heritage Unit Card */}
-          <div className="contact-quick-card">
-            <div className="quick-card-icon-wrap">📍</div>
-            <div className="quick-card-body">
-              <h3>Tenkasi Heritage Unit</h3>
-              <p>Manthiyoor, Kadayam, Tenkasi District, TN - 627415</p>
-              <span className="quick-card-fssai">FSSAI Lic. #{brandInfo.fssai}</span>
-            </div>
-          </div>
-        </section>
-
         {/* 2-Column Main Layout: Message Form (Left) & Heritage Showcase (Right) */}
         <section className="contact-main-split">
           {/* Left: Interactive Form */}

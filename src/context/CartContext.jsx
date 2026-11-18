@@ -94,15 +94,8 @@ export const CartProvider = ({ children }) => {
 
   const isLoggedIn = !!currentUser
 
-  // Applied Coupon state
-  const [appliedCoupon, setAppliedCoupon] = useState(() => {
-    try {
-      const saved = localStorage.getItem('thenee_applied_coupon')
-      return saved ? JSON.parse(saved) : null
-    } catch {
-      return null
-    }
-  })
+  // Applied Coupon state (cleared until store owner configures active campaigns)
+  const [appliedCoupon, setAppliedCoupon] = useState(null)
 
   useEffect(() => {
     try {
@@ -189,18 +182,17 @@ export const CartProvider = ({ children }) => {
   const amountToFreeShipping = Math.max(0, freeShippingThreshold - subtotal)
   const isFreeShipping = subtotal >= freeShippingThreshold
 
-  const VALID_COUPONS = {
-    HERBALFIRST: { code: 'HERBALFIRST', type: 'percent', value: 15, desc: '15% OFF on your order', minOrder: 0 },
-    ROOTS50: { code: 'ROOTS50', type: 'flat', value: 50, desc: 'Flat ₹50 OFF on orders above ₹499', minOrder: 499 },
-    FREESHIP: { code: 'FREESHIP', type: 'shipping', value: 40, desc: 'Free Delivery Across India', minOrder: 0 },
-    THENEE10: { code: 'THENEE10', type: 'percent', value: 10, desc: '10% OFF on all products', minOrder: 0 },
-  }
+  // Active store coupons (demo coupon codes removed until store owner adds active coupon campaigns)
+  const VALID_COUPONS = {}
 
   const applyCoupon = (rawCode) => {
     if (!rawCode || !rawCode.trim()) {
       return { success: false, message: 'Please enter a coupon code' }
     }
     const code = rawCode.trim().toUpperCase()
+    if (Object.keys(VALID_COUPONS).length === 0) {
+      return { success: false, message: `Coupon code "${code}" is invalid or expired.` }
+    }
     const found = VALID_COUPONS[code]
     if (!found) {
       return { success: false, message: `Coupon code "${code}" is invalid.` }
@@ -227,7 +219,7 @@ export const CartProvider = ({ children }) => {
     }
   }
 
-  const isFreeDelivery = isFreeShipping || (appliedCoupon && appliedCoupon.code === 'FREESHIP')
+  const isFreeDelivery = isFreeShipping || (appliedCoupon && appliedCoupon.type === 'shipping')
   const deliveryFee = cartItems.length === 0 ? 0 : isFreeDelivery ? 0 : 40
   const grandTotal = Math.max(0, subtotal - couponDiscount + deliveryFee)
 

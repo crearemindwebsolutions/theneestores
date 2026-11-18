@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
 import { useCart } from '../context/CartContext'
-import { products, individualPodis } from '../data/products'
 import { ImageWithSkeleton } from './Skeleton'
 import './CartDrawer.css'
 
@@ -91,11 +90,6 @@ const CartDrawer = () => {
   if (!isCartOpen) return null
 
   const progressPercent = Math.min(100, (subtotal / freeShippingThreshold) * 100)
-
-  // Smart suggestions when cart has room
-  const recommendations = [...products, ...individualPodis]
-    .filter((p) => !cartItems.some((ci) => ci.id === p.id))
-    .slice(0, 2)
 
   // Handle coupon apply
   const handleApplyCoupon = (codeToApply) => {
@@ -263,38 +257,6 @@ const CartDrawer = () => {
                 </div>
               ))}
 
-              {/* Cross-Sell Recommendations */}
-              {recommendations.length > 0 && (
-                <div className="cart-cross-sell-section">
-                  <div className="cart-cross-sell-title">
-                    <span>✨ Frequently Paired With</span>
-                  </div>
-                  <div className="cart-cross-sell-list">
-                    {recommendations.map((rec) => (
-                      <div className="cart-rec-card" key={rec.id}>
-                        <img
-                          src={rec.bottle || rec.cardImage || rec.image}
-                          alt={rec.name}
-                          className="cart-rec-img"
-                        />
-                        <div className="cart-rec-info">
-                          <span className="cart-rec-name">{rec.name}</span>
-                          <span className="cart-rec-price">₹{rec.price}</span>
-                        </div>
-                        <button
-                          type="button"
-                          className="cart-rec-add-btn"
-                          onClick={() => addToCart(rec, 1)}
-                          aria-label={`Add ${rec.name} to cart`}
-                        >
-                          + Add
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
               {/* Purity Guarantee Strip */}
               <div className="cart-purity-strip">
                 <span>🌾 Tenkasi Heritage</span>
@@ -358,24 +320,6 @@ const CartDrawer = () => {
                     </div>
 
                     {couponError && <p className="cart-promo-error">⚠️ {couponError}</p>}
-
-                    <div className="cart-promo-chips">
-                      <span className="cart-promo-chips-label">Quick apply:</span>
-                      <button
-                        type="button"
-                        className="cart-promo-chip"
-                        onClick={() => handleApplyCoupon('HERBALFIRST')}
-                      >
-                        HERBALFIRST <span>(15% off)</span>
-                      </button>
-                      <button
-                        type="button"
-                        className="cart-promo-chip"
-                        onClick={() => handleApplyCoupon('FREESHIP')}
-                      >
-                        FREESHIP
-                      </button>
-                    </div>
                   </>
                 )}
               </div>

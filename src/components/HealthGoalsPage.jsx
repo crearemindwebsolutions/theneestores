@@ -22,7 +22,7 @@ const HEALTH_GOALS = [
     emoji: '🌿',
     title: 'Digestive Comfort & Gut Relief',
     desc: 'Calm bloating, reduce acid reflux, and restore gut microflora with traditional dry-roasted culinary digestives.',
-    recommendedIds: ['garlic-podi', 'pirandai-podi'],
+    recommendedIds: ['garlic-podi', 'herbal-tea'],
     keyHerbs: ['Country Garlic', 'Pirandai (Cissus quadrangularis)', 'Roasted Cumin', 'Asafoetida'],
   },
   {
@@ -46,7 +46,7 @@ const HEALTH_GOALS = [
     emoji: '🌙',
     title: 'Restorative Sleep & De-Stress',
     desc: 'Melt away hectic workday anxiety and slip into deep, restorative REM sleep with tranquil botanical anthocyanins.',
-    recommendedIds: ['bliss-tea'],
+    recommendedIds: ['bliss-tea', 'herbal-tea'],
     keyHerbs: ['Butterfly Pea (Sangu Poo)', 'Crimson Hibiscus', 'Cardamom Pods', 'Chamomile Flowers'],
   },
 ]

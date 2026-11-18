@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import useReveal from '../lib/useReveal'
 import { useCart } from '../context/CartContext'
 import './PromoOffers.css'
@@ -5,9 +6,9 @@ import './PromoOffers.css'
 const TILES = [
   {
     image: '/images/custom_thenee/herbal-tea-scene.jpg',
-    heading: '15% Off Your First Herbal Order',
-    body: 'Begin your journey to natural healing. Use code THENEE15 on WhatsApp or checkout and save on your first order.',
-    cta: 'Claim Coupon (THENEE15)',
+    heading: '15% Off Your First Order',
+    body: 'Use code THENEE15 at checkout or on WhatsApp.',
+    cta: 'Claim Code: THENEE15',
     action: 'coupon',
     icon: (
       <path
@@ -22,9 +23,9 @@ const TILES = [
   },
   {
     image: '/images/custom_thenee/podis-scene.jpg',
-    heading: 'Free Shipping Across India Over ₹499',
-    body: 'Stock up on traditional botanical teas and nutrient-rich food podis — fresh from village roots to your home.',
-    cta: 'Shop & Save',
+    heading: 'Free Shipping Over ₹499',
+    body: 'Free delivery across India on all orders above ₹499.',
+    cta: 'Shop Now',
     action: 'shop',
     icon: (
       <path
@@ -40,6 +41,7 @@ const TILES = [
 
 const PromoOffers = () => {
   const { openCart } = useCart()
+  const [copied, setCopied] = useState(false)
   const sectionRef = useReveal([
     { selector: '.promo-tile', y: 50, duration: 0.75, stagger: 0.14, start: 'top 82%' },
   ])
@@ -63,13 +65,16 @@ const PromoOffers = () => {
                 onClick={() => {
                   if (t.action === 'coupon') {
                     navigator.clipboard?.writeText('THENEE15')
-                    alert('Coupon THENEE15 copied! Use it in WhatsApp or Cart.')
+                    setCopied(true)
+                    setTimeout(() => setCopied(false), 2500)
+                    openCart()
                   } else {
-                    document.getElementById('catalog')?.scrollIntoView({ behavior: 'smooth' })
+                    window.location.hash = 'products'
+                    window.scrollTo({ top: 0, behavior: 'instant' })
                   }
                 }}
               >
-                {t.cta}
+                {t.action === 'coupon' && copied ? '✓ Code Copied!' : t.cta}
               </button>
             </div>
           </div>

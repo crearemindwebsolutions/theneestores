@@ -156,14 +156,16 @@ const ProductModal = () => {
                 <span className="pmodal-volume-tag">{selectedProduct.volume}</span>
               </div>
 
-              <p className="pmodal-desc">{selectedProduct.description}</p>
+              <p className="pmodal-desc">
+                {selectedProduct.description || selectedProduct.desc || selectedProduct.shortDesc}
+              </p>
 
               {/* Key benefits list */}
-              {selectedProduct.keyBenefits && selectedProduct.keyBenefits.length > 0 && (
+              {((selectedProduct.keyBenefits && selectedProduct.keyBenefits.length > 0) || (selectedProduct.benefits && selectedProduct.benefits.length > 0)) && (
                 <div className="pmodal-section">
                   <h4>Key Health Benefits</h4>
                   <div className="pmodal-benefits-grid">
-                    {selectedProduct.keyBenefits.map((b, i) => (
+                    {(selectedProduct.keyBenefits || selectedProduct.benefits.map((b) => typeof b === 'string' ? { title: b, desc: '' } : b)).map((b, i) => (
                       <div className="pmodal-benefit-item" key={i}>
                         <span className="pmodal-benefit-check">✓</span>
                         <div>
@@ -177,11 +179,11 @@ const ProductModal = () => {
               )}
 
               {/* How to use */}
-              {selectedProduct.howToUse && selectedProduct.howToUse.length > 0 && (
+              {((selectedProduct.howToUse && selectedProduct.howToUse.length > 0) || selectedProduct.shortDesc) && (
                 <div className="pmodal-section">
                   <h4>How to Use</h4>
                   <ol className="pmodal-steps">
-                    {selectedProduct.howToUse.map((step, i) => (
+                    {(selectedProduct.howToUse || [selectedProduct.shortDesc || 'Mix 1–2 spoons with hot steamed rice and cow ghee or sesame oil.']).map((step, i) => (
                       <li key={i}>{step}</li>
                     ))}
                   </ol>
@@ -189,9 +191,9 @@ const ProductModal = () => {
               )}
 
               {/* Ingredients */}
-              {selectedProduct.ingredients && (
+              {(selectedProduct.ingredients || selectedProduct.tagline) && (
                 <div className="pmodal-section pmodal-ingredients">
-                  <strong>Ingredients:</strong> {selectedProduct.ingredients}
+                  <strong>Ingredients:</strong> {selectedProduct.ingredients || selectedProduct.tagline || '100% Pure Natural Botanicals'}
                 </div>
               )}
             </div>
