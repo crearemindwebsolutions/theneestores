@@ -1,4 +1,5 @@
 import { authService, isSupabaseConfigured, supabase } from './supabase'
+import { getNumericUserId, attachNumericUserId } from './userIdHelper'
 
 const RESEND_KEY = import.meta.env.VITE_RESEND_API_KEY || import.meta.env.RESEND_API_KEY || ''
 const STORAGE_KEY_USERS = 'thenee_registered_users'
@@ -175,9 +176,11 @@ export async function verifySignupOtp({ email, otp, otpToken, name, phone, passw
   const passwordHash = await hashPassword(password)
   const cleanPhone = (phone || '').replace(/\D/g, '').slice(-10)
   const fullPhone = cleanPhone ? `+91 ${cleanPhone}` : ''
+  const numericId = getNumericUserId(cleanEmail)
 
   const newUser = {
     id: 'thn_' + Math.random().toString(36).substring(2, 9),
+    user_id_number: numericId,
     name: name?.trim() || cleanEmail.split('@')[0],
     email: cleanEmail,
     phone: fullPhone,
@@ -199,6 +202,8 @@ export async function verifySignupOtp({ email, otp, otpToken, name, phone, passw
     success: true,
     user: {
       id: newUser.id,
+      user_id_number: numericId,
+      userIdNumber: numericId,
       name: newUser.name,
       email: newUser.email,
       contact: newUser.phone,
@@ -241,9 +246,11 @@ export async function signInWithEmailPassword({ email, password }) {
         // Sync with local registry
         const existing = findUserByEmail(cleanEmail) || {}
         const passHash = await hashPassword(password)
+        const numericId = u.user_metadata?.user_id_number || existing.user_id_number || getNumericUserId(u.id || cleanEmail)
         saveUserToRegistry({
           ...existing,
           id: u.id,
+          user_id_number: numericId,
           name: fullName || existing.name || cleanEmail.split('@')[0],
           email: cleanEmail,
           phone: phone || existing.phone || '',
@@ -255,6 +262,8 @@ export async function signInWithEmailPassword({ email, password }) {
           success: true,
           user: {
             id: u.id,
+            user_id_number: numericId,
+            userIdNumber: numericId,
             name: fullName,
             email: cleanEmail,
             contact: phone || existing.phone || '',
@@ -288,10 +297,13 @@ export async function signInWithEmailPassword({ email, password }) {
 
     const inputHash = await hashPassword(password)
     if (existingUser.passwordHash === inputHash) {
+      const numericId = existingUser.user_id_number || getNumericUserId(existingUser)
       return {
         success: true,
         user: {
           id: existingUser.id,
+          user_id_number: numericId,
+          userIdNumber: numericId,
           name: existingUser.name,
           email: existingUser.email,
           contact: existingUser.phone || '',
@@ -460,8 +472,11 @@ export async function updateUserProfile({ email, name, phone, password }) {
     hasPassword = true
   }
 
+  const numericId = user.user_id_number || getNumericUserId(user)
   const updated = {
     ...user,
+    user_id_number: numericId,
+    userIdNumber: numericId,
     name: name?.trim() || user.name || cleanEmail.split('@')[0],
     phone: fullPhone || user.phone || '',
     passwordHash,

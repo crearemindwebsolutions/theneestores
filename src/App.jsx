@@ -27,6 +27,7 @@ import LoginPage from './components/LoginPage'
 import ProfileCompletionModal from './components/ProfileCompletionModal'
 import AdminPortal from './components/AdminPortal'
 import { CartProvider, useCart } from './context/CartContext'
+import { analyticsService } from './lib/analyticsService'
 
 const parseRouteFromHash = () => {
   if (typeof window !== 'undefined') {
@@ -147,6 +148,15 @@ const AppContent = () => {
     window.addEventListener('hashchange', handleHashChange)
     return () => window.removeEventListener('hashchange', handleHashChange)
   }, [])
+
+  // Live analytics route event tracking
+  useEffect(() => {
+    if (route && route !== 'admin') {
+      const routePath = route === 'home' ? '/' : `/${route}`
+      const actionLabel = route === 'home' ? 'viewed Home' : `viewed /${route}`
+      analyticsService.trackEvent(actionLabel, routePath)
+    }
+  }, [route])
 
   // Whenever the active route changes, reset body locks, sync Lenis, scroll to top, and refresh GSAP ScrollTrigger
   useEffect(() => {

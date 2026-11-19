@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect } from 'react'
 import { brandInfo } from '../data/products'
-import { authService, isSupabaseConfigured } from '../lib/supabase'
+import { authService, isSupabaseConfigured, supabase, profileService } from '../lib/supabase'
+import { getNumericUserId, attachNumericUserId } from '../lib/userIdHelper'
 
 const CartContext = createContext()
 
@@ -25,13 +26,16 @@ export const CartProvider = ({ children }) => {
       if (!saved) return null
       const parsed = JSON.parse(saved)
       if (parsed?.email) {
+        const cleanEmail = parsed.email.toLowerCase().trim()
         const rawPrompted = localStorage.getItem('thenee_google_prompted_accounts')
         const promptedList = rawPrompted ? JSON.parse(rawPrompted) : []
-        if (promptedList.includes(parsed.email.toLowerCase().trim())) {
+        if (promptedList.includes(cleanEmail)) {
           parsed.profilePrompted = true
           parsed.profileCompleted = true
           parsed.hasPassword = true
         }
+        const storedRoles = JSON.parse(localStorage.getItem('thenee_customer_roles') || '{}')
+        parsed.role = storedRoles[parsed.id] || (cleanEmail && storedRoles[cleanEmail]) || parsed.role || (cleanEmail === 'rootsenterprises2025@gmail.com' ? 'admin' : 'customer')
       }
       return parsed
     } catch {
@@ -109,7 +113,7 @@ export const CartProvider = ({ children }) => {
           isPrompted = true
           hasPass = true
         }
-      } catch {}
+      } catch { }
 
       // 3. Check stored auth & local registry
       try {
@@ -119,7 +123,7 @@ export const CartProvider = ({ children }) => {
         if (storedAuth.hasPassword || storedUser.hasPassword) hasPass = true
         savedContact = savedContact || storedAuth.contact || storedUser.contact || storedAuth.phone || storedUser.phone || ''
         savedName = storedAuth.name || storedUser.name || ''
-      } catch {}
+      } catch { }
 
       try {
         const rawUsers = localStorage.getItem('thenee_registered_users')
@@ -131,7 +135,7 @@ export const CartProvider = ({ children }) => {
           if (found?.profilePrompted) isPrompted = true
           if (found?.passwordHash || found?.hasPassword) hasPass = true
         }
-      } catch {}
+      } catch { }
 
       const resolvedName =
         (savedName && !savedName.includes('@'))
@@ -146,13 +150,27 @@ export const CartProvider = ({ children }) => {
         if (typeof savedUser?.points === 'number') {
           existingPoints = savedUser.points
         }
-      } catch {}
+      } catch { }
+
+      const numericUserId =
+        u.user_id_number ||
+        u.user_metadata?.user_id_number ||
+        getNumericUserId(u)
+
+      let assignedRole = 'customer'
+      try {
+        const storedRoles = JSON.parse(localStorage.getItem('thenee_customer_roles') || '{}')
+        assignedRole = storedRoles[u.id] || (cleanEmail && storedRoles[cleanEmail]) || (cleanEmail === 'rootsenterprises2025@gmail.com' ? 'admin' : 'customer')
+      } catch { }
 
       const userData = {
         id: u.id,
+        user_id_number: numericUserId,
+        userIdNumber: numericUserId,
         name: resolvedName,
         email: cleanEmail,
         contact: resolvedContact,
+        role: assignedRole,
         profilePrompted: isPrompted,
         profileCompleted: isPrompted,
         hasPassword: hasPass,
@@ -169,6 +187,7 @@ export const CartProvider = ({ children }) => {
         if (existingIdx === -1) {
           usersList.push({
             id: u.id,
+            user_id_number: numericUserId,
             name: resolvedName,
             email: cleanEmail,
             phone: resolvedContact,
@@ -178,13 +197,19 @@ export const CartProvider = ({ children }) => {
             createdAt: new Date().toISOString(),
           })
           localStorage.setItem('thenee_registered_users', JSON.stringify(usersList))
+        } else {
+          usersList[existingIdx] = {
+            ...usersList[existingIdx],
+            user_id_number: usersList[existingIdx].user_id_number || numericUserId,
+          }
+          localStorage.setItem('thenee_registered_users', JSON.stringify(usersList))
         }
       } catch { }
 
       try {
         localStorage.setItem('thenee_auth_user', JSON.stringify(userData))
         localStorage.setItem('thenee_user', JSON.stringify(userData))
-      } catch {}
+      } catch { }
 
       if (isMounted) {
         setCurrentUser(userData)
@@ -194,16 +219,20 @@ export const CartProvider = ({ children }) => {
       // Asynchronously fetch live profile from Supabase to ensure phone & completion state are 100% synced
       if (isSupabaseConfigured && supabase && u.id) {
         profileService.getProfile(u.id).then(({ data: prof }) => {
-          if (prof && (prof.phone || prof.profile_completed)) {
+          if (prof) {
+            const liveNumericId = prof.user_id_number || numericUserId
             if (isMounted) {
               setCurrentUser((prev) => {
                 if (!prev || prev.id !== u.id) return prev
                 const updated = {
                   ...prev,
+                  user_id_number: liveNumericId,
+                  userIdNumber: liveNumericId,
                   contact: prof.phone || prev.contact,
                   name: prof.full_name || prev.name,
-                  profilePrompted: true,
-                  profileCompleted: true,
+                  role: prof.role || prev.role || assignedRole || 'customer',
+                  profilePrompted: Boolean(prof.phone || prof.profile_completed || prev.profilePrompted),
+                  profileCompleted: Boolean(prof.phone || prof.profile_completed || prev.profileCompleted),
                   hasPassword: true,
                 }
                 try {
@@ -215,12 +244,12 @@ export const CartProvider = ({ children }) => {
                     promptedList.push(cleanEmail)
                     localStorage.setItem('thenee_google_prompted_accounts', JSON.stringify(promptedList))
                   }
-                } catch {}
+                } catch { }
                 return updated
               })
             }
           }
-        }).catch(() => {})
+        }).catch(() => { })
       }
 
       // Check if returning from OAuth / login redirect
@@ -323,14 +352,50 @@ export const CartProvider = ({ children }) => {
     }
   }, [])
 
+  // Listen for real-time customer role promotions from Admin Panel
+  useEffect(() => {
+    const handleRoleChanged = (e) => {
+      const { customerId, email, newRole } = e.detail || {}
+      setCurrentUser((prev) => {
+        if (!prev) return prev
+        const match =
+          (customerId && prev.id === customerId) ||
+          (email && prev.email && prev.email.toLowerCase().trim() === email.toLowerCase().trim())
+        if (match) {
+          const updated = { ...prev, role: newRole }
+          try {
+            localStorage.setItem('thenee_auth_user', JSON.stringify(updated))
+            localStorage.setItem('thenee_user', JSON.stringify(updated))
+          } catch { }
+          return updated
+        }
+        return prev
+      })
+    }
+    window.addEventListener('thenee-role-changed', handleRoleChanged)
+    return () => window.removeEventListener('thenee-role-changed', handleRoleChanged)
+  }, [])
+
   const loginUser = (userData) => {
+    const withUserId = attachNumericUserId(userData)
+    let assignedRole = withUserId.role || 'customer'
     try {
-      localStorage.setItem('thenee_auth_user', JSON.stringify(userData))
-      localStorage.setItem('thenee_user', JSON.stringify(userData))
-      setCurrentUser(userData)
-      showToast(`Welcome, ${userData.name || 'Member'}! 🌿`)
+      const storedRoles = JSON.parse(localStorage.getItem('thenee_customer_roles') || '{}')
+      const emailKey = (withUserId.email || '').toLowerCase().trim()
+      assignedRole =
+        storedRoles[withUserId.id] ||
+        (emailKey && storedRoles[emailKey]) ||
+        withUserId.role ||
+        (emailKey === 'rootsenterprises2025@gmail.com' ? 'admin' : 'customer')
+    } catch { }
+    const finalUser = { ...withUserId, role: assignedRole }
+    try {
+      localStorage.setItem('thenee_auth_user', JSON.stringify(finalUser))
+      localStorage.setItem('thenee_user', JSON.stringify(finalUser))
+      setCurrentUser(finalUser)
+      showToast(`Welcome, ${finalUser.name || 'Member'}! 🌿`)
     } catch {
-      setCurrentUser(userData)
+      setCurrentUser(finalUser)
     }
   }
 

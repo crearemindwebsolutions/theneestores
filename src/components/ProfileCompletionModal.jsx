@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { updateUserProfile } from '../lib/authApi'
 import { profileService, isSupabaseConfigured, supabase } from '../lib/supabase'
+import { getNumericUserId } from '../lib/userIdHelper'
 
 export default function ProfileCompletionModal({ currentUser, onComplete }) {
   const [name, setName] = useState(
@@ -42,6 +43,7 @@ export default function ProfileCompletionModal({ currentUser, onComplete }) {
 
     setIsSubmitting(true)
     const fullPhone = `+91 ${cleanPhone}`
+    const numericUserId = currentUser.user_id_number || currentUser.userIdNumber || getNumericUserId(currentUser)
 
     // 1. Update in Supabase Auth user password AND metadata so user can sign in via email & password
     if (isSupabaseConfigured && supabase) {
@@ -52,6 +54,7 @@ export default function ProfileCompletionModal({ currentUser, onComplete }) {
             full_name: cleanName,
             name: cleanName,
             phone: fullPhone,
+            user_id_number: numericUserId,
             profile_completed: true,
             has_password: true,
           },
@@ -78,6 +81,7 @@ export default function ProfileCompletionModal({ currentUser, onComplete }) {
         full_name: cleanName,
         phone: fullPhone,
         email: currentUser.email,
+        user_id_number: numericUserId,
         profile_completed: true,
       }).catch((err) => {
         console.warn('Profile Supabase update notice:', err)
@@ -99,6 +103,8 @@ export default function ProfileCompletionModal({ currentUser, onComplete }) {
     if (onComplete) {
       onComplete({
         ...currentUser,
+        user_id_number: numericUserId,
+        userIdNumber: numericUserId,
         name: cleanName,
         contact: fullPhone,
         hasPassword: true,

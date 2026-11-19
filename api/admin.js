@@ -50,6 +50,18 @@ export default async function adminHandler(req, res) {
 
         const merged = authUsers.map((u) => {
           const prof = profiles.find((p) => p.id === u.id) || {}
+          const rawProv = (u.app_metadata?.provider || prof.provider || '').toLowerCase()
+          let provider = 'email'
+          if (rawProv === 'google' || rawProv.includes('google')) {
+            provider = 'google'
+          } else if (rawProv === 'phone' || rawProv === 'number' || rawProv === 'sms' || (!u.email && u.phone)) {
+            provider = 'number'
+          } else if (u.email) {
+            provider = 'email'
+          } else if (u.phone) {
+            provider = 'number'
+          }
+
           return {
             id: u.id,
             name:
@@ -63,7 +75,8 @@ export default async function adminHandler(req, res) {
             city: prof.addresses && prof.addresses[0]?.city ? prof.addresses[0].city : '',
             createdAt: u.created_at || prof.created_at,
             profileCompleted: Boolean(prof.profile_completed || u.user_metadata?.profile_completed),
-            authProvider: u.app_metadata?.provider || 'google',
+            provider,
+            authProvider: provider,
           }
         })
 
@@ -87,17 +100,32 @@ export default async function adminHandler(req, res) {
         })
       }
 
-      const formatted = (profiles || []).map((p) => ({
-        id: p.id,
-        name: p.full_name || p.email?.split('@')[0] || 'Member Patron',
-        email: p.email || '',
-        phone: p.phone || '',
-        greenPoints: p.reward_points !== undefined ? p.reward_points : 100,
-        city: p.addresses && p.addresses[0]?.city ? p.addresses[0].city : '',
-        createdAt: p.created_at,
-        profileCompleted: Boolean(p.profile_completed),
-        authProvider: 'database',
-      }))
+      const formatted = (profiles || []).map((p) => {
+        const rawProv = (p.provider || '').toLowerCase()
+        let provider = 'email'
+        if (rawProv === 'google' || rawProv.includes('google')) {
+          provider = 'google'
+        } else if (rawProv === 'phone' || rawProv === 'number' || rawProv === 'sms' || (!p.email && p.phone)) {
+          provider = 'number'
+        } else if (p.email) {
+          provider = 'email'
+        } else if (p.phone) {
+          provider = 'number'
+        }
+
+        return {
+          id: p.id,
+          name: p.full_name || p.email?.split('@')[0] || 'Member Patron',
+          email: p.email || '',
+          phone: p.phone || '',
+          greenPoints: p.reward_points !== undefined ? p.reward_points : 100,
+          city: p.addresses && p.addresses[0]?.city ? p.addresses[0].city : '',
+          createdAt: p.created_at,
+          profileCompleted: Boolean(p.profile_completed),
+          provider,
+          authProvider: provider,
+        }
+      })
 
       return res.status(200).json({ success: true, source: 'supabase-profiles', users: formatted })
     } catch (err) {
@@ -127,6 +155,32 @@ export default async function adminHandler(req, res) {
         return res.status(400).json({ success: false, error: error.message })
       }
       return res.status(200).json({ success: true, newPoints: Number(newPoints) })
+    } catch (err) {
+      return res.status(500).json({ success: false, error: err.message })
+    }
+  }
+
+  // --------------------------------------------------------------------------
+  // ACTION: update-role (Update user role in Supabase profile: admin / customer / staff)
+  // --------------------------------------------------------------------------
+  if (action === 'update-role') {
+    const { userId, role } = req.body || {}
+    if (!userId || !role) {
+      return res.status(400).json({ success: false, error: 'Missing userId or role' })
+    }
+
+    try {
+      const activeKey = serviceKey || anonKey
+      const client = createClient(supabaseUrl, activeKey)
+      const { error } = await client
+        .from('profiles')
+        .update({ role, updated_at: new Date().toISOString() })
+        .eq('id', userId)
+
+      if (error) {
+        return res.status(400).json({ success: false, error: error.message })
+      }
+      return res.status(200).json({ success: true, role })
     } catch (err) {
       return res.status(500).json({ success: false, error: err.message })
     }
