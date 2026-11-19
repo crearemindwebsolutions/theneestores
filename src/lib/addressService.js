@@ -43,7 +43,7 @@ export function getSavedAddresses(email = '', userId = null) {
 
 // Save a new address or update if it exists
 export function saveAddress(newAddr, email = '', userId = null) {
-  if (!newAddr || !newAddr.street || !newAddr.city) return []
+  if (!newAddr || (!newAddr.street && !newAddr.line1) || !newAddr.city) return []
 
   try {
     const currentList = getSavedAddresses(email, userId)
@@ -54,11 +54,16 @@ export function saveAddress(newAddr, email = '', userId = null) {
 
     const normalizedAddr = {
       id: addrId,
-      name: newAddr.name?.trim() || 'Receiver',
+      name: newAddr.name?.trim() || newAddr.recipient?.trim() || 'Receiver',
+      recipient: newAddr.recipient?.trim() || newAddr.name?.trim() || 'Receiver',
       phone: newAddr.phone?.trim() || '',
+      alt_mobile: newAddr.alt_mobile?.trim() || newAddr.altPhone?.trim() || '',
       email: newAddr.email?.trim() || email || '',
-      street: newAddr.street?.trim() || '',
+      line1: newAddr.line1?.trim() || newAddr.street?.trim() || '',
+      line2: newAddr.line2?.trim() || newAddr.area?.trim() || '',
+      street: newAddr.line1?.trim() || newAddr.street?.trim() || '',
       city: newAddr.city?.trim() || '',
+      district: newAddr.district?.trim() || newAddr.city?.trim() || '',
       state: newAddr.state?.trim() || 'Tamil Nadu',
       pincode: newAddr.pincode?.trim() || '',
       type: newAddr.type || 'Home',

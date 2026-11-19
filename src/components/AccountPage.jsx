@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useCart } from '../context/CartContext'
 import { products, individualPodis, brandInfo } from '../data/products'
-import { orderService, profileService, adminService, inquiryService, supabase, isSupabaseConfigured } from '../lib/supabase'
+import { orderService, profileService, adminService, inquiryService, supabase, isSupabaseConfigured, isRealAwb } from '../lib/supabase'
 import { updateUserProfile } from '../lib/authApi'
 import { getNumericUserId } from '../lib/userIdHelper'
 import { sendOrderStatusUpdateEmail } from '../lib/emailService'
@@ -89,17 +89,24 @@ const AccountPage = ({ onBack, onLogout, initialTab = 'hub' }) => {
       if (!saved) return []
       const parsed = JSON.parse(saved)
       const cleaned = Array.isArray(parsed)
-        ? parsed.filter(
+        ? parsed
+          .filter(
             (o) =>
               !['THN-884102', 'THN-884095', 'THN-883981'].includes(o.id || o.order_number) &&
               o.customer_name !== 'Dr. Anand Raman' &&
               o.customer_name !== 'Meenakshi Sundaram' &&
               o.customer_name !== 'Suresh Narayanan'
           )
+          .map((o) => {
+            const hasReal = isRealAwb(o.awb || o.tracking_awb)
+            return {
+              ...o,
+              awb: hasReal ? (o.awb || o.tracking_awb) : '',
+              tracking_awb: hasReal ? (o.tracking_awb || o.awb) : '',
+            }
+          })
         : []
-      if (cleaned.length !== parsed.length) {
-        localStorage.setItem('thenee_user_orders', JSON.stringify(cleaned))
-      }
+      localStorage.setItem('thenee_user_orders', JSON.stringify(cleaned))
       return cleaned
     } catch {
       return []
@@ -162,20 +169,43 @@ const AccountPage = ({ onBack, onLogout, initialTab = 'hub' }) => {
 
   // Re-sync orders when tab changes or storage updates
   useEffect(() => {
-    const handleStorage = () => {
+    const handleStorage = (event) => {
       try {
+        if (event && event.detail && event.detail.deletedId) {
+          const delId = String(event.detail.deletedId).trim().toLowerCase()
+          const altId = delId.startsWith('#') ? delId.slice(1) : `#${delId}`
+          setOrdersList((prev) =>
+            prev.filter((o) => {
+              const num = String(o.order_number || o.order_id || o.id || '').trim().toLowerCase()
+              return num !== delId && num !== altId
+            })
+          )
+        }
         const saved = localStorage.getItem('thenee_user_orders')
         if (saved) {
-          setOrdersList(JSON.parse(saved))
+          const parsed = JSON.parse(saved)
+          const cleaned = (Array.isArray(parsed) ? parsed : []).map((o) => {
+            const hasReal = isRealAwb(o.awb || o.tracking_awb)
+            return {
+              ...o,
+              awb: hasReal ? (o.awb || o.tracking_awb) : '',
+              tracking_awb: hasReal ? (o.tracking_awb || o.awb) : '',
+            }
+          })
+          setOrdersList(cleaned)
+        } else {
+          setOrdersList([])
         }
       } catch {
         // ignore
       }
     }
     window.addEventListener('storage', handleStorage)
+    window.addEventListener('thenee_orders_updated', handleStorage)
     window.addEventListener('focus', handleStorage)
     return () => {
       window.removeEventListener('storage', handleStorage)
+      window.removeEventListener('thenee_orders_updated', handleStorage)
       window.removeEventListener('focus', handleStorage)
     }
   }, [])
@@ -207,8 +237,12 @@ const AccountPage = ({ onBack, onLogout, initialTab = 'hub' }) => {
   const [newAddr, setNewAddr] = useState({
     name: '',
     phone: '',
+    alt_mobile: '',
+    line1: '',
+    line2: '',
     street: '',
     city: '',
+    district: '',
     state: 'Tamil Nadu',
     pincode: '',
     type: 'Home',
@@ -228,7 +262,7 @@ const AccountPage = ({ onBack, onLogout, initialTab = 'hub' }) => {
   useEffect(() => {
     try {
       localStorage.setItem('thenee_user_wishlist', JSON.stringify(wishlist))
-    } catch {}
+    } catch { }
   }, [wishlist])
 
   // Profile Edit State
@@ -376,8 +410,12 @@ const AccountPage = ({ onBack, onLogout, initialTab = 'hub' }) => {
     setNewAddr({
       name: currentUser?.name && !currentUser.name.includes('@') ? currentUser.name : '',
       phone: currentUser?.contact ? currentUser.contact.replace(/\D/g, '').slice(-10) : '',
+      alt_mobile: '',
+      line1: '',
+      line2: '',
       street: '',
       city: '',
+      district: '',
       state: 'Tamil Nadu',
       pincode: '',
       type: 'Home',
@@ -388,10 +426,14 @@ const AccountPage = ({ onBack, onLogout, initialTab = 'hub' }) => {
   const handleOpenEditAddress = (addr) => {
     setEditingAddressId(addr.id)
     setNewAddr({
-      name: addr.name || '',
+      name: addr.name || addr.recipient || '',
       phone: addr.phone || '',
-      street: addr.street || '',
+      alt_mobile: addr.alt_mobile || '',
+      line1: addr.line1 || addr.street || '',
+      line2: addr.line2 || '',
+      street: addr.line1 || addr.street || '',
       city: addr.city || '',
+      district: addr.district || addr.city || '',
       state: addr.state || 'Tamil Nadu',
       pincode: addr.pincode || '',
       type: addr.type || 'Home',
@@ -406,17 +448,25 @@ const AccountPage = ({ onBack, onLogout, initialTab = 'hub' }) => {
 
   const handleSaveAddressForm = (e) => {
     e.preventDefault()
-    if (!newAddr.name.trim() || !newAddr.phone.trim() || !newAddr.street.trim() || !newAddr.city.trim() || !newAddr.pincode.trim()) {
+    const streetAddress = (newAddr.line1 || newAddr.street || '').trim()
+    if (!newAddr.name.trim() || !newAddr.phone.trim() || !streetAddress || !newAddr.city.trim() || !newAddr.pincode.trim()) {
       showToast('Please fill out all required address fields.')
       return
     }
 
+    const payload = {
+      ...newAddr,
+      street: streetAddress,
+      line1: streetAddress,
+      district: newAddr.district || newAddr.city,
+    }
+
     if (editingAddressId) {
-      const updated = updateAddress(editingAddressId, newAddr, currentUser?.email, currentUser?.id)
+      const updated = updateAddress(editingAddressId, payload, currentUser?.email, currentUser?.id)
       setAddresses(updated)
       showToast('Address updated successfully! 🌿')
     } else {
-      const updated = saveAddress(newAddr, currentUser?.email, currentUser?.id)
+      const updated = saveAddress(payload, currentUser?.email, currentUser?.id)
       setAddresses(updated)
       showToast('New delivery address added! 🌿')
     }
@@ -674,8 +724,8 @@ const AccountPage = ({ onBack, onLogout, initialTab = 'hub' }) => {
                     {activeShipments > 0
                       ? `${activeShipments} Order(s) In Transit`
                       : ordersList.length > 0
-                      ? 'All Consignments Delivered'
-                      : 'No Active Dispatches'}
+                        ? 'All Consignments Delivered'
+                        : 'No Active Dispatches'}
                   </span>
                 </div>
                 <span className="bento-action-link">{ordersList.length > 0 ? 'Track Consignments →' : 'View Orders →'}</span>
@@ -901,58 +951,84 @@ const AccountPage = ({ onBack, onLogout, initialTab = 'hub' }) => {
                             <div className="order-product-info">
                               <h4>{item.name}</h4>
                               <p>Qty: {item.qty} • ₹{item.price}</p>
-                              <span className="order-courier-note">Carrier: {order.courier} (AWB: {order.awb})</span>
+                              <span className="order-courier-note">
+                                {isRealAwb(order.awb || order.tracking_awb) ? (
+                                  <>Carrier: {order.courier || 'India Post Speed Post'} (AWB: {order.awb || order.tracking_awb})</>
+                                ) : (
+                                  <span style={{ color: '#854D0E', fontWeight: 600 }}>Tracking updated soon</span>
+                                )}
+                              </span>
                             </div>
                           </div>
                         ))}
                       </div>
 
-                    <div className="order-card-actions">
-                      <button
-                        className="btn-outline-sm"
-                        onClick={() => setActiveTrackingOrder(activeTrackingOrder?.id === order.id ? null : order)}
-                      >
-                        {activeTrackingOrder?.id === order.id ? 'Hide Tracking ▲' : 'Track Shipment ▼'}
-                      </button>
+                      <div className="order-card-actions">
+                        {isRealAwb(order.awb || order.tracking_awb) ? (
+                          <button
+                            className="btn-outline-sm"
+                            onClick={() => setActiveTrackingOrder(activeTrackingOrder?.id === order.id ? null : order)}
+                          >
+                            {activeTrackingOrder?.id === order.id ? 'Hide Tracking ▲' : 'Track Shipment ▼'}
+                          </button>
+                        ) : (
+                          <span
+                            className="tracking-pending-badge"
+                            style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '6px',
+                              padding: '7px 14px',
+                              background: '#FEF9C3',
+                              color: '#854D0E',
+                              borderRadius: '6px',
+                              fontSize: '0.82rem',
+                              fontWeight: 600,
+                              border: '1px solid #FEF08A',
+                            }}
+                          >
+                            ⏳ Tracking updated soon
+                          </span>
+                        )}
 
-                      <button className="btn-secondary-sm" onClick={() => handleReorder(order)}>
-                        🔄 Reorder in 1-Click
-                      </button>
+                        <button className="btn-secondary-sm" onClick={() => handleReorder(order)}>
+                          🔄 Reorder in 1-Click
+                        </button>
 
-                      <button
-                        className="btn-ghost-sm"
-                        onClick={() => showToast(`Invoice for ${order.id} downloaded.`)}
-                      >
-                        📄 Download Invoice
-                      </button>
-                    </div>
-
-                    {/* Expandable Live Tracking Timeline */}
-                    {activeTrackingOrder?.id === order.id && (
-                      <div className="order-tracking-expanded">
-                        <div className="expanded-track-head">
-                          <h4>Live Delivery Timeline</h4>
-                          <span>Destination: {order.destination}</span>
-                        </div>
-                        <div className="timeline-trail">
-                          {order.timeline.map((step, sIdx) => (
-                            <div className="timeline-node done" key={sIdx}>
-                              <div className="node-marker">✓</div>
-                              <div className="node-content">
-                                <strong>{step.title}</strong>
-                                <span>{step.time}</span>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
+                        <button
+                          className="btn-ghost-sm"
+                          onClick={() => showToast(`Invoice for ${order.id} downloaded.`)}
+                        >
+                          📄 Download Invoice
+                        </button>
                       </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
+
+                      {/* Expandable Live Tracking Timeline */}
+                      {isRealAwb(order.awb || order.tracking_awb) && activeTrackingOrder?.id === order.id && (
+                        <div className="order-tracking-expanded">
+                          <div className="expanded-track-head">
+                            <h4>Live Delivery Timeline</h4>
+                            <span>Destination: {order.destination}</span>
+                          </div>
+                          <div className="timeline-trail">
+                            {order.timeline && order.timeline.map((step, sIdx) => (
+                              <div className="timeline-node done" key={sIdx}>
+                                <div className="node-marker">✓</div>
+                                <div className="node-content">
+                                  <strong>{step.title}</strong>
+                                  <span>{step.time}</span>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
 
           {/* SUBPAGE 2: ADDRESSES */}
           {activeTab === 'addresses' && (
@@ -986,10 +1062,10 @@ const AccountPage = ({ onBack, onLogout, initialTab = 'hub' }) => {
                         {addr.isDefault && <span className="addr-default-badge">Default Address</span>}
                       </div>
 
-                      <h4 className="addr-name">{addr.name}</h4>
-                      <p className="addr-line">{addr.street}</p>
-                      <p className="addr-line">{addr.city}, {addr.district || addr.state} - <strong>{addr.pincode}</strong></p>
-                      <p className="addr-phone">Phone: {addr.phone}</p>
+                      <h4 className="addr-name">{addr.name || addr.recipient}</h4>
+                      <p className="addr-line">{addr.line1 || addr.street}{addr.line2 ? `, ${addr.line2}` : ''}</p>
+                      <p className="addr-line">{addr.city}, {addr.district ? `${addr.district}, ` : ''}{addr.state} - <strong>{addr.pincode}</strong></p>
+                      <p className="addr-phone">Phone: {addr.phone}{addr.alt_mobile ? ` · Alt: ${addr.alt_mobile}` : ''}</p>
 
                       <div className="addr-actions">
                         <button
@@ -1030,61 +1106,102 @@ const AccountPage = ({ onBack, onLogout, initialTab = 'hub' }) => {
                       <button className="modal-close-x" onClick={handleCloseAddressModal}>✕</button>
                     </div>
                     <form onSubmit={handleSaveAddressForm} className="modal-form-custom">
-                      <div className="form-group-row">
-                        <div>
-                          <label>Full Name *</label>
-                          <input
-                            type="text"
-                            required
-                            placeholder="Recipient Name"
-                            value={newAddr.name}
-                            onChange={(e) => setNewAddr({ ...newAddr, name: e.target.value })}
-                          />
-                        </div>
-                        <div>
-                          <label>Mobile Number *</label>
-                          <input
-                            type="tel"
-                            required
-                            maxLength={10}
-                            placeholder="10-digit mobile"
-                            value={newAddr.phone}
-                            onChange={(e) => setNewAddr({ ...newAddr, phone: e.target.value.replace(/\D/g, '') })}
-                          />
-                        </div>
-                      </div>
-
                       <div>
-                        <label>Street Address / House No / Landmark *</label>
+                        <label>Recipient Name *</label>
                         <input
                           type="text"
                           required
-                          placeholder="Door no, Street name, Area"
-                          value={newAddr.street}
-                          onChange={(e) => setNewAddr({ ...newAddr, street: e.target.value })}
+                          placeholder="Recipient Name"
+                          value={newAddr.name}
+                          onChange={(e) => setNewAddr({ ...newAddr, name: e.target.value })}
                         />
                       </div>
 
-                      <div className="form-group-row">
+                      <div>
+                        <label>Line 1 (Street) *</label>
+                        <input
+                          type="text"
+                          required
+                          placeholder="Door / Flat, Building, Street"
+                          value={newAddr.line1}
+                          onChange={(e) => setNewAddr({ ...newAddr, line1: e.target.value, street: e.target.value })}
+                        />
+                      </div>
+
+                      <div>
+                        <label>Line 2 (Area/Apt)</label>
+                        <input
+                          type="text"
+                          placeholder="Area / Landmark"
+                          value={newAddr.line2}
+                          onChange={(e) => setNewAddr({ ...newAddr, line2: e.target.value })}
+                        />
+                      </div>
+
+                      <div className="form-group-row" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(100px, 1fr))', gap: 12 }}>
                         <div>
-                          <label>City / Town / Village *</label>
+                          <label>City *</label>
                           <input
                             type="text"
                             required
-                            placeholder="e.g. Tenkasi"
+                            placeholder="City"
                             value={newAddr.city}
                             onChange={(e) => setNewAddr({ ...newAddr, city: e.target.value })}
                           />
                         </div>
+                        <div>
+                          <label>District *</label>
+                          <input
+                            type="text"
+                            required
+                            placeholder="District"
+                            value={newAddr.district}
+                            onChange={(e) => setNewAddr({ ...newAddr, district: e.target.value })}
+                          />
+                        </div>
+                        <div>
+                          <label>State *</label>
+                          <input
+                            type="text"
+                            required
+                            placeholder="State"
+                            value={newAddr.state}
+                            onChange={(e) => setNewAddr({ ...newAddr, state: e.target.value })}
+                          />
+                        </div>
+                      </div>
+
+                      <div className="form-group-row" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(100px, 1fr))', gap: 12 }}>
                         <div>
                           <label>Pincode *</label>
                           <input
                             type="text"
                             required
                             maxLength={6}
-                            placeholder="6-digit pincode"
+                            placeholder="Pincode"
                             value={newAddr.pincode}
                             onChange={(e) => setNewAddr({ ...newAddr, pincode: e.target.value.replace(/\D/g, '') })}
+                          />
+                        </div>
+                        <div>
+                          <label>Mobile *</label>
+                          <input
+                            type="tel"
+                            required
+                            maxLength={10}
+                            placeholder="+91 75502..."
+                            value={newAddr.phone}
+                            onChange={(e) => setNewAddr({ ...newAddr, phone: e.target.value.replace(/\D/g, '') })}
+                          />
+                        </div>
+                        <div>
+                          <label>Alt Mobile</label>
+                          <input
+                            type="tel"
+                            maxLength={10}
+                            placeholder="Alternate"
+                            value={newAddr.alt_mobile}
+                            onChange={(e) => setNewAddr({ ...newAddr, alt_mobile: e.target.value.replace(/\D/g, '') })}
                           />
                         </div>
                       </div>

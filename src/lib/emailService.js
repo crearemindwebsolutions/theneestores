@@ -164,7 +164,7 @@ function buildOrderConfirmationHtml(order) {
                             </tr>
                             <tr>
                               <td style="font-size: 13px; color: #6C8271; padding-top: 8px;">Speed Post AWB:</td>
-                              <td align="right" style="font-size: 13px; font-weight: 700; color: #2E7D32; padding-top: 8px;">${order.awb || 'Processing'}</td>
+                              <td align="right" style="font-size: 13px; font-weight: 700; color: #2E7D32; padding-top: 8px;">${order.awb || 'Updated soon'}</td>
                             </tr>
                             <tr>
                               <td style="font-size: 13px; color: #6C8271; padding-top: 8px;">Payment Method:</td>
@@ -276,7 +276,7 @@ function buildAdminOrderAlertHtml(order) {
             <strong>Customer:</strong> ${order.recipient}<br />
             <strong>Phone:</strong> ${order.phone}<br />
             <strong>Total Amount Paid:</strong> Rs. ${order.total}<br />
-            <strong>India Post Speed Post AWB:</strong> ${order.awb || 'Pending'}<br />
+            <strong>India Post Speed Post AWB:</strong> ${order.awb || 'Updated soon'}<br />
             <strong>Delivery Address:</strong> ${order.address || order.destination}
           </div>
           <h4 style="color: #274C37; margin: 0 0 8px;">Order Items:</h4>
@@ -367,7 +367,7 @@ export async function sendOrderConfirmationEmail(order, customerEmail) {
     to: targetEmail,
     subject: `Your THENEE Herbal Order Confirmation ${order.id} 🌿`,
     html: buildOrderConfirmationHtml(order),
-    text: `Your THENEE Herbal Order ${order.id} is confirmed. Total: Rs. ${order.total}. Postal Courier: ${order.courier || 'India Post Speed Post'} (${order.awb}). Thank you for supporting rural women artisans in Tenkasi!`,
+    text: `Your THENEE Herbal Order ${order.id} is confirmed. Total: Rs. ${order.total}. Postal Courier: ${order.courier || 'India Post Speed Post'} (${order.awb || 'Updated soon'}). Thank you for supporting rural women artisans in Tenkasi!`,
   })
 }
 

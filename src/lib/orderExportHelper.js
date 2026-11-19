@@ -3,6 +3,8 @@
 // Generates single-order detail sheets, status-filtered reports, and bulk invoices
 // ==============================================================================
 
+import { isRealAwb } from './supabase'
+
 /**
  * Computes dynamic counts for the 9 status filters based on the active orders ledger
  */
@@ -469,8 +471,8 @@ export const openSingleOrderDetailSheet = (order) => {
   const discount = Number(order.discount || 0)
   const deliveryFee = Number(order.delivery_fee ?? order.shipping_fee ?? order.shippingCharge ?? (subtotal > 499 ? 0 : 50))
   const grandTotal = Number(order.total_amount || subtotal - discount + deliveryFee)
-  const orderNum = order.order_number || order.id || 'JSRT-2026-785305'
-  const placedDate = order.created_at ? new Date(order.created_at).toLocaleString('en-IN') : '19 Nov 2026, 02:30 PM'
+  const orderNum = order.order_number || order.id || 'N/A'
+  const placedDate = order.created_at ? new Date(order.created_at).toLocaleString('en-IN') : new Date().toLocaleString('en-IN')
   const status = (order.order_status || order.status || 'Confirmed').toLowerCase()
 
   const html = `<!DOCTYPE html>
@@ -525,11 +527,11 @@ export const openSingleOrderDetailSheet = (order) => {
         </div>
         <div class="detail-row">
           <span>Shipping Destination:</span>
-          <strong>${order.shipping_address ? (typeof order.shipping_address === 'string' ? order.shipping_address : (order.shipping_address.street || order.shipping_address.city || 'India')) : (order.shipping_city || 'Palani, Dindigul, Tamil Nadu')}</strong>
+          <strong>${order.shipping_address ? (typeof order.shipping_address === 'string' ? order.shipping_address : (order.shipping_address.street || order.shipping_address.city || 'Standard Address')) : (order.shipping_city || 'Registered Address')}</strong>
         </div>
         <div class="detail-row">
           <span>Patron User ID:</span>
-          <strong>${order.user_id_number || '44914715'}</strong>
+          <strong>${order.user_id_number || order.customer_id || 'PATRON'}</strong>
         </div>
       </div>
 
@@ -541,15 +543,15 @@ export const openSingleOrderDetailSheet = (order) => {
         </div>
         <div class="detail-row">
           <span>Courier Partner:</span>
-          <strong>${order.courier_partner || order.courier || 'Shadowfax / India Post Speed Post'}</strong>
+          <strong>${order.courier_partner || order.courier || 'India Post Speed Post'}</strong>
         </div>
         <div class="detail-row">
           <span>Tracking ID / AWB:</span>
-          <strong>${order.tracking_number || order.tracking_awb || 'SF36989873860'}</strong>
+          <strong>${isRealAwb(order.tracking_number || order.tracking_awb) ? (order.tracking_number || order.tracking_awb) : 'Updated soon'}</strong>
         </div>
         <div class="detail-row">
           <span>Payment Gateway:</span>
-          <strong>${order.payment_method || 'Online Razorpay'} (${order.razorpay_payment_id || 'pay_TMp6vSDrsYHfrA'})</strong>
+          <strong>${order.payment_method || 'Online Razorpay'} ${order.razorpay_payment_id ? `(${order.razorpay_payment_id})` : ''}</strong>
         </div>
         <div class="detail-row">
           <span>Expected Delivery:</span>
@@ -823,7 +825,7 @@ export const openBulkInvoicesSheet = (matchedOrders = [], fromDate = '', toDate 
       const discount = Number(order.discount || 0)
       const deliveryFee = Number(order.delivery_fee ?? order.shipping_fee ?? order.shippingCharge ?? (subtotal > 499 ? 0 : 50))
       const grandTotal = Number(order.total_amount || subtotal - discount + deliveryFee)
-      const orderNum = order.order_number || order.id || `JSRT-2026-${100000 + idx}`
+      const orderNum = order.order_number || order.id || `THN-${100000 + idx}`
       const invoiceDate = order.created_at ? new Date(order.created_at).toLocaleDateString('en-IN') : new Date().toLocaleDateString('en-IN')
 
       return `
@@ -858,9 +860,9 @@ export const openBulkInvoicesSheet = (matchedOrders = [], fromDate = '', toDate 
           <div class="col-card-title">Consignee (Billed & Shipped To)</div>
           <p style="font-size: 0.82rem; line-height: 1.5; color: #385040;">
             <strong>${order.customer_name || 'Valued Patron'}</strong><br />
-            ${order.shipping_address ? (typeof order.shipping_address === 'string' ? order.shipping_address : `${order.shipping_address.street || ''}, ${order.shipping_address.city || ''}`) : (order.shipping_city || 'Palani, Dindigul')}<br />
-            ${order.shipping_state || 'Tamil Nadu'} - ${order.shipping_pincode || '624601'}<br />
-            Phone: ${order.customer_phone || '+91 75502 48005'}
+            ${order.shipping_address ? (typeof order.shipping_address === 'string' ? order.shipping_address : `${order.shipping_address.street || ''}, ${order.shipping_address.city || ''}`) : (order.shipping_city || '')}<br />
+            ${order.shipping_state || 'Tamil Nadu'}${order.shipping_pincode ? ` - ${order.shipping_pincode}` : ''}<br />
+            Phone: ${order.customer_phone || ''}
           </p>
         </div>
       </div>

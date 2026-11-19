@@ -2222,6 +2222,30 @@
   color: #36533F;
 }
 
+.btn-tbl-action.delete {
+  color: #DC2626;
+  border-color: #FECACA;
+  background: #FEF2F2;
+}
+
+.btn-tbl-action.delete:hover {
+  background: #DC2626;
+  color: #FFFFFF;
+  border-color: #DC2626;
+}
+
+.btn-mo-action.btn-mo-delete {
+  color: #DC2626;
+  border-color: #FECACA;
+  background: #FEF2F2;
+}
+
+.btn-mo-action.btn-mo-delete:hover {
+  background: #DC2626;
+  color: #FFFFFF;
+  border-color: #DC2626;
+}
+
 .cell-review-text {
   max-width: 320px;
   line-height: 1.45;

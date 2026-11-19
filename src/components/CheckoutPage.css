@@ -306,7 +306,7 @@
 
 .form-field-row.three-cols {
   display: grid;
-  grid-template-columns: 1.25fr 1fr 1fr;
+  grid-template-columns: repeat(3, 1fr);
   gap: 16px;
   width: 100%;
   min-width: 0;
@@ -412,17 +412,19 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
-  max-height: 260px;
+  max-height: 280px;
   overflow-y: auto;
-  padding-right: 4px;
+  overflow-x: visible;
+  padding: 10px 10px 6px 6px;
 }
 
 .summary-item-row {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 14px;
   padding-bottom: 12px;
   border-bottom: 1px solid #F2F6F1;
+  position: relative;
 }
 
 .summary-item-row:last-child {
@@ -431,39 +433,46 @@
 }
 
 .summary-item-img-wrap {
-  width: 46px;
-  height: 46px;
-  border-radius: 9px;
-  border: 1px solid #E2EADF;
-  background: #F8FAF7;
+  width: 52px;
+  height: 52px;
+  border-radius: 11px;
+  border: 1.5px solid #DCE6D9;
+  background: #FFFFFF;
   position: relative;
   flex-shrink: 0;
+  margin-top: 6px;
+  margin-right: 6px;
   overflow: visible;
 }
 
-.summary-item-img-wrap img {
+.summary-item-img-wrap img,
+.summary-item-img-wrap .smart-image-wrap {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  border-radius: 8px;
+  border-radius: 9px;
+  display: block;
 }
 
 .summary-item-qty {
   position: absolute;
-  top: -6px;
-  right: -6px;
-  width: 20px;
-  height: 20px;
+  top: -8px;
+  right: -8px;
+  width: 22px;
+  height: 22px;
   border-radius: 50%;
-  background: #274C37;
+  background: #173826;
   color: #FFFFFF;
-  font-size: 0.7rem;
+  font-size: 0.72rem;
   font-weight: 800;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
-  border: 1.5px solid #FFFFFF;
+  box-shadow: 0 2px 6px rgba(18, 50, 35, 0.25);
+  border: 2px solid #FFFFFF;
+  z-index: 10;
+  pointer-events: none;
+  line-height: 1;
 }
 
 .summary-item-info {
@@ -1060,26 +1069,11 @@
     gap: 14px;
   }
 
-  /* City full width on row 1, State and Pincode cleanly side by side on row 2 */
+  /* 3-column rows adapt nicely on tablet, and stack on mobile */
   .form-field-row.three-cols {
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 12px;
-  }
-
-  .form-field-row.three-cols .form-field:nth-child(1) {
-    grid-column: span 2;
-    /* City full width */
-  }
-
-  .form-field-row.three-cols .form-field:nth-child(2) {
-    grid-column: span 1;
-    /* State */
-  }
-
-  .form-field-row.three-cols .form-field:nth-child(3) {
-    grid-column: span 1;
-    /* Pincode */
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
   }
 
   .form-field input {
@@ -1137,6 +1131,11 @@
     padding: 16px 14px;
   }
 
+  .form-field-row.three-cols {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
   .checkout-section-header {
     margin-bottom: 16px;
     padding-bottom: 12px;
@@ -1166,8 +1165,10 @@
   }
 
   .summary-item-img-wrap {
-    width: 40px;
-    height: 40px;
+    width: 48px;
+    height: 48px;
+    margin-top: 6px;
+    margin-right: 6px;
   }
 
   .summary-item-info h4 {
@@ -1497,4 +1498,138 @@
   .checkout-address-cards-grid {
     grid-template-columns: 1fr;
   }
+}
+
+/* ==============================================================================
+   IN-WEBSITE VALIDATION POPUP (REPLACES BROWSER ALERT)
+   ============================================================================== */
+.checkout-validation-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(18, 50, 35, 0.45);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 99999;
+  padding: 16px;
+  animation: checkoutBackdropFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes checkoutBackdropFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.checkout-validation-card {
+  background: #FFFFFF;
+  border-radius: 18px;
+  width: 100%;
+  max-width: 420px;
+  padding: 24px;
+  box-shadow: 0 20px 45px rgba(18, 50, 35, 0.2), 0 4px 12px rgba(0, 0, 0, 0.06);
+  border: 1px solid #E3ECE4;
+  position: relative;
+  box-sizing: border-box;
+  animation: checkoutCardPopIn 0.24s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+@keyframes checkoutCardPopIn {
+  from {
+    opacity: 0;
+    transform: scale(0.92) translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.checkout-validation-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.checkout-validation-icon-wrap {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: #FEF3C7;
+  color: #D97706;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.checkout-validation-close-btn {
+  background: #F4FAF5;
+  border: 1px solid #E1EAE3;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  color: #4C6454;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.checkout-validation-close-btn:hover {
+  background: #E8F2EC;
+  color: #123223;
+  transform: rotate(90deg);
+}
+
+.checkout-validation-title {
+  font-family: var(--font-heading, inherit);
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #173826;
+  margin: 0 0 8px;
+  line-height: 1.3;
+}
+
+.checkout-validation-msg {
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: #43594C;
+  margin: 0 0 20px;
+}
+
+.checkout-validation-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.checkout-validation-btn {
+  background: #173826;
+  color: #FFFFFF;
+  border: none;
+  border-radius: 10px;
+  padding: 10px 24px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(23, 56, 38, 0.2);
+  transition: all 0.15s ease;
+  min-width: 90px;
+}
+
+.checkout-validation-btn:hover {
+  background: #0F2519;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(23, 56, 38, 0.28);
+}
+
+.checkout-validation-btn:active {
+  transform: translateY(0);
 }

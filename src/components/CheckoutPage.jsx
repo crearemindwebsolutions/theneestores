@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useCart } from '../context/CartContext'
 import { brandInfo } from '../data/products'
-import { orderService } from '../lib/supabase'
+import { orderService, isRealAwb } from '../lib/supabase'
 import { sendOrderConfirmationEmail, sendAdminOrderAlertEmail } from '../lib/emailService'
 import { getSavedAddresses, saveAddress, updateAddress } from '../lib/addressService'
 import { ImageWithSkeleton } from './Skeleton'
@@ -34,14 +34,26 @@ const CheckoutPage = ({ onBack, onOpenAccount }) => {
   const [isAddingNewAddress, setIsAddingNewAddress] = useState(false)
   const [isEditingAddress, setIsEditingAddress] = useState(false)
   const [saveForFuture, setSaveForFuture] = useState(true)
+  const [validationPopup, setValidationPopup] = useState(null)
+
+  const handleCloseValidationPopup = () => {
+    setValidationPopup(null)
+    const el = document.getElementById('checkout-shipping-section')
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }
+  }
 
   // Shipping details state (pre-filled from user or saved address)
   const [shippingForm, setShippingForm] = useState({
     name: '',
     phone: '',
+    alt_mobile: '',
     email: currentUser?.email || '',
-    street: '',
+    line1: '',
+    line2: '',
     city: '',
+    district: '',
     state: 'Tamil Nadu',
     pincode: '',
   })
@@ -54,10 +66,13 @@ const CheckoutPage = ({ onBack, onOpenAccount }) => {
 
       const savedUser = localStorage.getItem('thenee_user')
       let name = currentUser?.name || ''
-      let phone = currentUser?.contact || ''
+      let phone = currentUser?.contact ? currentUser.contact.replace(/\D/g, '').slice(-10) : ''
+      let alt_mobile = ''
       let email = currentUser?.email || ''
-      let street = ''
+      let line1 = ''
+      let line2 = ''
       let city = ''
+      let district = ''
       let state = 'Tamil Nadu'
       let pincode = ''
 
@@ -65,7 +80,8 @@ const CheckoutPage = ({ onBack, onOpenAccount }) => {
         try {
           const u = JSON.parse(savedUser)
           if (u.name && !name) name = u.name
-          if (u.contact && !phone) phone = u.contact
+          if (u.contact && !phone) phone = u.contact.replace(/\D/g, '').slice(-10)
+          if (u.alt_mobile && !alt_mobile) alt_mobile = u.alt_mobile
           if (u.email && !email) email = u.email
         } catch {}
       }
@@ -74,11 +90,14 @@ const CheckoutPage = ({ onBack, onOpenAccount }) => {
         const def = addrs.find((a) => a.isDefault) || addrs[0]
         if (def) {
           setSelectedAddressId(def.id)
-          if (def.name) name = def.name
+          if (def.name || def.recipient) name = def.name || def.recipient
           if (def.phone) phone = def.phone
+          if (def.alt_mobile) alt_mobile = def.alt_mobile
           if (def.email) email = def.email
-          if (def.street) street = def.street
+          if (def.line1 || def.street) line1 = def.line1 || def.street
+          if (def.line2) line2 = def.line2
           if (def.city) city = def.city
+          if (def.district) district = def.district || def.city
           if (def.state) state = def.state
           if (def.pincode) pincode = def.pincode
           setIsAddingNewAddress(false)
@@ -89,7 +108,7 @@ const CheckoutPage = ({ onBack, onOpenAccount }) => {
         setIsEditingAddress(true)
       }
 
-      setShippingForm({ name, phone, email, street, city, state, pincode })
+      setShippingForm({ name, phone, alt_mobile, email, line1, line2, city, district, state, pincode })
     } catch {
       setIsAddingNewAddress(true)
       setIsEditingAddress(true)
@@ -102,11 +121,14 @@ const CheckoutPage = ({ onBack, onOpenAccount }) => {
     setIsAddingNewAddress(false)
     setIsEditingAddress(false)
     setShippingForm({
-      name: addr.name || currentUser?.name || '',
+      name: addr.name || addr.recipient || currentUser?.name || '',
       phone: addr.phone || currentUser?.contact || '',
+      alt_mobile: addr.alt_mobile || '',
       email: addr.email || currentUser?.email || '',
-      street: addr.street || '',
+      line1: addr.line1 || addr.street || '',
+      line2: addr.line2 || '',
       city: addr.city || '',
+      district: addr.district || addr.city || '',
       state: addr.state || 'Tamil Nadu',
       pincode: addr.pincode || '',
     })
@@ -120,9 +142,12 @@ const CheckoutPage = ({ onBack, onOpenAccount }) => {
     setShippingForm({
       name: currentUser?.name && !currentUser.name.includes('@') ? currentUser.name : '',
       phone: currentUser?.contact ? currentUser.contact.replace(/\D/g, '').slice(-10) : '',
+      alt_mobile: '',
       email: currentUser?.email || '',
-      street: '',
+      line1: '',
+      line2: '',
       city: '',
+      district: '',
       state: 'Tamil Nadu',
       pincode: '',
     })
@@ -161,8 +186,45 @@ const CheckoutPage = ({ onBack, onOpenAccount }) => {
   const handleExecutePayment = async (e) => {
     if (e) e.preventDefault()
 
-    if (!shippingForm.name.trim() || !shippingForm.phone.trim() || !shippingForm.street.trim() || !shippingForm.pincode.trim()) {
-      alert('Please fill in your delivery name, phone, and complete address.')
+    if (
+      !shippingForm.name.trim() ||
+      !shippingForm.phone.trim() ||
+      !shippingForm.line1.trim() ||
+      !shippingForm.city.trim() ||
+      !shippingForm.district.trim() ||
+      !shippingForm.pincode.trim()
+    ) {
+      setValidationPopup({
+        title: 'Delivery Details Required',
+        message: 'Please fill in recipient name, mobile number, line 1 street address, city, district, and pincode.',
+      })
+      if (savedAddresses.length > 0 && !isAddingNewAddress && !isEditingAddress) {
+        setIsEditingAddress(true)
+      }
+      return
+    }
+
+    const cleanPhone = shippingForm.phone.replace(/\D/g, '')
+    if (cleanPhone.length < 10) {
+      setValidationPopup({
+        title: 'Valid Mobile Number Required',
+        message: 'Please enter a valid 10-digit mobile number for courier dispatch updates.',
+      })
+      if (savedAddresses.length > 0 && !isAddingNewAddress && !isEditingAddress) {
+        setIsEditingAddress(true)
+      }
+      return
+    }
+
+    const cleanPin = shippingForm.pincode.replace(/\D/g, '')
+    if (cleanPin.length !== 6) {
+      setValidationPopup({
+        title: 'Valid 6-Digit Pincode Required',
+        message: 'Please enter a valid 6-digit postal pincode for India Post Speed Post delivery.',
+      })
+      if (savedAddresses.length > 0 && !isAddingNewAddress && !isEditingAddress) {
+        setIsEditingAddress(true)
+      }
       return
     }
 
@@ -175,10 +237,15 @@ const CheckoutPage = ({ onBack, onOpenAccount }) => {
           const updated = saveAddress(
             {
               name: shippingForm.name,
+              recipient: shippingForm.name,
               phone: shippingForm.phone,
+              alt_mobile: shippingForm.alt_mobile,
               email: shippingForm.email,
-              street: shippingForm.street,
+              line1: shippingForm.line1,
+              line2: shippingForm.line2,
+              street: shippingForm.line1,
               city: shippingForm.city,
+              district: shippingForm.district,
               state: shippingForm.state,
               pincode: shippingForm.pincode,
               type: 'Home',
@@ -197,10 +264,15 @@ const CheckoutPage = ({ onBack, onOpenAccount }) => {
           selectedAddressId,
           {
             name: shippingForm.name,
+            recipient: shippingForm.name,
             phone: shippingForm.phone,
+            alt_mobile: shippingForm.alt_mobile,
             email: shippingForm.email,
-            street: shippingForm.street,
+            line1: shippingForm.line1,
+            line2: shippingForm.line2,
+            street: shippingForm.line1,
             city: shippingForm.city,
+            district: shippingForm.district,
             state: shippingForm.state,
             pincode: shippingForm.pincode,
           },
@@ -216,7 +288,7 @@ const CheckoutPage = ({ onBack, onOpenAccount }) => {
     }
 
     const orderId = `#THN-${Math.floor(80000 + Math.random() * 19000)}`
-    const awbId = `INP${Math.floor(800000000 + Math.random() * 190000000)}TN`
+    const awbId = null
     const dateStr = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
     const timeStr = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
 
@@ -226,6 +298,33 @@ const CheckoutPage = ({ onBack, onOpenAccount }) => {
       price: item.price,
       image: item.cardImage,
     }))
+
+    const destinationText = [shippingForm.city, shippingForm.district, shippingForm.state].filter(Boolean).join(', ')
+    const fullAddressText = [
+      shippingForm.line1,
+      shippingForm.line2,
+      shippingForm.city,
+      shippingForm.district,
+      `${shippingForm.state} - ${shippingForm.pincode}`,
+    ].filter(Boolean).join(', ')
+
+    const shippingAddressPayload = {
+      recipient: shippingForm.name,
+      recipient_name: shippingForm.name,
+      name: shippingForm.name,
+      phone: shippingForm.phone,
+      alt_mobile: shippingForm.alt_mobile,
+      email: shippingForm.email || currentUser?.email || '',
+      line1: shippingForm.line1,
+      line2: shippingForm.line2,
+      street: shippingForm.line1,
+      address: shippingForm.line1,
+      area: shippingForm.line2,
+      city: shippingForm.city,
+      district: shippingForm.district,
+      state: shippingForm.state,
+      pincode: shippingForm.pincode,
+    }
 
     const newOrder = {
       id: orderId,
@@ -239,18 +338,21 @@ const CheckoutPage = ({ onBack, onOpenAccount }) => {
       status: 'Order Confirmed',
       step: 1,
       courier: 'India Post Speed Post',
-      awb: awbId,
+      awb: null,
+      tracking_awb: null,
       paymentMethod: 'Online Payment (UPI, Cards, NetBanking)',
-      destination: `${shippingForm.city || 'Tamil Nadu'}, ${shippingForm.state}`,
-      address: `${shippingForm.street}, ${shippingForm.city} - ${shippingForm.pincode}`,
+      destination: destinationText || `${shippingForm.city || 'Tamil Nadu'}, ${shippingForm.state}`,
+      address: fullAddressText,
       recipient: shippingForm.name,
       phone: shippingForm.phone,
+      alt_mobile: shippingForm.alt_mobile,
       email: shippingForm.email || currentUser?.email || '',
+      shipping_address: shippingAddressPayload,
       timeline: [
         { title: 'Payment Authorized & Order Confirmed', time: `${dateStr}, ${timeStr}`, done: true },
-        { title: 'Handcrafting at Tenkasi Rural Unit', time: 'Tomorrow, by 10:00 AM', done: false },
-        { title: 'Dispatch via Speed Post', time: 'Within 24-48 hours', done: false },
-        { title: 'Out for Delivery', time: 'Estimated 2-3 days', done: false },
+        { title: 'Handcrafting at Tenkasi Rural Unit', time: 'In Progress', done: false },
+        { title: 'Dispatch via Courier', time: 'Updated soon', done: false },
+        { title: 'Out for Delivery', time: 'Updated soon', done: false },
       ],
     }
 
@@ -266,17 +368,10 @@ const CheckoutPage = ({ onBack, onOpenAccount }) => {
         delivery_fee: deliveryFee,
         status: 'Order Confirmed',
         courier: 'India Post Speed Post',
-        awb: awbId,
+        awb: null,
+        tracking_awb: null,
         payment_method: 'Online Payment (UPI, Cards, NetBanking)',
-        shipping_address: {
-          recipient: shippingForm.name,
-          phone: shippingForm.phone,
-          email: shippingForm.email || currentUser?.email || '',
-          street: shippingForm.street,
-          city: shippingForm.city,
-          state: shippingForm.state,
-          pincode: shippingForm.pincode,
-        },
+        shipping_address: shippingAddressPayload,
         timeline: newOrder.timeline,
       })
     } catch (dbErr) {
@@ -465,7 +560,13 @@ const CheckoutPage = ({ onBack, onOpenAccount }) => {
               <div className="success-detail-row">
                 <span className="detail-label">Postal Tracking / AWB:</span>
                 <span className="detail-value status-badge-inline">
-                  📦 {confirmedOrder.courier} ({confirmedOrder.awb})
+                  {isRealAwb(confirmedOrder.awb || confirmedOrder.tracking_awb) ? (
+                    <>📦 {confirmedOrder.courier || 'India Post Speed Post'} ({confirmedOrder.awb || confirmedOrder.tracking_awb})</>
+                  ) : (
+                    <span style={{ color: '#854D0E', background: '#FEF9C3', padding: '3px 8px', borderRadius: '6px', fontSize: '0.85rem', fontWeight: 600 }}>
+                      Updated soon
+                    </span>
+                  )}
                 </span>
               </div>
               <div className="success-detail-row">
@@ -507,7 +608,7 @@ const CheckoutPage = ({ onBack, onOpenAccount }) => {
             {/* LEFT COLUMN: FORMS (SHIPPING & PAYMENT) */}
             <div className="checkout-forms-column">
               {/* SECTION 1: DELIVERY ADDRESS */}
-              <section className="checkout-card-section">
+              <section className="checkout-card-section" id="checkout-shipping-section">
                 <div className="checkout-section-header">
                   <span className="section-step-num">1</span>
                   <div>
@@ -573,12 +674,12 @@ const CheckoutPage = ({ onBack, onOpenAccount }) => {
                               </div>
 
                               <div className="checkout-addr-card-body">
-                                <strong className="checkout-addr-name">{addr.name}</strong>
-                                <p className="checkout-addr-line">{addr.street}</p>
+                                <strong className="checkout-addr-name">{addr.name || addr.recipient}</strong>
+                                <p className="checkout-addr-line">{addr.line1 || addr.street}{addr.line2 ? `, ${addr.line2}` : ''}</p>
                                 <p className="checkout-addr-line">
-                                  {addr.city}, {addr.state} - <strong>{addr.pincode}</strong>
+                                  {addr.city}, {addr.district ? `${addr.district}, ` : ''}{addr.state} - <strong>{addr.pincode}</strong>
                                 </p>
-                                <p className="checkout-addr-phone">📞 +91 {addr.phone}</p>
+                                <p className="checkout-addr-phone">📞 +91 {addr.phone}{addr.alt_mobile ? ` · Alt: +91 ${addr.alt_mobile}` : ''}</p>
                               </div>
 
                               {isSelected && !isEditingAddress && (
@@ -612,26 +713,102 @@ const CheckoutPage = ({ onBack, onOpenAccount }) => {
                       </div>
                     )}
 
-                    <div className="form-field-row">
+                    <div className="form-field">
+                      <label>Recipient Name *</label>
+                      <input
+                        type="text"
+                        value={shippingForm.name}
+                        onChange={(e) => setShippingForm({ ...shippingForm, name: e.target.value })}
+                        placeholder="Recipient Name"
+                        required
+                      />
+                    </div>
+
+                    <div className="form-field">
+                      <label>Line 1 (Street) *</label>
+                      <input
+                        type="text"
+                        value={shippingForm.line1}
+                        onChange={(e) => setShippingForm({ ...shippingForm, line1: e.target.value })}
+                        placeholder="Door / Flat, Building, Street"
+                        required
+                      />
+                    </div>
+
+                    <div className="form-field">
+                      <label>Line 2 (Area/Apt)</label>
+                      <input
+                        type="text"
+                        value={shippingForm.line2}
+                        onChange={(e) => setShippingForm({ ...shippingForm, line2: e.target.value })}
+                        placeholder="Area / Landmark"
+                      />
+                    </div>
+
+                    <div className="form-field-row three-cols">
                       <div className="form-field">
-                        <label>Full Name *</label>
+                        <label>City *</label>
                         <input
                           type="text"
-                          value={shippingForm.name}
-                          onChange={(e) => setShippingForm({ ...shippingForm, name: e.target.value })}
-                          placeholder="Receiver's Full Name"
+                          value={shippingForm.city}
+                          onChange={(e) => setShippingForm({ ...shippingForm, city: e.target.value })}
+                          placeholder="City"
                           required
                         />
                       </div>
                       <div className="form-field">
-                        <label>Mobile Number (+91) *</label>
+                        <label>District *</label>
+                        <input
+                          type="text"
+                          value={shippingForm.district}
+                          onChange={(e) => setShippingForm({ ...shippingForm, district: e.target.value })}
+                          placeholder="District"
+                          required
+                        />
+                      </div>
+                      <div className="form-field">
+                        <label>State *</label>
+                        <input
+                          type="text"
+                          value={shippingForm.state}
+                          onChange={(e) => setShippingForm({ ...shippingForm, state: e.target.value })}
+                          placeholder="State"
+                          required
+                        />
+                      </div>
+                    </div>
+
+                    <div className="form-field-row three-cols">
+                      <div className="form-field">
+                        <label>Pincode *</label>
+                        <input
+                          type="text"
+                          maxLength={6}
+                          value={shippingForm.pincode}
+                          onChange={(e) => setShippingForm({ ...shippingForm, pincode: e.target.value.replace(/\D/g, '') })}
+                          placeholder="Pincode"
+                          required
+                        />
+                      </div>
+                      <div className="form-field">
+                        <label>Mobile *</label>
                         <input
                           type="tel"
                           maxLength={10}
                           value={shippingForm.phone}
                           onChange={(e) => setShippingForm({ ...shippingForm, phone: e.target.value.replace(/\D/g, '') })}
-                          placeholder="10-digit mobile number"
+                          placeholder="+91 75502..."
                           required
+                        />
+                      </div>
+                      <div className="form-field">
+                        <label>Alt Mobile</label>
+                        <input
+                          type="tel"
+                          maxLength={10}
+                          value={shippingForm.alt_mobile}
+                          onChange={(e) => setShippingForm({ ...shippingForm, alt_mobile: e.target.value.replace(/\D/g, '') })}
+                          placeholder="Alternate"
                         />
                       </div>
                     </div>
@@ -644,51 +821,6 @@ const CheckoutPage = ({ onBack, onOpenAccount }) => {
                         onChange={(e) => setShippingForm({ ...shippingForm, email: e.target.value })}
                         placeholder="yourname@gmail.com"
                       />
-                    </div>
-
-                    <div className="form-field">
-                      <label>House / Flat / Street Address *</label>
-                      <input
-                        type="text"
-                        value={shippingForm.street}
-                        onChange={(e) => setShippingForm({ ...shippingForm, street: e.target.value })}
-                        placeholder="Door no., Apartment, Street name, Landmark"
-                        required
-                      />
-                    </div>
-
-                    <div className="form-field-row three-cols">
-                      <div className="form-field">
-                        <label>City / Town *</label>
-                        <input
-                          type="text"
-                          value={shippingForm.city}
-                          onChange={(e) => setShippingForm({ ...shippingForm, city: e.target.value })}
-                          placeholder="e.g. Tenkasi"
-                          required
-                        />
-                      </div>
-                      <div className="form-field">
-                        <label>State *</label>
-                        <input
-                          type="text"
-                          value={shippingForm.state}
-                          onChange={(e) => setShippingForm({ ...shippingForm, state: e.target.value })}
-                          placeholder="Tamil Nadu"
-                          required
-                        />
-                      </div>
-                      <div className="form-field">
-                        <label>Pincode *</label>
-                        <input
-                          type="text"
-                          maxLength={6}
-                          value={shippingForm.pincode}
-                          onChange={(e) => setShippingForm({ ...shippingForm, pincode: e.target.value.replace(/\D/g, '') })}
-                          placeholder="6-digit PIN"
-                          required
-                        />
-                      </div>
                     </div>
 
                     <div className="checkout-save-address-row">
@@ -893,6 +1025,58 @@ const CheckoutPage = ({ onBack, onOpenAccount }) => {
           </a>
         </div>
       </footer>
+
+      {/* SMALL IN-WEBSITE VALIDATION POPUP */}
+      {validationPopup && (
+        <div
+          className="checkout-validation-backdrop"
+          onClick={handleCloseValidationPopup}
+          data-lenis-prevent
+        >
+          <div
+            className="checkout-validation-card"
+            onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+          >
+            <div className="checkout-validation-header">
+              <div className="checkout-validation-icon-wrap">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="10" />
+                  <line x1="12" y1="8" x2="12" y2="12" />
+                  <line x1="12" y1="16" x2="12.01" y2="16" />
+                </svg>
+              </div>
+              <button
+                type="button"
+                className="checkout-validation-close-btn"
+                onClick={handleCloseValidationPopup}
+                aria-label="Close"
+              >
+                ✕
+              </button>
+            </div>
+
+            <h3 className="checkout-validation-title">
+              {validationPopup.title || 'Delivery Details Required'}
+            </h3>
+
+            <p className="checkout-validation-msg">
+              {validationPopup.message}
+            </p>
+
+            <div className="checkout-validation-actions">
+              <button
+                type="button"
+                className="checkout-validation-btn"
+                onClick={handleCloseValidationPopup}
+              >
+                OK
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
