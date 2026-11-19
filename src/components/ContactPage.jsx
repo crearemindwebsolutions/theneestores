@@ -138,38 +138,42 @@ const ContactPage = ({ onOpenAccount }) => {
             </div>
           </div>
 
-          {/* 4 Trust Badges Horizontal Strip */}
+          {/* 4 Trust Badges Strip (Responsive: Single Row on Desktop, Balanced 2x2 Grid on Mobile) */}
           <div className="contact-trust-pill-strip">
             <div className="trust-pill-item">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="12" cy="12" r="10" />
                 <polyline points="12 6 12 12 16 14" />
               </svg>
-              <span>2-Hour Response Time</span>
+              <span className="trust-text-desktop">2-Hour Response Time</span>
+              <span className="trust-text-mobile">2-Hour Response</span>
             </div>
 
             <div className="trust-pill-item">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
               </svg>
-              <span>WhatsApp Direct Support</span>
+              <span className="trust-text-desktop">WhatsApp Direct Support</span>
+              <span className="trust-text-mobile">WhatsApp Support</span>
             </div>
 
             <div className="trust-pill-item">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <rect x="1" y="3" width="15" height="13" />
-                <polygon points="16 8 20 8 23 11 23 16 16 16 16 8" />
+                <polygon points="16 8 20 8 23 11 23 16 16 16 8" />
                 <circle cx="5.5" cy="18.5" r="2.5" />
                 <circle cx="18.5" cy="18.5" r="2.5" />
               </svg>
-              <span>All-India Daily Dispatch</span>
+              <span className="trust-text-desktop">All-India Daily Dispatch</span>
+              <span className="trust-text-mobile">Daily Dispatch</span>
             </div>
 
             <div className="trust-pill-item">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="m8 3 4 8 5-5 5 15H2L8 3z" />
               </svg>
-              <span>Foothills of Western Ghats</span>
+              <span className="trust-text-desktop">Foothills of Western Ghats</span>
+              <span className="trust-text-mobile">Western Ghats</span>
             </div>
           </div>
         </div>
@@ -181,37 +185,65 @@ const ContactPage = ({ onOpenAccount }) => {
           <p className="card-subheading">Choose an inquiry type</p>
 
           <form onSubmit={handleSubmit} className="contact-card-form">
-            {/* Inquiry Type Box (Sage Green Selected Top Pill + White Sub-Pills) */}
+            {/* Inquiry Type Box (Desktop: Exact Reference Design; Mobile: Balanced 2x2 Grid) */}
             <div className="inquiry-type-box">
               <span className="inquiry-box-label">Inquiry type</span>
 
-              {/* Top Active Pill */}
-              <div className="inquiry-active-pill">
-                <div className="pill-left-content">
-                  <span className="pill-icon">{activeType.icon}</span>
-                  <span className="pill-label">{activeType.activeLabel}</span>
+              {/* Desktop Layout: Exact Reference Match */}
+              <div className="inquiry-desktop-layout">
+                <div className="inquiry-active-pill">
+                  <div className="pill-left-content">
+                    <span className="pill-icon">{activeType.icon}</span>
+                    <span className="pill-label">{activeType.activeLabel}</span>
+                  </div>
+                  <div className="pill-check-circle" title="Selected">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                  </div>
                 </div>
-                <div className="pill-check-circle" title="Selected">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
-                    <polyline points="20 6 9 17 4 12" />
-                  </svg>
+
+                <div className="inquiry-options-row">
+                  {otherTypes.map((t) => (
+                    <button
+                      key={t.id}
+                      type="button"
+                      className="inquiry-sub-pill"
+                      onClick={() => setForm({ ...form, type: t.id })}
+                      title={t.activeLabel}
+                    >
+                      <span className="sub-pill-icon">{t.icon}</span>
+                      <span className="sub-pill-label">{t.subLabel}</span>
+                    </button>
+                  ))}
                 </div>
               </div>
 
-              {/* Sub-Pills (3 Options in Row) */}
-              <div className="inquiry-options-row">
-                {otherTypes.map((t) => (
-                  <button
-                    key={t.id}
-                    type="button"
-                    className="inquiry-sub-pill"
-                    onClick={() => setForm({ ...form, type: t.id })}
-                    title={t.activeLabel}
-                  >
-                    <span className="sub-pill-icon">{t.icon}</span>
-                    <span className="sub-pill-label">{t.subLabel}</span>
-                  </button>
-                ))}
+              {/* Mobile Layout: Balanced 2x2 Option Grid with Stable In-Place Selection */}
+              <div className="inquiry-mobile-grid">
+                {INQUIRY_TYPES.map((t) => {
+                  const isSelected = form.type === t.id;
+                  return (
+                    <button
+                      key={t.id}
+                      type="button"
+                      className={`inquiry-grid-card ${isSelected ? 'is-selected' : ''}`}
+                      onClick={() => setForm({ ...form, type: t.id })}
+                    >
+                      <div className="grid-card-main">
+                        <span className="grid-card-icon">{t.icon}</span>
+                        <span className="grid-card-label">{t.subLabel}</span>
+                      </div>
+                      {isSelected && (
+                        <div className="grid-card-check">
+                          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
+                            <polyline points="20 6 9 17 4 12" />
+                          </svg>
+                        </div>
+                      )}
+                    </button>
+                  );
+                })}
               </div>
             </div>
 
@@ -274,7 +306,7 @@ const ContactPage = ({ onOpenAccount }) => {
                 <label className="input-label">Your Message *</label>
                 <div className="input-wrap textarea-wrap">
                   <textarea
-                    rows="1"
+                    rows={3}
                     placeholder="Tell us about your inquiry..."
                     value={form.message}
                     onChange={(e) => setForm({ ...form, message: e.target.value })}

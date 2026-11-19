@@ -291,6 +291,98 @@
   line-height: 1.2;
 }
 
+/* Trust Pill Text Responsive Variants */
+.trust-text-desktop {
+  display: inline;
+}
+.trust-text-mobile {
+  display: none;
+}
+
+/* Inquiry Layouts */
+.inquiry-desktop-layout {
+  display: block;
+}
+.inquiry-mobile-grid {
+  display: none;
+}
+
+/* Mobile 2x2 Option Grid Cards */
+.inquiry-grid-card {
+  background: #FFFFFF;
+  border: 1.5px solid #D6DCD4;
+  border-radius: 12px;
+  padding: 10px 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  min-width: 0;
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.inquiry-grid-card:hover {
+  border-color: #123223;
+  background: #FAFDF8;
+  transform: translateY(-1px);
+}
+
+.inquiry-grid-card.is-selected {
+  background: #CADCBE;
+  border-color: #123223;
+  box-shadow: 0 2px 6px rgba(18, 50, 35, 0.08);
+}
+
+.grid-card-main {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  flex: 1;
+  overflow: hidden;
+}
+
+.grid-card-icon {
+  font-size: 1.05rem;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.grid-card-label {
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: #1E3725;
+  line-height: 1.25;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.inquiry-grid-card.is-selected .grid-card-label {
+  font-weight: 700;
+  color: #123223;
+}
+
+.grid-card-check {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #123223;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.grid-card-check svg {
+  stroke: #FFFFFF;
+}
+
+
 /* ==========================================================================
    Input Fields & Clean Icons
    ========================================================================== */
@@ -678,83 +770,268 @@
    ========================================================================== */
 @media (max-width: 720px) {
   .contact-theme-container {
-    padding: 24px 14px 60px;
+    padding: 16px 14px 48px;
+  }
+
+  /* Compact & Balanced Brand Hero on Mobile */
+  .contact-brand-hero {
+    margin-bottom: 14px;
+  }
+
+  .contact-brand-logo-row {
+    margin-bottom: 8px;
+  }
+
+  .contact-leaf-icon {
+    width: 28px;
+    height: 28px;
+    margin-bottom: 4px;
   }
 
   .contact-brand-title {
-    font-size: 1.65rem;
-    letter-spacing: 0.14em;
+    font-size: 1.45rem;
+    letter-spacing: 0.12em;
+    line-height: 1.1;
   }
 
+  .contact-brand-subtitle {
+    font-size: 0.78rem;
+    margin-top: 3px;
+  }
+
+  /* 4 Trust Badges in a Balanced 2x2 Grid (No More 4 Stacked Rows!) */
   .contact-trust-pill-strip {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
     gap: 8px;
-    margin-bottom: 24px;
+    margin: 0 auto 18px;
+    max-width: 100%;
+  }
+
+  .trust-text-desktop {
+    display: none;
+  }
+
+  .trust-text-mobile {
+    display: inline;
   }
 
   .trust-pill-item {
-    font-size: 0.74rem;
-    padding: 6px 12px;
+    padding: 7px 8px;
+    font-size: 0.72rem;
+    justify-content: center;
+    border-radius: 999px;
+    white-space: nowrap;
+    box-sizing: border-box;
+    width: 100%;
   }
 
+  .trust-pill-item svg {
+    width: 15px;
+    height: 15px;
+  }
+
+  /* Main Contact Card */
   .contact-main-card {
-    padding: 24px 18px 22px;
-    border-radius: 20px;
-    margin-bottom: 32px;
+    padding: 20px 14px 20px;
+    border-radius: 18px;
+    margin-bottom: 24px;
+    box-shadow: 0 4px 18px rgba(18, 50, 35, 0.05);
+  }
+
+  .card-kicker {
+    font-size: 0.68rem;
+    margin-bottom: 4px;
   }
 
   .card-heading {
-    font-size: 1.5rem;
+    font-size: 1.45rem;
+    margin-bottom: 2px;
   }
 
+  .card-subheading {
+    font-size: 0.82rem;
+    margin-bottom: 14px;
+  }
+
+  /* Inquiry Type Box: Switch to 2x2 Grid with In-Place Selection */
   .inquiry-type-box {
-    padding: 12px;
-  }
-
-  .inquiry-active-pill {
     padding: 10px 12px;
+    border-radius: 14px;
+    margin-bottom: 16px;
   }
 
-  .pill-label {
-    font-size: 0.84rem;
+  .inquiry-box-label {
+    font-size: 0.74rem;
+    margin-bottom: 8px;
   }
 
-  .inquiry-options-row {
-    grid-template-columns: 1fr;
-    gap: 7px;
+  .inquiry-desktop-layout {
+    display: none;
   }
 
-  .inquiry-sub-pill {
-    padding: 10px 12px;
+  .inquiry-mobile-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    width: 100%;
+    box-sizing: border-box;
   }
 
-  .sub-pill-label {
-    white-space: normal;
-    font-size: 0.8rem;
+  /* Input Fields */
+  .contact-input-field {
+    margin-bottom: 12px;
+  }
+
+  .input-label {
+    font-size: 0.78rem;
+    margin-bottom: 5px;
+  }
+
+  .input-wrap {
+    min-height: 44px;
+    padding: 0 12px;
+    border-radius: 11px;
+  }
+
+  .input-wrap input {
+    font-size: 0.86rem;
+    padding: 9px 0;
   }
 
   .contact-split-row {
     grid-template-columns: 1fr;
-    gap: 14px;
+    gap: 12px;
+    margin-bottom: 14px;
   }
 
+  /* Message Textarea: Proper Multi-line Affordance */
+  .textarea-wrap {
+    align-items: flex-start;
+    padding: 10px 12px;
+    min-height: 84px;
+  }
+
+  .textarea-wrap textarea {
+    min-height: 64px;
+    font-size: 0.86rem;
+    line-height: 1.45;
+  }
+
+  /* Submit Button */
+  .contact-submit-btn {
+    height: 48px;
+    border-radius: 11px;
+    font-size: 0.94rem;
+    margin-top: 4px;
+  }
+
+  .contact-reassurance-note {
+    margin-top: 12px;
+    font-size: 0.78rem;
+  }
+
+  /* Kadayam Heritage & Direct Channels */
   .contact-heritage-split {
     grid-template-columns: 1fr;
-    gap: 18px;
-    margin: 32px auto;
+    gap: 14px;
+    margin: 26px auto 20px;
   }
 
   .heritage-story-box,
   .contact-channels-box {
-    padding: 20px 16px;
+    padding: 18px 14px;
     border-radius: 16px;
   }
 
+  .heritage-story-box h3,
+  .contact-channels-box h3 {
+    font-size: 1.22rem;
+    margin-bottom: 8px;
+  }
+
+  .heritage-story-box p,
+  .contact-channels-box p {
+    font-size: 0.82rem;
+    margin-bottom: 12px;
+    line-height: 1.5;
+  }
+
+  .heritage-bullet-item {
+    font-size: 0.80rem;
+    gap: 8px;
+  }
+
+  .channel-pill {
+    padding: 10px 12px;
+    border-radius: 10px;
+    gap: 10px;
+  }
+
+  .channel-icon {
+    font-size: 1.15rem;
+  }
+
+  .channel-pill strong {
+    font-size: 0.82rem;
+  }
+
+  .channel-pill span {
+    font-size: 0.74rem;
+  }
+
+  /* FAQ Section */
+  .contact-faq-section {
+    margin: 28px auto 36px;
+  }
+
+  .faq-theme-card {
+    border-radius: 12px;
+  }
+
   .faq-theme-card-top {
-    padding: 14px 16px;
+    padding: 12px 14px;
+  }
+
+  .faq-theme-card-top h4 {
+    font-size: 0.88rem;
   }
 
   .faq-theme-card-body {
-    padding: 0 16px 14px;
+    padding: 0 14px 12px;
+  }
+
+  .faq-theme-card-body p {
+    font-size: 0.82rem;
+  }
+}
+
+@media (max-width: 360px) {
+  .contact-theme-container {
+    padding: 12px 10px 40px;
+  }
+
+  .contact-trust-pill-strip {
+    gap: 6px;
+  }
+
+  .trust-pill-item {
+    padding: 6px 6px;
+    font-size: 0.68rem;
+    gap: 4px;
+  }
+
+  .trust-pill-item svg {
+    width: 13px;
+    height: 13px;
+  }
+
+  .inquiry-grid-card {
+    padding: 8px 8px;
+  }
+
+  .grid-card-label {
+    font-size: 0.70rem;
   }
 }
 
