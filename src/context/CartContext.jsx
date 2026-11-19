@@ -22,7 +22,18 @@ export const CartProvider = ({ children }) => {
   const [currentUser, setCurrentUser] = useState(() => {
     try {
       const saved = localStorage.getItem('thenee_auth_user')
-      return saved ? JSON.parse(saved) : null
+      if (!saved) return null
+      const parsed = JSON.parse(saved)
+      if (parsed?.email) {
+        const rawPrompted = localStorage.getItem('thenee_google_prompted_accounts')
+        const promptedList = rawPrompted ? JSON.parse(rawPrompted) : []
+        if (promptedList.includes(parsed.email.toLowerCase().trim())) {
+          parsed.profilePrompted = true
+          parsed.profileCompleted = true
+          parsed.hasPassword = true
+        }
+      }
+      return parsed
     } catch {
       return null
     }
@@ -73,31 +84,54 @@ export const CartProvider = ({ children }) => {
       if (!session?.user) return false
       const u = session.user
 
+      const cleanEmail = (u.email || '').toLowerCase().trim()
       let savedContact = ''
       let savedName = ''
       let isPrompted = false
       let hasPass = false
+
+      // 1. Supabase auth metadata check (stored permanently in Supabase Auth)
+      if (u.user_metadata?.profile_completed || u.user_metadata?.profilePrompted) {
+        isPrompted = true
+      }
+      if (u.user_metadata?.has_password || u.user_metadata?.password_set) {
+        hasPass = true
+      }
+      if (u.user_metadata?.phone) {
+        savedContact = u.user_metadata.phone
+      }
+
+      // 2. Check prompted accounts list (ensures modal is strictly once per Google account)
+      try {
+        const rawPrompted = localStorage.getItem('thenee_google_prompted_accounts')
+        const promptedList = rawPrompted ? JSON.parse(rawPrompted) : []
+        if (cleanEmail && promptedList.includes(cleanEmail)) {
+          isPrompted = true
+          hasPass = true
+        }
+      } catch {}
+
+      // 3. Check stored auth & local registry
       try {
         const storedAuth = JSON.parse(localStorage.getItem('thenee_auth_user') || '{}')
         const storedUser = JSON.parse(localStorage.getItem('thenee_user') || '{}')
-        savedContact = storedAuth.contact || storedUser.contact || storedAuth.phone || storedUser.phone || ''
+        if (storedAuth.profilePrompted || storedUser.profilePrompted) isPrompted = true
+        if (storedAuth.hasPassword || storedUser.hasPassword) hasPass = true
+        savedContact = savedContact || storedAuth.contact || storedUser.contact || storedAuth.phone || storedUser.phone || ''
         savedName = storedAuth.name || storedUser.name || ''
-        isPrompted = Boolean(storedAuth.profilePrompted || storedUser.profilePrompted)
-        hasPass = Boolean(storedAuth.hasPassword || storedUser.hasPassword)
-      } catch { }
+      } catch {}
 
-      const cleanEmail = (u.email || '').toLowerCase().trim()
       try {
         const rawUsers = localStorage.getItem('thenee_registered_users')
         if (rawUsers) {
           const usersList = JSON.parse(rawUsers)
           const found = usersList.find((usr) => (usr.email || '').toLowerCase().trim() === cleanEmail)
-          if (found?.phone) savedContact = found.phone
-          if (found?.name) savedName = found.name
+          if (found?.phone) savedContact = savedContact || found.phone
+          if (found?.name) savedName = savedName || found.name
           if (found?.profilePrompted) isPrompted = true
           if (found?.passwordHash || found?.hasPassword) hasPass = true
         }
-      } catch { }
+      } catch {}
 
       const resolvedName =
         (savedName && !savedName.includes('@'))
@@ -112,7 +146,7 @@ export const CartProvider = ({ children }) => {
         if (typeof savedUser?.points === 'number') {
           existingPoints = savedUser.points
         }
-      } catch { }
+      } catch {}
 
       const userData = {
         id: u.id,
@@ -120,6 +154,7 @@ export const CartProvider = ({ children }) => {
         email: cleanEmail,
         contact: resolvedContact,
         profilePrompted: isPrompted,
+        profileCompleted: isPrompted,
         hasPassword: hasPass,
         avatar: u.user_metadata?.avatar_url || u.user_metadata?.picture || '',
         authProvider: u.app_metadata?.provider || 'google',
@@ -138,21 +173,54 @@ export const CartProvider = ({ children }) => {
             email: cleanEmail,
             phone: resolvedContact,
             profilePrompted: isPrompted,
+            profileCompleted: isPrompted,
             hasPassword: hasPass,
             createdAt: new Date().toISOString(),
           })
           localStorage.setItem('thenee_registered_users', JSON.stringify(usersList))
         }
-      } catch {}
+      } catch { }
 
       try {
         localStorage.setItem('thenee_auth_user', JSON.stringify(userData))
         localStorage.setItem('thenee_user', JSON.stringify(userData))
-      } catch { }
+      } catch {}
 
       if (isMounted) {
         setCurrentUser(userData)
         setAuthLoading(false)
+      }
+
+      // Asynchronously fetch live profile from Supabase to ensure phone & completion state are 100% synced
+      if (isSupabaseConfigured && supabase && u.id) {
+        profileService.getProfile(u.id).then(({ data: prof }) => {
+          if (prof && (prof.phone || prof.profile_completed)) {
+            if (isMounted) {
+              setCurrentUser((prev) => {
+                if (!prev || prev.id !== u.id) return prev
+                const updated = {
+                  ...prev,
+                  contact: prof.phone || prev.contact,
+                  name: prof.full_name || prev.name,
+                  profilePrompted: true,
+                  profileCompleted: true,
+                  hasPassword: true,
+                }
+                try {
+                  localStorage.setItem('thenee_auth_user', JSON.stringify(updated))
+                  localStorage.setItem('thenee_user', JSON.stringify(updated))
+                  const rawPrompted = localStorage.getItem('thenee_google_prompted_accounts')
+                  const promptedList = rawPrompted ? JSON.parse(rawPrompted) : []
+                  if (cleanEmail && !promptedList.includes(cleanEmail)) {
+                    promptedList.push(cleanEmail)
+                    localStorage.setItem('thenee_google_prompted_accounts', JSON.stringify(promptedList))
+                  }
+                } catch {}
+                return updated
+              })
+            }
+          }
+        }).catch(() => {})
       }
 
       // Check if returning from OAuth / login redirect

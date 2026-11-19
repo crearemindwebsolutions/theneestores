@@ -1,7 +1,7 @@
 import { createClient } from '@supabase/supabase-js'
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || ''
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || ''
+const supabaseUrl = (typeof import.meta !== 'undefined' && import.meta?.env?.VITE_SUPABASE_URL) || (typeof process !== 'undefined' && process.env?.VITE_SUPABASE_URL) || ''
+const supabaseAnonKey = (typeof import.meta !== 'undefined' && import.meta?.env?.VITE_SUPABASE_ANON_KEY) || (typeof process !== 'undefined' && process.env?.VITE_SUPABASE_ANON_KEY) || ''
 
 export const isSupabaseConfigured = Boolean(
   supabaseUrl &&
@@ -406,20 +406,24 @@ export const adminService = {
     return { data: all, error: null }
   },
 
-  // Update order status, courier and Speed Post Tracking AWB
-  async updateOrder(orderNumber, { order_status, tracking_awb, courier }) {
-    const updates = {}
-    if (order_status) updates.order_status = order_status
-    if (tracking_awb !== undefined) updates.tracking_awb = tracking_awb
-    if (courier) updates.courier = courier
+  // Update order status, courier and Speed Post Tracking AWB (supports both object updates and positional args)
+  async updateOrder(orderIdentifier, updates = {}) {
+    const patch = {}
+    if (updates.order_status || updates.status) patch.order_status = updates.order_status || updates.status
+    if (updates.tracking_awb !== undefined || updates.awb !== undefined) {
+      patch.tracking_awb = updates.tracking_awb !== undefined ? updates.tracking_awb : updates.awb
+    }
+    if (updates.courier || updates.partner || updates.courier_partner) {
+      patch.courier = updates.courier || updates.partner || updates.courier_partner
+    }
 
     // 1. Update in Supabase
     if (isSupabaseConfigured && supabase) {
       try {
         await supabase
           .from('orders')
-          .update(updates)
-          .eq('order_number', orderNumber)
+          .update(patch)
+          .or(`order_number.eq.${orderIdentifier},id.eq.${orderIdentifier}`)
       } catch (err) {
         console.warn('Supabase update order warning:', err)
       }
@@ -431,15 +435,17 @@ export const adminService = {
         const list = JSON.parse(localStorage.getItem(key) || '[]')
         const updated = list.map((item) => {
           const num = item.order_number || item.order_id || item.id
-          if (num === orderNumber) {
+          if (num === orderIdentifier || item.id === orderIdentifier) {
             return {
               ...item,
-              ...updates,
-              status: updates.order_status || item.status,
-              order_status: updates.order_status || item.order_status || item.status,
-              awb: updates.tracking_awb !== undefined ? updates.tracking_awb : item.awb,
-              tracking_awb: updates.tracking_awb !== undefined ? updates.tracking_awb : item.tracking_awb,
-              courier: updates.courier || item.courier,
+              ...patch,
+              status: patch.order_status || item.status,
+              order_status: patch.order_status || item.order_status || item.status,
+              awb: patch.tracking_awb !== undefined ? patch.tracking_awb : item.awb,
+              tracking_awb: patch.tracking_awb !== undefined ? patch.tracking_awb : item.tracking_awb,
+              tracking_number: patch.tracking_awb !== undefined ? patch.tracking_awb : item.tracking_number,
+              courier: patch.courier || item.courier,
+              courier_partner: patch.courier || item.courier_partner,
             }
           }
           return item
@@ -456,7 +462,12 @@ export const adminService = {
     return { success: true }
   },
 
-  // Fetch all customer inquiries
+  // Alias for updateOrder with positional parameters used by fulfillment modals
+  async updateOrderStatus(orderId, order_status, tracking_awb, courier) {
+    return this.updateOrder(orderId, { order_status, tracking_awb, courier })
+  },
+
+  // Fetch all customer inquiries (Real live customer submissions only - zero demo data)
   async getAllInquiries() {
     let dbInquiries = []
     if (isSupabaseConfigured && supabase) {
@@ -476,46 +487,18 @@ export const adminService = {
       localInquiries = JSON.parse(localStorage.getItem('thenee_all_inquiries') || '[]')
     } catch {}
 
-    const seedInquiries = [
-      {
-        id: 'inq-101',
-        name: 'Dr. Selvamani Clinic',
-        phone: '+91 94421 78900',
-        email: 'drselva.ayur@gmail.com',
-        inquiry_type: 'Clinic & Ayurvedic Wholesale',
-        message: 'Requesting wholesale catalog and bulk pricing for 50 jars of Moringa Powder and 100 packs of Thenee Herbal Tea for our Coimbatore clinic.',
-        status: 'new',
-        created_at: new Date(Date.now() - 3 * 3600 * 1000).toISOString(),
-      },
-      {
-        id: 'inq-102',
-        name: 'Priya Venkatesh',
-        phone: '+91 98840 22331',
-        email: 'priya.v@gmail.com',
-        inquiry_type: 'Retail Order & Tracking',
-        message: 'Wanted to check delivery timeline for my order THN-884102 to Alwarpet, Chennai.',
-        status: 'in-progress',
-        created_at: new Date(Date.now() - 14 * 3600 * 1000).toISOString(),
-      },
-      {
-        id: 'inq-103',
-        name: 'Green Roots Corporate Gifts',
-        phone: '+91 99001 44552',
-        email: 'gifts@greenroots.in',
-        inquiry_type: 'Corporate Gift Hampers',
-        message: 'Looking for 200 custom herbal gift boxes containing Bliss Tea and Podis for our upcoming annual company celebration.',
-        status: 'contacted',
-        created_at: new Date(Date.now() - 2 * 24 * 3600 * 1000).toISOString(),
-      },
-    ]
-
     const inqMap = new Map()
-    seedInquiries.forEach((i) => inqMap.set(i.id, i))
-    localInquiries.forEach((i) => inqMap.set(i.id || i.name + i.created_at, i))
-    dbInquiries.forEach((i) => inqMap.set(i.id, i))
+    localInquiries.forEach((i) => {
+      const key = i.id || (i.name + (i.created_at || ''))
+      if (key) inqMap.set(key, i)
+    })
+    dbInquiries.forEach((i) => {
+      const key = i.id || (i.name + (i.created_at || ''))
+      if (key) inqMap.set(key, i)
+    })
 
     const list = Array.from(inqMap.values()).sort(
-      (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      (a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime()
     )
     return { data: list, error: null }
   },
@@ -538,6 +521,186 @@ export const adminService = {
     } catch {}
 
     return { success: true }
+  },
+
+  // Fetch all real patrons from Supabase profiles + auth API + orders + local registries
+  async getAllCustomers() {
+    let dbProfiles = []
+
+    // 1. Try fetching directly via backend admin endpoint (lists Supabase auth users & profiles)
+    if (typeof window !== 'undefined') {
+      try {
+        const res = await fetch('/api/admin?action=get-users')
+        if (res.ok) {
+          const json = await res.json()
+          if (json.users && Array.isArray(json.users) && json.users.length > 0) {
+            dbProfiles = json.users
+          }
+        }
+      } catch (apiErr) {
+        // Fallback to client-side Supabase query
+      }
+    }
+
+    // 2. Query Supabase profiles table directly if API returned empty
+    if (dbProfiles.length === 0 && isSupabaseConfigured && supabase) {
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .order('created_at', { ascending: false })
+        if (!error && Array.isArray(data) && data.length > 0) {
+          dbProfiles = data
+        }
+      } catch (e) {}
+    }
+
+    // 3. Collect registered users from local registries
+    let localRegUsers = []
+    let currentAuthUser = null
+    try {
+      localRegUsers = JSON.parse(localStorage.getItem('thenee_registered_users') || '[]')
+      currentAuthUser = JSON.parse(localStorage.getItem('thenee_auth_user') || localStorage.getItem('thenee_user') || 'null')
+    } catch {}
+
+    // 4. Fetch all orders to compute lifetime spend and order history
+    const { data: allOrders } = await this.getAllOrders()
+    const customerMap = new Map()
+
+    const normalizeKey = (cust) => {
+      return (cust.email || cust.phone || cust.name || cust.id || '').toLowerCase().trim()
+    }
+
+    // Index DB Profiles
+    dbProfiles.forEach((p) => {
+      const key = normalizeKey(p)
+      if (!key) return
+      customerMap.set(key, {
+        id: p.id,
+        name: p.full_name || p.name || 'Member Patron',
+        phone: p.phone || '',
+        email: p.email || '',
+        ordersCount: 0,
+        totalSpent: 0,
+        city: (p.addresses && p.addresses[0]?.city) || p.city || '',
+        lastOrderDate: p.created_at || p.createdAt,
+        greenPoints: Number(p.greenPoints || p.reward_points) || 100,
+      })
+    })
+
+    // Index Locally Registered Users
+    localRegUsers.forEach((lr) => {
+      const key = normalizeKey(lr)
+      if (!key) return
+      if (!customerMap.has(key)) {
+        customerMap.set(key, {
+          id: lr.id || `reg-${Date.now()}`,
+          name: lr.name || (lr.email ? lr.email.split('@')[0] : 'Member Patron'),
+          phone: lr.phone || lr.contact || '',
+          email: lr.email || '',
+          ordersCount: 0,
+          totalSpent: 0,
+          city: lr.city || '',
+          lastOrderDate: lr.createdAt || lr.created_at,
+          greenPoints: Number(lr.points) || 100,
+        })
+      } else {
+        const existing = customerMap.get(key)
+        if (!existing.phone && (lr.phone || lr.contact)) existing.phone = lr.phone || lr.contact
+        if ((!existing.name || existing.name === 'Member Patron') && lr.name) existing.name = lr.name
+      }
+    })
+
+    // Index Current Session User if logged in
+    if (currentAuthUser) {
+      const key = normalizeKey(currentAuthUser)
+      if (key) {
+        if (!customerMap.has(key)) {
+          customerMap.set(key, {
+            id: currentAuthUser.id || 'curr-session',
+            name: currentAuthUser.name || 'Member Patron',
+            phone: currentAuthUser.contact || currentAuthUser.phone || '',
+            email: currentAuthUser.email || '',
+            ordersCount: 0,
+            totalSpent: 0,
+            city: currentAuthUser.city || '',
+            lastOrderDate: new Date().toISOString(),
+            greenPoints: Number(currentAuthUser.points) || 100,
+          })
+        } else {
+          const existing = customerMap.get(key)
+          if (!existing.phone && (currentAuthUser.contact || currentAuthUser.phone)) {
+            existing.phone = currentAuthUser.contact || currentAuthUser.phone
+          }
+          if ((!existing.name || existing.name === 'Member Patron') && currentAuthUser.name) {
+            existing.name = currentAuthUser.name
+          }
+        }
+      }
+    }
+
+    // Merge Real Orders Placed
+    ;(allOrders || []).forEach((o) => {
+      const key = (o.customer_email || o.customer_phone || o.customer_name || '').toLowerCase().trim()
+      if (!key) return
+      const amount = Number(o.total_amount) || 0
+      const orderCity = o.shipping_address?.city || o.shipping_city || ''
+
+      if (!customerMap.has(key)) {
+        customerMap.set(key, {
+          id: o.user_id || `cust-${Date.now()}`,
+          name: o.customer_name || 'Guest Patron',
+          phone: o.customer_phone || '',
+          email: o.customer_email || '',
+          ordersCount: 1,
+          totalSpent: amount,
+          city: orderCity,
+          lastOrderDate: o.created_at,
+          greenPoints: Math.floor(amount / 10),
+        })
+      } else {
+        const cust = customerMap.get(key)
+        cust.ordersCount += 1
+        cust.totalSpent += amount
+        if (!cust.phone && o.customer_phone) cust.phone = o.customer_phone
+        if (!cust.city && orderCity) cust.city = orderCity
+        if (new Date(o.created_at).getTime() > new Date(cust.lastOrderDate || 0).getTime()) {
+          cust.lastOrderDate = o.created_at
+        }
+      }
+    })
+
+    const result = Array.from(customerMap.values()).sort(
+      (a, b) => new Date(b.lastOrderDate || 0).getTime() - new Date(a.lastOrderDate || 0).getTime()
+    )
+
+    return { data: result, error: null }
+  },
+
+  // Update customer reward points in Supabase profile and local storage
+  async updateCustomerPoints(customer, pointsDelta, reason = 'Admin Adjustment') {
+    const newTotal = Math.max(0, (Number(customer.greenPoints) || 0) + Number(pointsDelta))
+    if (isSupabaseConfigured && supabase && customer.id && !customer.id.startsWith('cust-')) {
+      try {
+        await supabase
+          .from('profiles')
+          .update({ reward_points: newTotal })
+          .eq('id', customer.id)
+      } catch (err) {
+        console.warn('Supabase update reward points error:', err)
+      }
+    }
+    // Update local profile if it matches current signed-in user
+    try {
+      const currentUser = JSON.parse(localStorage.getItem('thenee_user_profile') || '{}')
+      if (currentUser && (currentUser.id === customer.id || currentUser.email === customer.email)) {
+        currentUser.reward_points = newTotal
+        localStorage.setItem('thenee_user_profile', JSON.stringify(currentUser))
+        window.dispatchEvent(new Event('storage'))
+      }
+    } catch {}
+
+    return { success: true, newPoints: newTotal }
   },
 
   // Export orders to CSV

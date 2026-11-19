@@ -207,9 +207,11 @@
 }
 
 .pill-icon {
-  font-size: 1.15rem;
-  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   flex-shrink: 0;
+  color: #123223;
 }
 
 .pill-label {
@@ -274,9 +276,11 @@
 }
 
 .sub-pill-icon {
-  font-size: 0.95rem;
-  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   flex-shrink: 0;
+  color: #223B2A;
 }
 
 .sub-pill-label {
@@ -347,9 +351,11 @@
 }
 
 .grid-card-icon {
-  font-size: 1.05rem;
-  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   flex-shrink: 0;
+  color: #1E3725;
 }
 
 .grid-card-label {
@@ -638,8 +644,12 @@
 }
 
 .channel-icon {
-  font-size: 1.3rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   flex-shrink: 0;
+  width: 24px;
+  height: 24px;
 }
 
 .channel-pill strong {

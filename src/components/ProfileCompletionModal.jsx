@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { updateUserProfile } from '../lib/authApi'
 import { profileService, isSupabaseConfigured, supabase } from '../lib/supabase'
 
-export default function ProfileCompletionModal({ currentUser, onComplete, onClose }) {
+export default function ProfileCompletionModal({ currentUser, onComplete }) {
   const [name, setName] = useState(
     currentUser?.name && !currentUser.name.includes('@') ? currentUser.name : ''
   )
@@ -43,10 +43,19 @@ export default function ProfileCompletionModal({ currentUser, onComplete, onClos
     setIsSubmitting(true)
     const fullPhone = `+91 ${cleanPhone}`
 
-    // 1. Update in Supabase Auth user password so user can sign in via email & password
+    // 1. Update in Supabase Auth user password AND metadata so user can sign in via email & password
     if (isSupabaseConfigured && supabase) {
       try {
-        const { error: passErr } = await supabase.auth.updateUser({ password: cleanPassword })
+        const { error: passErr } = await supabase.auth.updateUser({
+          password: cleanPassword,
+          data: {
+            full_name: cleanName,
+            name: cleanName,
+            phone: fullPhone,
+            profile_completed: true,
+            has_password: true,
+          },
+        })
         if (passErr) {
           console.warn('Supabase updateUser password notice:', passErr)
         }
@@ -63,16 +72,28 @@ export default function ProfileCompletionModal({ currentUser, onComplete, onClos
       password: cleanPassword,
     })
 
-    // 3. Update in Supabase profile if configured
+    // 3. Update in Supabase profile database table
     if (isSupabaseConfigured && currentUser.id) {
       profileService.updateProfile(currentUser.id, {
         full_name: cleanName,
         phone: fullPhone,
         email: currentUser.email,
+        profile_completed: true,
       }).catch((err) => {
         console.warn('Profile Supabase update notice:', err)
       })
     }
+
+    // 4. Mark account permanently in prompted accounts so it NEVER shows again
+    try {
+      const cleanEmail = (currentUser.email || '').toLowerCase().trim()
+      const rawPrompted = localStorage.getItem('thenee_google_prompted_accounts')
+      const promptedList = rawPrompted ? JSON.parse(rawPrompted) : []
+      if (cleanEmail && !promptedList.includes(cleanEmail)) {
+        promptedList.push(cleanEmail)
+        localStorage.setItem('thenee_google_prompted_accounts', JSON.stringify(promptedList))
+      }
+    } catch {}
 
     setIsSubmitting(false)
     if (onComplete) {
@@ -82,6 +103,7 @@ export default function ProfileCompletionModal({ currentUser, onComplete, onClos
         contact: fullPhone,
         hasPassword: true,
         profilePrompted: true,
+        profileCompleted: true,
       })
     }
   }
@@ -89,22 +111,11 @@ export default function ProfileCompletionModal({ currentUser, onComplete, onClos
   return (
     <div className="pro-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modal-title">
       <div className="pro-profile-complete-modal">
-        {onClose && (
-          <button
-            type="button"
-            className="pro-modal-close-btn"
-            onClick={onClose}
-            aria-label="Close"
-          >
-            ✕
-          </button>
-        )}
-
         <div className="pro-profile-complete-hero">
-          <span className="pro-profile-badge">Account Setup</span>
+          <span className="pro-profile-badge">Required Account Setup</span>
           <h3 id="modal-title">Complete Your Profile & Set Password</h3>
           <p>
-            Please provide your delivery contact number and set a password so you can log in with either Google or your email directly.
+            Please provide your delivery contact number and set an account password to continue. You can use this password to log in directly with your email anytime.
           </p>
         </div>
 
@@ -189,20 +200,10 @@ export default function ProfileCompletionModal({ currentUser, onComplete, onClos
             type="submit"
             className="pro-submit-btn"
             disabled={isSubmitting}
-            style={{ marginTop: '8px' }}
+            style={{ marginTop: '12px' }}
           >
             {isSubmitting ? 'Saving Account Credentials...' : 'Save & Set Password ➔'}
           </button>
-
-          {onClose && (
-            <button
-              type="button"
-              className="pro-skip-btn"
-              onClick={onClose}
-            >
-              Skip for now
-            </button>
-          )}
         </form>
       </div>
     </div>

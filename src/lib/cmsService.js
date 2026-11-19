@@ -26,7 +26,7 @@ const DEFAULT_COUPONS = [
     maxDiscount: 50,
     isActive: true,
     description: 'Flat ₹50 off on orders above ₹499',
-    usageCount: 142,
+    usageCount: 0,
     expiryDate: '2026-12-31',
   },
   {
@@ -37,7 +37,7 @@ const DEFAULT_COUPONS = [
     maxDiscount: 100,
     isActive: true,
     description: '10% instant discount for new patrons',
-    usageCount: 88,
+    usageCount: 0,
     expiryDate: '2026-12-31',
   },
   {
@@ -48,7 +48,7 @@ const DEFAULT_COUPONS = [
     maxDiscount: 150,
     isActive: true,
     description: '15% off on festive Kadayam wellness combos',
-    usageCount: 64,
+    usageCount: 0,
     expiryDate: '2026-12-31',
   },
   {
@@ -59,7 +59,7 @@ const DEFAULT_COUPONS = [
     maxDiscount: 40,
     isActive: true,
     description: 'Special free shipping voucher across India',
-    usageCount: 219,
+    usageCount: 0,
     expiryDate: '2026-12-31',
   },
 ]
@@ -174,11 +174,34 @@ export const cmsService = {
       list.push(updatedProduct)
     }
     this.saveProducts(list)
+    if (supabase) {
+      supabase.from('products').upsert({
+        id: updatedProduct.id,
+        name: updatedProduct.name,
+        category: updatedProduct.category,
+        category_label: updatedProduct.categoryLabel || updatedProduct.category,
+        price: updatedProduct.price,
+        original_price: updatedProduct.originalPrice || null,
+        volume: updatedProduct.volume || '',
+        badge: updatedProduct.badge || '',
+        tagline: updatedProduct.tagline || '',
+        description: updatedProduct.description || '',
+        ingredients: updatedProduct.ingredients || '',
+        in_stock: updatedProduct.inStock !== false,
+        stock_count: updatedProduct.stockCount || 50,
+        card_image: updatedProduct.cardImage || updatedProduct.image || '',
+        key_benefits: updatedProduct.keyBenefits || [],
+        updated_at: new Date().toISOString(),
+      }).catch(() => {})
+    }
   },
 
   deleteProduct(id) {
     const list = this.getProducts().filter((p) => p.id !== id)
     this.saveProducts(list)
+    if (supabase) {
+      supabase.from('products').delete().eq('id', id).catch(() => {})
+    }
   },
 
   // --------------------------------------------------------------------------
@@ -210,11 +233,34 @@ export const cmsService = {
       list.push(updatedPodi)
     }
     this.savePodis(list)
+    if (supabase) {
+      supabase.from('products').upsert({
+        id: updatedPodi.id,
+        name: updatedPodi.name,
+        category: 'podi',
+        category_label: 'Traditional Food Podi',
+        price: updatedPodi.price,
+        original_price: updatedPodi.originalPrice || null,
+        volume: updatedPodi.volume || '',
+        badge: updatedPodi.badge || '',
+        tagline: updatedPodi.tagline || '',
+        description: updatedPodi.description || '',
+        ingredients: updatedPodi.ingredients || '',
+        in_stock: updatedPodi.inStock !== false,
+        stock_count: updatedPodi.stockCount || 50,
+        card_image: updatedPodi.cardImage || updatedPodi.image || '',
+        key_benefits: updatedPodi.keyBenefits || [],
+        updated_at: new Date().toISOString(),
+      }).catch(() => {})
+    }
   },
 
   deletePodi(id) {
     const list = this.getPodis().filter((p) => p.id !== id)
     this.savePodis(list)
+    if (supabase) {
+      supabase.from('products').delete().eq('id', id).catch(() => {})
+    }
   },
 
   // Reset entire catalog to initial pristine defaults
@@ -254,11 +300,28 @@ export const cmsService = {
       list.push(coupon)
     }
     this.saveCoupons(list)
+    if (supabase) {
+      supabase.from('coupons').upsert({
+        code: coupon.code.toUpperCase(),
+        discount_type: coupon.discountType || 'flat',
+        discount_value: coupon.discountValue,
+        min_order: coupon.minOrder || 0,
+        max_discount: coupon.maxDiscount || null,
+        is_active: coupon.isActive !== false,
+        description: coupon.description || '',
+        usage_count: coupon.usageCount || 0,
+        expiry_date: coupon.expiryDate || '2026-12-31',
+        updated_at: new Date().toISOString(),
+      }).catch(() => {})
+    }
   },
 
   deleteCoupon(code) {
     const list = this.getCoupons().filter((c) => c.code.toUpperCase() !== code.toUpperCase())
     this.saveCoupons(list)
+    if (supabase) {
+      supabase.from('coupons').delete().eq('code', code.toUpperCase()).catch(() => {})
+    }
   },
 
   // --------------------------------------------------------------------------
@@ -281,6 +344,13 @@ export const cmsService = {
     const updated = { ...current, ...content }
     localStorage.setItem(STORAGE_KEYS.SITE_CONTENT, JSON.stringify(updated))
     this.notifyUpdate()
+    if (supabase) {
+      supabase.from('site_content').upsert({
+        key: 'main',
+        content: updated,
+        updated_at: new Date().toISOString(),
+      }).catch(() => {})
+    }
   },
 
   // --------------------------------------------------------------------------
@@ -312,11 +382,24 @@ export const cmsService = {
       list.unshift(review)
     }
     this.saveReviews(list)
+    if (supabase) {
+      supabase.from('reviews').upsert({
+        product_id: review.productName || 'Thenee Herbal Tea',
+        user_name: review.name,
+        rating: review.rating || 5,
+        comment: review.text,
+        verified: review.isApproved !== false,
+        created_at: review.date ? new Date(review.date).toISOString() : new Date().toISOString(),
+      }).catch(() => {})
+    }
   },
 
   deleteReview(id) {
     const list = this.getReviews().filter((r) => r.id !== id)
     this.saveReviews(list)
+    if (supabase) {
+      supabase.from('reviews').delete().eq('id', id).catch(() => {})
+    }
   },
 
   // --------------------------------------------------------------------------
@@ -351,6 +434,13 @@ export const cmsService = {
     const updated = { ...current, ...settings }
     localStorage.setItem(STORAGE_KEYS.STORE_SETTINGS, JSON.stringify(updated))
     this.notifyUpdate()
+    if (supabase) {
+      supabase.from('store_settings').upsert({
+        key: 'main',
+        settings: updated,
+        updated_at: new Date().toISOString(),
+      }).catch(() => {})
+    }
   },
 
   // --------------------------------------------------------------------------

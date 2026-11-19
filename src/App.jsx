@@ -296,12 +296,13 @@ const AppContent = () => {
       <CartDrawer />
       <ProductModal />
 
-      {/* 1-Time Profile Completion for Google Sign-Up Users (Prompts only 1 time per account) */}
+      {/* Mandatory Profile & Password Setup for Google Sign-Up Users (Asked strictly ONCE per account) */}
       {isLoggedIn &&
         currentUser?.email &&
-        !currentUser.profilePrompted &&
         !hasAccountBeenPrompted(currentUser.email) &&
-        (!currentUser.contact || currentUser.contact.trim() === '' || !currentUser.hasPassword || !currentUser.name || currentUser.name.trim() === '' || currentUser.name.includes('@')) && (
+        !currentUser.profilePrompted &&
+        !currentUser.profileCompleted &&
+        (!currentUser.hasPassword || !currentUser.contact || currentUser.contact.trim() === '' || !currentUser.name || currentUser.name.trim() === '' || currentUser.name.includes('@')) && (
           <ProfileCompletionModal
             currentUser={currentUser}
             onComplete={(updatedUser) => {
@@ -309,14 +310,8 @@ const AppContent = () => {
               loginUser({
                 ...updatedUser,
                 profilePrompted: true,
+                profileCompleted: true,
                 hasPassword: true,
-              })
-            }}
-            onClose={() => {
-              markAccountAsPrompted(currentUser.email)
-              loginUser({
-                ...currentUser,
-                profilePrompted: true,
               })
             }}
           />

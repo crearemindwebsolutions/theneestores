@@ -13,25 +13,50 @@ const INQUIRY_TYPES = [
     id: 'Retail Order & Tracking',
     activeLabel: 'Order Tracking & Delivery Status',
     subLabel: 'Order Tracking & Delivery',
-    icon: '📦',
+    icon: (
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
+        <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
+        <line x1="12" y1="22.08" x2="12" y2="12" />
+      </svg>
+    ),
   },
   {
     id: 'Herbal Wellness Guidance',
     activeLabel: 'Herbal Wellness Guidance',
     subLabel: 'Herbal Wellness Guidance',
-    icon: '🌿',
+    icon: (
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z" />
+        <path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12" />
+      </svg>
+    ),
   },
   {
     id: 'Clinic & Ayurvedic Wholesale',
     activeLabel: 'Clinic & Ayurvedic Wholesale',
     subLabel: 'Clinic & Wholesale',
-    icon: '🩺',
+    icon: (
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M3 2v6a6 6 0 0 0 12 0V2" />
+        <line x1="9" y1="14" x2="9" y2="18" />
+        <circle cx="12" cy="18" r="3" />
+      </svg>
+    ),
   },
   {
     id: 'Corporate Gift Hampers',
     activeLabel: 'Corporate Gift Hampers',
     subLabel: 'Corporate Gift Hampers',
-    icon: '🎁',
+    icon: (
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <polyline points="20 12 20 22 4 22 4 12" />
+        <rect x="2" y="7" width="20" height="5" />
+        <line x1="12" y1="22" x2="12" y2="7" />
+        <path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z" />
+        <path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z" />
+      </svg>
+    ),
   },
 ]
 
@@ -364,21 +389,34 @@ const ContactPage = ({ onOpenAccount }) => {
             <p>You can also reach our Kadayam support desk directly via WhatsApp or phone:</p>
             <div className="direct-channels-list">
               <a href="https://wa.me/917550248005" target="_blank" rel="noopener noreferrer" className="channel-pill">
-                <span className="channel-icon">💬</span>
+                <span className="channel-icon">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="#25D366">
+                    <path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.82 9.82 0 0 0 12.04 2m.01 1.67c2.2 0 4.26.86 5.82 2.41a8.19 8.19 0 0 1 2.41 5.83c0 4.54-3.7 8.24-8.24 8.24-1.48 0-2.93-.4-4.2-1.15l-.3-.18-3.12.82.83-3.04-.2-.31a8.2 8.2 0 0 1-1.26-4.38c0-4.54 3.7-8.24 8.24-8.24m4.52 11.66c-.25-.13-1.47-.72-1.7-.81-.23-.08-.39-.13-.56.13-.17.25-.64.81-.79.97-.14.17-.29.19-.54.06-.25-.13-1.06-.39-2.01-1.24-.74-.66-1.24-1.48-1.39-1.73-.14-.25-.02-.39.11-.51.11-.11.25-.29.37-.44.13-.14.17-.25.25-.42.08-.17.04-.31-.02-.44-.06-.13-.56-1.34-.76-1.84-.2-.49-.4-.42-.56-.43h-.48c-.17 0-.44.06-.67.31-.23.25-.88.86-.88 2.1 0 1.24.9 2.44 1.03 2.61.13.17 1.78 2.72 4.31 3.81.6.26 1.07.42 1.44.54.61.19 1.16.16 1.6.1.49-.07 1.47-.6 1.68-1.18.21-.58.21-1.07.15-1.18-.06-.11-.23-.17-.48-.3" />
+                  </svg>
+                </span>
                 <div>
                   <strong>WhatsApp Chat Support</strong>
                   <span>+91 75502 48005 (Immediate Reply)</span>
                 </div>
               </a>
               <a href="tel:+917550248005" className="channel-pill">
-                <span className="channel-icon">📞</span>
+                <span className="channel-icon">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#123223" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
+                  </svg>
+                </span>
                 <div>
                   <strong>Direct Calling Desk</strong>
                   <span>+91 75502 48005 (10 AM - 7 PM)</span>
                 </div>
               </a>
               <a href="mailto:crearemindwebsolutions@gmail.com" className="channel-pill">
-                <span className="channel-icon">✉️</span>
+                <span className="channel-icon">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#123223" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+                    <polyline points="22,6 12,13 2,6" />
+                  </svg>
+                </span>
                 <div>
                   <strong>Official Email Desk</strong>
                   <span>crearemindwebsolutions@gmail.com</span>
@@ -443,7 +481,12 @@ const ContactPage = ({ onOpenAccount }) => {
       {/* Floating Toast Notification */}
       {toastMsg && (
         <div className="cart-toast" role="status" aria-live="polite">
-          <span className="cart-toast-icon">🌿</span>
+          <span className="cart-toast-icon" style={{ display: 'inline-flex', alignItems: 'center' }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z" />
+              <path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12" />
+            </svg>
+          </span>
           <span>{toastMsg}</span>
         </div>
       )}

@@ -15,7 +15,7 @@ try {
       }
     }
   })
-} catch {}
+} catch { }
 
 function localApiMiddlewarePlugin() {
   return {
@@ -23,7 +23,7 @@ function localApiMiddlewarePlugin() {
     configureServer(server) {
       server.middlewares.use(async (req, res, next) => {
         const url = req.url || ''
-        if (url.startsWith('/api/auth') || url.startsWith('/api/send-email')) {
+        if (url.startsWith('/api/auth') || url.startsWith('/api/send-email') || url.startsWith('/api/admin')) {
           let body = ''
           req.on('data', (chunk) => {
             body += chunk
@@ -46,6 +46,9 @@ function localApiMiddlewarePlugin() {
               } else if (url.startsWith('/api/send-email')) {
                 const { default: emailHandler } = await import('./api/send-email.js')
                 await emailHandler(req, res)
+              } else if (url.startsWith('/api/admin')) {
+                const { default: adminHandler } = await import('./api/admin.js')
+                await adminHandler(req, res)
               }
             } catch (err) {
               console.error('Local API dev middleware error:', err)

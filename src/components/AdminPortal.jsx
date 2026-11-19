@@ -4,16 +4,203 @@ import { adminService, profileService } from '../lib/supabase'
 import './PagesShared.css'
 import './AdminPortal.css'
 
+const Icons = {
+  dashboard: (props) => (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <rect x="3" y="3" width="7" height="7" rx="1.5" />
+      <rect x="14" y="3" width="7" height="7" rx="1.5" />
+      <rect x="14" y="14" width="7" height="7" rx="1.5" />
+      <rect x="3" y="14" width="7" height="7" rx="1.5" />
+    </svg>
+  ),
+  orders: (props) => (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
+      <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
+      <line x1="12" y1="22.08" x2="12" y2="12" />
+    </svg>
+  ),
+  products: (props) => (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <path d="M12 2L2 7l10 5 10-5-10-5z" />
+      <path d="M2 17l10 5 10-5" />
+      <path d="M2 12l10 5 10-5" />
+    </svg>
+  ),
+  coupons: (props) => (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z" />
+      <path d="M13 5v2" />
+      <path d="M13 17v2" />
+      <path d="M13 11v2" />
+    </svg>
+  ),
+  cms: (props) => (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <rect x="3" y="3" width="18" height="18" rx="2" />
+      <line x1="3" y1="9" x2="21" y2="9" />
+      <line x1="9" y1="21" x2="9" y2="9" />
+    </svg>
+  ),
+  reviews: (props) => (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+    </svg>
+  ),
+  inquiries: (props) => (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+    </svg>
+  ),
+  customers: (props) => (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+      <circle cx="9" cy="7" r="4" />
+      <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+      <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+    </svg>
+  ),
+  settings: (props) => (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <circle cx="12" cy="12" r="3" />
+      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
+    </svg>
+  ),
+  storefront: (props) => (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+      <polyline points="9 22 9 12 15 12 15 22" />
+    </svg>
+  ),
+  refresh: (props) => (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67" />
+    </svg>
+  ),
+  lock: (props) => (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+      <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+    </svg>
+  ),
+  plus: (props) => (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <line x1="12" y1="5" x2="12" y2="19" />
+      <line x1="5" y1="12" x2="19" y2="12" />
+    </svg>
+  ),
+  download: (props) => (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+      <polyline points="7 10 12 15 17 10" />
+      <line x1="12" y1="15" x2="12" y2="3" />
+    </svg>
+  ),
+  revenue: (props) => (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <circle cx="12" cy="12" r="10" />
+      <path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8" />
+      <line x1="12" y1="6" x2="12" y2="8" />
+      <line x1="12" y1="16" x2="12" y2="18" />
+    </svg>
+  ),
+  trend: (props) => (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <polyline points="23 6 13.5 15.5 8.5 10.5 1 18" />
+      <polyline points="17 6 23 6 23 12" />
+    </svg>
+  ),
+  leaf: (props) => (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z" />
+      <path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12" />
+    </svg>
+  ),
+  truck: (props) => (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <rect x="1" y="3" width="15" height="13" />
+      <polygon points="16 8 20 8 23 11 23 16 16 16 16 8" />
+      <circle cx="5.5" cy="18.5" r="2.5" />
+      <circle cx="18.5" cy="18.5" r="2.5" />
+    </svg>
+  ),
+  fileText: (props) => (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+      <polyline points="14 2 14 8 20 8" />
+      <line x1="16" y1="13" x2="8" y2="13" />
+      <line x1="16" y1="17" x2="8" y2="17" />
+    </svg>
+  ),
+  edit: (props) => (
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+    </svg>
+  ),
+  trash: (props) => (
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <polyline points="3 6 5 6 21 6" />
+      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+    </svg>
+  ),
+  save: (props) => (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
+      <polyline points="17 21 17 13 7 13 7 21" />
+      <polyline points="7 3 7 8 15 8" />
+    </svg>
+  ),
+  search: (props) => (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <circle cx="11" cy="11" r="8" />
+      <line x1="21" y1="21" x2="16.65" y2="16.65" />
+    </svg>
+  ),
+  printer: (props) => (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <polyline points="6 9 6 2 18 2 18 9" />
+      <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
+      <rect x="6" y="14" width="12" height="8" />
+    </svg>
+  ),
+  whatsapp: (props) => (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" {...props}>
+      <path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.82 9.82 0 0 0 12.04 2m.01 1.67c2.2 0 4.26.86 5.82 2.41a8.19 8.19 0 0 1 2.41 5.83c0 4.54-3.7 8.24-8.24 8.24-1.48 0-2.93-.4-4.2-1.15l-.3-.18-3.12.82.83-3.04-.2-.31a8.2 8.2 0 0 1-1.26-4.38c0-4.54 3.7-8.24 8.24-8.24m4.52 11.66c-.25-.13-1.47-.72-1.7-.81-.23-.08-.39-.13-.56.13-.17.25-.64.81-.79.97-.14.17-.29.19-.54.06-.25-.13-1.06-.39-2.01-1.24-.74-.66-1.24-1.48-1.39-1.73-.14-.25-.02-.39.11-.51.11-.11.25-.29.37-.44.13-.14.17-.25.25-.42.08-.17.04-.31-.02-.44-.06-.13-.56-1.34-.76-1.84-.2-.49-.4-.42-.56-.43h-.48c-.17 0-.44.06-.67.31-.23.25-.88.86-.88 2.1 0 1.24.9 2.44 1.03 2.61.13.17 1.78 2.72 4.31 3.81.6.26 1.07.42 1.44.54.61.19 1.16.16 1.6.1.49-.07 1.47-.6 1.68-1.18.21-.58.21-1.07.15-1.18-.06-.11-.23-.17-.48-.3" />
+    </svg>
+  ),
+  gift: (props) => (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <polyline points="20 12 20 22 4 22 4 12" />
+      <rect x="2" y="7" width="20" height="5" />
+      <line x1="12" y1="22" x2="12" y2="7" />
+      <path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z" />
+      <path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z" />
+    </svg>
+  ),
+  star: (props) => (
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="#EAB308" stroke="#EAB308" strokeWidth="1" {...props}>
+      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+    </svg>
+  ),
+  close: (props) => (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <line x1="18" y1="6" x2="6" y2="18" />
+      <line x1="6" y1="6" x2="18" y2="18" />
+    </svg>
+  ),
+}
+
 const TABS = [
-  { id: 'dashboard', label: 'Dashboard & Analytics', icon: '📊' },
-  { id: 'orders', label: 'Orders & Fulfillment', icon: '📦' },
-  { id: 'products', label: 'Products & Catalog CMS', icon: '🌿' },
-  { id: 'coupons', label: 'Coupons & Discounts', icon: '🏷️' },
-  { id: 'cms', label: 'Website Content & Banners', icon: '✍️' },
-  { id: 'reviews', label: 'Customer Reviews', icon: '⭐' },
-  { id: 'inquiries', label: 'Inquiries & WhatsApp CRM', icon: '💬' },
-  { id: 'customers', label: 'Customers & Green Loyalty', icon: '👥' },
-  { id: 'settings', label: 'Store & Dispatch Settings', icon: '⚙️' },
+  { id: 'dashboard', label: 'Dashboard & Analytics', icon: 'dashboard' },
+  { id: 'orders', label: 'Orders & Fulfillment', icon: 'orders' },
+  { id: 'products', label: 'Products & Catalog CMS', icon: 'products' },
+  { id: 'coupons', label: 'Coupons & Discounts', icon: 'coupons' },
+  { id: 'cms', label: 'Website Content & Banners', icon: 'cms' },
+  { id: 'reviews', label: 'Customer Reviews', icon: 'reviews' },
+  { id: 'inquiries', label: 'Inquiries & WhatsApp CRM', icon: 'inquiries' },
+  { id: 'customers', label: 'Customers & Green Loyalty', icon: 'customers' },
+  { id: 'settings', label: 'Store & Dispatch Settings', icon: 'settings' },
 ]
 
 const ORDER_STATUSES = ['all', 'Confirmed', 'Processing', 'Dispatched', 'Delivered', 'Cancelled']
@@ -100,43 +287,20 @@ const AdminPortal = ({ onBack }) => {
   const loadStoreData = async () => {
     setIsLoading(true)
     try {
-      const [ordersRes, inqRes] = await Promise.all([
+      const [ordersRes, inqRes, custRes] = await Promise.all([
         adminService.getAllOrders(),
         adminService.getAllInquiries(),
+        adminService.getAllCustomers(),
       ])
       if (ordersRes.data) setOrders(ordersRes.data)
       if (inqRes.data) setInquiries(inqRes.data)
+      if (custRes.data) setCustomers(custRes.data)
       setProducts(cmsService.getProducts())
       setPodis(cmsService.getPodis())
       setCoupons(cmsService.getCoupons())
       setSiteContent(cmsService.getSiteContent())
       setReviews(cmsService.getReviews())
       setStoreSettings(cmsService.getStoreSettings())
-
-      // Derive distinct customers list from orders
-      const userMap = new Map()
-      ;(ordersRes.data || []).forEach((o) => {
-        const key = o.customer_email || o.customer_phone || o.customer_name
-        if (!key) return
-        if (!userMap.has(key)) {
-          userMap.set(key, {
-            name: o.customer_name || 'Guest Patron',
-            phone: o.customer_phone || '—',
-            email: o.customer_email || '—',
-            ordersCount: 1,
-            totalSpent: Number(o.total_amount) || 0,
-            city: o.shipping_city || '—',
-            lastOrderDate: o.created_at,
-            greenPoints: Math.floor((Number(o.total_amount) || 0) / 10),
-          })
-        } else {
-          const u = userMap.get(key)
-          u.ordersCount += 1
-          u.totalSpent += Number(o.total_amount) || 0
-          u.greenPoints = Math.floor(u.totalSpent / 10)
-        }
-      })
-      setCustomers(Array.from(userMap.values()))
     } catch (err) {
       console.warn('Admin data load notice:', err)
     } finally {
@@ -238,15 +402,16 @@ const AdminPortal = ({ onBack }) => {
   const handleSaveCourier = async (e) => {
     e.preventDefault()
     if (!selectedOrder) return
+    const orderKey = selectedOrder.order_number || selectedOrder.id
     try {
       await adminService.updateOrderStatus(
-        selectedOrder.id,
+        orderKey,
         courierForm.status,
         courierForm.awb,
         courierForm.partner
       )
       setIsCourierModalOpen(false)
-      showToast(`Order ${selectedOrder.order_number || selectedOrder.id} updated with ${courierForm.partner} AWB: ${courierForm.awb}`)
+      showToast(`Order ${orderKey} updated with ${courierForm.partner} AWB: ${courierForm.awb}`)
       loadStoreData()
     } catch (err) {
       showToast('Error updating consignment details')
@@ -502,7 +667,7 @@ const AdminPortal = ({ onBack }) => {
           <form onSubmit={handleUnlock} className="admin-lock-form">
             <label className="admin-field-lbl">Enter Master Admin Passcode</label>
             <div className="admin-pin-input-wrap">
-              <span className="admin-pin-key-icon">🔒</span>
+              <span className="admin-pin-key-icon"><Icons.lock width="18" height="18" /></span>
               <input
                 type="password"
                 placeholder="Enter 4-10 digit master PIN"
@@ -568,7 +733,8 @@ const AdminPortal = ({ onBack }) => {
             }}
             title="Open Customer Storefront"
           >
-            🏪 View Storefront
+            <Icons.storefront />
+            <span>View Storefront</span>
           </button>
           <button
             type="button"
@@ -576,7 +742,8 @@ const AdminPortal = ({ onBack }) => {
             onClick={loadStoreData}
             title="Refresh Live Data"
           >
-            🔄 Refresh
+            <Icons.refresh />
+            <span>Refresh</span>
           </button>
           <button
             type="button"
@@ -584,7 +751,8 @@ const AdminPortal = ({ onBack }) => {
             onClick={handleLock}
             title="Lock Admin Session"
           >
-            🔒 Lock
+            <Icons.lock />
+            <span>Lock</span>
           </button>
         </div>
       </header>
@@ -603,6 +771,8 @@ const AdminPortal = ({ onBack }) => {
               if (tab.id === 'inquiries') badgeCount = metrics.inquiriesCount
               if (tab.id === 'coupons') badgeCount = coupons.filter((c) => c.isActive).length
 
+              const TabIcon = Icons[tab.icon] || Icons.dashboard
+
               return (
                 <button
                   key={tab.id}
@@ -610,7 +780,7 @@ const AdminPortal = ({ onBack }) => {
                   className={`admin-sidebar-item ${isActive ? 'is-active' : ''}`}
                   onClick={() => setActiveTab(tab.id)}
                 >
-                  <span className="sidebar-item-icon">{tab.icon}</span>
+                  <span className="sidebar-item-icon"><TabIcon /></span>
                   <span className="sidebar-item-label">{tab.label}</span>
                   {badgeCount !== null && (
                     <span className={`sidebar-badge ${badgeCount > 0 ? 'has-data' : ''}`}>
@@ -650,10 +820,12 @@ const AdminPortal = ({ onBack }) => {
                 </div>
                 <div className="pane-actions-row">
                   <button type="button" className="admin-action-btn primary" onClick={() => handleOpenEditProduct(null, true)}>
-                    ➕ Add Product
+                    <Icons.plus />
+                    <span>Add Product</span>
                   </button>
                   <button type="button" className="admin-action-btn secondary" onClick={handleExportCsv}>
-                    📥 Export CSV
+                    <Icons.download />
+                    <span>Export CSV</span>
                   </button>
                 </div>
               </div>
@@ -663,7 +835,7 @@ const AdminPortal = ({ onBack }) => {
                 <div className="kpi-card highlight-green">
                   <div className="kpi-card-top">
                     <span className="kpi-title">Gross Revenue</span>
-                    <span className="kpi-icon">💰</span>
+                    <span className="kpi-icon"><Icons.revenue /></span>
                   </div>
                   <div className="kpi-num">₹{metrics.totalRev.toLocaleString('en-IN')}</div>
                   <div className="kpi-meta">All confirmed customer orders</div>
@@ -672,7 +844,7 @@ const AdminPortal = ({ onBack }) => {
                 <div className="kpi-card">
                   <div className="kpi-card-top">
                     <span className="kpi-title">Total Orders</span>
-                    <span className="kpi-icon">📦</span>
+                    <span className="kpi-icon"><Icons.orders /></span>
                   </div>
                   <div className="kpi-num">{metrics.ordersCount}</div>
                   <div className="kpi-meta">
@@ -684,7 +856,7 @@ const AdminPortal = ({ onBack }) => {
                 <div className="kpi-card">
                   <div className="kpi-card-top">
                     <span className="kpi-title">Average Order Value</span>
-                    <span className="kpi-icon">📈</span>
+                    <span className="kpi-icon"><Icons.trend /></span>
                   </div>
                   <div className="kpi-num">₹{metrics.aov}</div>
                   <div className="kpi-meta">Per customer basket size</div>
@@ -693,7 +865,7 @@ const AdminPortal = ({ onBack }) => {
                 <div className="kpi-card">
                   <div className="kpi-card-top">
                     <span className="kpi-title">Catalog Health</span>
-                    <span className="kpi-icon">🌿</span>
+                    <span className="kpi-icon"><Icons.leaf /></span>
                   </div>
                   <div className="kpi-num">{metrics.totalProductsCount} Items</div>
                   <div className="kpi-meta">Teas, Superfood & Podis in Stock</div>
@@ -756,7 +928,8 @@ const AdminPortal = ({ onBack }) => {
                             onClick={() => handleOpenWhatsAppReply(inq)}
                             title="Reply via WhatsApp"
                           >
-                            💬 WhatsApp
+                            <Icons.whatsapp />
+                            <span>WhatsApp</span>
                           </button>
                         </div>
                       ))}
@@ -779,7 +952,8 @@ const AdminPortal = ({ onBack }) => {
                 </div>
                 <div className="pane-actions-row">
                   <button type="button" className="admin-action-btn secondary" onClick={handleExportCsv}>
-                    📥 Export CSV Ledger
+                    <Icons.download />
+                    <span>Export CSV Ledger</span>
                   </button>
                 </div>
               </div>
@@ -805,7 +979,7 @@ const AdminPortal = ({ onBack }) => {
                 </div>
 
                 <div className="orders-search-wrap">
-                  <span className="search-icon">🔍</span>
+                  <span className="search-icon"><Icons.search /></span>
                   <input
                     type="text"
                     placeholder="Search Order #, Name, Phone, AWB, City..."
@@ -814,7 +988,7 @@ const AdminPortal = ({ onBack }) => {
                   />
                   {orderSearch && (
                     <button type="button" className="clear-search-btn" onClick={() => setOrderSearch('')}>
-                      ✕
+                      <Icons.close />
                     </button>
                   )}
                 </div>
@@ -882,7 +1056,8 @@ const AdminPortal = ({ onBack }) => {
                                   onClick={() => handleOpenCourierModal(o)}
                                   title="Assign Courier & Status"
                                 >
-                                  🚚 Fulfill
+                                  <Icons.truck />
+                                  <span>Fulfill</span>
                                 </button>
                                 <button
                                   type="button"
@@ -890,7 +1065,8 @@ const AdminPortal = ({ onBack }) => {
                                   onClick={() => handlePrintInvoice(o)}
                                   title="Print Packing Slip & Invoice"
                                 >
-                                  📄 Invoice
+                                  <Icons.fileText />
+                                  <span>Invoice</span>
                                 </button>
                               </div>
                             </td>
@@ -916,10 +1092,12 @@ const AdminPortal = ({ onBack }) => {
                 </div>
                 <div className="pane-actions-row">
                   <button type="button" className="admin-action-btn primary" onClick={() => handleOpenEditProduct(null, true)}>
-                    ➕ Add New Product
+                    <Icons.plus />
+                    <span>Add New Product</span>
                   </button>
                   <button type="button" className="admin-action-btn secondary" onClick={handleResetCatalog} title="Reset to initial catalogue">
-                    🔄 Reset Defaults
+                    <Icons.refresh />
+                    <span>Reset Defaults</span>
                   </button>
                 </div>
               </div>
@@ -953,10 +1131,12 @@ const AdminPortal = ({ onBack }) => {
 
                     <div className="prod-card-actions">
                       <button type="button" className="btn-prod-edit" onClick={() => handleOpenEditProduct(prod, false)}>
-                        ✏️ Edit Product
+                        <Icons.edit />
+                        <span>Edit Product</span>
                       </button>
                       <button type="button" className="btn-prod-del" onClick={() => handleDeleteProduct(prod.id, false)}>
-                        🗑️ Delete
+                        <Icons.trash />
+                        <span>Delete</span>
                       </button>
                     </div>
                   </div>
@@ -992,10 +1172,12 @@ const AdminPortal = ({ onBack }) => {
 
                     <div className="prod-card-actions">
                       <button type="button" className="btn-prod-edit" onClick={() => handleOpenEditProduct(podi, false)}>
-                        ✏️ Edit Podi
+                        <Icons.edit />
+                        <span>Edit Podi</span>
                       </button>
                       <button type="button" className="btn-prod-del" onClick={() => handleDeleteProduct(podi.id, true)}>
-                        🗑️ Delete
+                        <Icons.trash />
+                        <span>Delete</span>
                       </button>
                     </div>
                   </div>
@@ -1016,7 +1198,8 @@ const AdminPortal = ({ onBack }) => {
                 </div>
                 <div className="pane-actions-row">
                   <button type="button" className="admin-action-btn primary" onClick={handleOpenNewCoupon}>
-                    ➕ Create Coupon
+                    <Icons.plus />
+                    <span>Create Coupon</span>
                   </button>
                 </div>
               </div>
@@ -1026,7 +1209,7 @@ const AdminPortal = ({ onBack }) => {
                   <div key={c.code} className={`coupon-admin-card ${c.isActive ? 'is-active' : 'is-disabled'}`}>
                     <div className="coupon-card-top">
                       <div className="coupon-code-badge">
-                        <span>🏷️</span>
+                        <span><Icons.coupons width="15" height="15" /></span>
                         <strong>{c.code}</strong>
                       </div>
                       <span className={`coupon-status-tag ${c.isActive ? 'active' : 'inactive'}`}>
@@ -1231,7 +1414,8 @@ const AdminPortal = ({ onBack }) => {
                 </div>
 
                 <button type="submit" className="admin-save-cms-btn">
-                  💾 Save All Website Content Changes
+                  <Icons.save />
+                  <span>Save All Website Content Changes</span>
                 </button>
               </form>
             </section>
@@ -1249,7 +1433,8 @@ const AdminPortal = ({ onBack }) => {
                 </div>
                 <div className="pane-actions-row">
                   <button type="button" className="admin-action-btn primary" onClick={handleOpenAddReview}>
-                    ➕ Add Verified Review
+                    <Icons.plus />
+                    <span>Add Verified Review</span>
                   </button>
                 </div>
               </div>
@@ -1273,7 +1458,13 @@ const AdminPortal = ({ onBack }) => {
                           <strong>{rev.name}</strong>
                           <small>{rev.location}</small>
                         </td>
-                        <td>{'⭐'.repeat(rev.rating)}</td>
+                        <td>
+                          <div style={{ display: 'inline-flex', gap: '2px', alignItems: 'center' }}>
+                            {Array.from({ length: rev.rating || 5 }).map((_, i) => (
+                              <Icons.star key={i} />
+                            ))}
+                          </div>
+                        </td>
                         <td>{rev.productName}</td>
                         <td className="cell-review-text">{rev.text}</td>
                         <td>
@@ -1359,7 +1550,8 @@ const AdminPortal = ({ onBack }) => {
                               onClick={() => handleOpenWhatsAppReply(inq)}
                               title="Send WhatsApp Message"
                             >
-                              💬 Reply on WhatsApp
+                              <Icons.whatsapp />
+                              <span>Reply on WhatsApp</span>
                             </button>
                           </td>
                         </tr>
@@ -1380,6 +1572,20 @@ const AdminPortal = ({ onBack }) => {
                 <div>
                   <span className="pane-kicker">CUSTOMER BASE</span>
                   <h1 className="pane-title">Registered Patrons & Green Loyalty Wallet</h1>
+                </div>
+                <div className="pane-actions-row">
+                  <button
+                    type="button"
+                    className="admin-action-btn secondary"
+                    onClick={async () => {
+                      showToast('Syncing live users from database...')
+                      await loadStoreData()
+                      showToast('Patrons synchronized live from database!')
+                    }}
+                  >
+                    <Icons.refresh />
+                    <span>Sync Database Users</span>
+                  </button>
                 </div>
               </div>
 
@@ -1402,19 +1608,23 @@ const AdminPortal = ({ onBack }) => {
                       {customers.map((c, i) => (
                         <tr key={i}>
                           <td>
-                            <strong>{c.name}</strong>
-                            <small>{c.city}</small>
+                            <strong>{c.name || 'Member Patron'}</strong>
+                            {c.city && c.city !== '—' && <small>{c.city}</small>}
                           </td>
                           <td>
-                            <span>{c.phone}</span>
-                            <small>{c.email}</small>
+                            {c.phone && <span>{c.phone}</span>}
+                            {c.email && c.email !== '—' && <small>{c.email}</small>}
+                            {!c.phone && (!c.email || c.email === '—') && <span>—</span>}
                           </td>
                           <td>
                             <span className="cell-items-pill">{c.ordersCount} Orders</span>
                           </td>
                           <td className="cell-amount">₹{c.totalSpent.toLocaleString('en-IN')}</td>
                           <td>
-                            <span className="green-points-badge">🌱 {c.greenPoints} pts (₹{Math.floor(c.greenPoints / 2)})</span>
+                            <span className="green-points-badge">
+                              <Icons.leaf width="13" height="13" style={{ marginRight: '4px', verticalAlign: '-1px' }} />
+                              {c.greenPoints} pts (₹{Math.floor(c.greenPoints / 2)})
+                            </span>
                           </td>
                           <td>
                             <button
@@ -1425,7 +1635,8 @@ const AdminPortal = ({ onBack }) => {
                                 setIsPointsModalOpen(true)
                               }}
                             >
-                              🎁 Adjust Points
+                              <Icons.gift />
+                              <span>Adjust Points</span>
                             </button>
                           </td>
                         </tr>
@@ -1528,7 +1739,8 @@ const AdminPortal = ({ onBack }) => {
                   </div>
 
                   <button type="submit" className="admin-action-btn primary" style={{ marginTop: '16px' }}>
-                    💾 Save Store Configuration
+                    <Icons.save />
+                    <span>Save Store Configuration</span>
                   </button>
                 </form>
 
@@ -1568,7 +1780,7 @@ const AdminPortal = ({ onBack }) => {
           <div className="admin-modal-card" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h3>Fulfill Order {selectedOrder.order_number || selectedOrder.id}</h3>
-              <button type="button" className="btn-close-modal" onClick={() => setIsCourierModalOpen(false)}>✕</button>
+              <button type="button" className="btn-close-modal" onClick={() => setIsCourierModalOpen(false)} aria-label="Close"><Icons.close /></button>
             </div>
             <form onSubmit={handleSaveCourier} className="modal-form">
               <div className="admin-input-group">
@@ -1626,8 +1838,8 @@ const AdminPortal = ({ onBack }) => {
             <div className="modal-header no-print">
               <h3>Official Tax Invoice & Dispatch Slip</h3>
               <div className="header-print-actions">
-                <button type="button" className="btn-print-slip" onClick={() => window.print()}>🖨️ Print Invoice</button>
-                <button type="button" className="btn-close-modal" onClick={() => setIsInvoiceModalOpen(false)}>✕</button>
+                <button type="button" className="btn-print-slip" onClick={() => window.print()}><Icons.printer /> Print Invoice</button>
+                <button type="button" className="btn-close-modal" onClick={() => setIsInvoiceModalOpen(false)} aria-label="Close"><Icons.close /></button>
               </div>
             </div>
 
@@ -1723,7 +1935,7 @@ const AdminPortal = ({ onBack }) => {
           <div className="admin-modal-card modal-lg" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h3>{isNewProduct ? 'Add New Formulation to Catalog' : `Edit Product: ${editingProduct.name}`}</h3>
-              <button type="button" className="btn-close-modal" onClick={() => setIsProductModalOpen(false)}>✕</button>
+              <button type="button" className="btn-close-modal" onClick={() => setIsProductModalOpen(false)} aria-label="Close"><Icons.close /></button>
             </div>
             <form onSubmit={handleSaveProduct} className="modal-form">
               <div className="cms-fields-row">
@@ -1831,7 +2043,7 @@ const AdminPortal = ({ onBack }) => {
           <div className="admin-modal-card" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h3>Create Promotional Coupon</h3>
-              <button type="button" className="btn-close-modal" onClick={() => setIsCouponModalOpen(false)}>✕</button>
+              <button type="button" className="btn-close-modal" onClick={() => setIsCouponModalOpen(false)} aria-label="Close"><Icons.close /></button>
             </div>
             <form onSubmit={handleSaveCoupon} className="modal-form">
               <div className="admin-input-group">
@@ -1915,14 +2127,16 @@ const AdminPortal = ({ onBack }) => {
           <div className="admin-modal-card" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h3>Adjust Green Rewards: {selectedCustomer.name}</h3>
-              <button type="button" className="btn-close-modal" onClick={() => setIsPointsModalOpen(false)}>✕</button>
+              <button type="button" className="btn-close-modal" onClick={() => setIsPointsModalOpen(false)} aria-label="Close"><Icons.close /></button>
             </div>
             <form
-              onSubmit={(e) => {
+              onSubmit={async (e) => {
                 e.preventDefault()
-                selectedCustomer.greenPoints += Number(pointsDelta)
-                showToast(`Credited ${pointsDelta} Green Points to ${selectedCustomer.name}!`)
+                const res = await adminService.updateCustomerPoints(selectedCustomer, pointsDelta, pointsReason)
+                selectedCustomer.greenPoints = res.newPoints !== undefined ? res.newPoints : (selectedCustomer.greenPoints + Number(pointsDelta))
+                showToast(`Adjusted Green Points by ${Number(pointsDelta) > 0 ? '+' : ''}${pointsDelta} for ${selectedCustomer.name}!`)
                 setIsPointsModalOpen(false)
+                loadStoreData()
               }}
               className="modal-form"
             >
@@ -1962,7 +2176,8 @@ const AdminPortal = ({ onBack }) => {
       {/* Floating Notification Toast */}
       {toastMsg && (
         <div className="admin-toast-notice">
-          <span>🌿</span> {toastMsg}
+          <span style={{ display: 'inline-flex', alignItems: 'center', marginRight: '6px' }}><Icons.leaf width="15" height="15" /></span>
+          {toastMsg}
         </div>
       )}
     </div>
