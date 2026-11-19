@@ -25,6 +25,7 @@ import ContactPage from './components/ContactPage'
 import CheckoutPage from './components/CheckoutPage'
 import LoginPage from './components/LoginPage'
 import ProfileCompletionModal from './components/ProfileCompletionModal'
+import AdminPortal from './components/AdminPortal'
 import { CartProvider, useCart } from './context/CartContext'
 
 const parseRouteFromHash = () => {
@@ -216,21 +217,7 @@ const AppContent = () => {
       <Loader />
 
       {route === 'admin' && (
-        authLoading ? (
-          <AuthLoadingScreen />
-        ) : isLoggedIn ? (
-          <AccountPage initialTab="admin" onBack={navigateToHome} onLogout={navigateToLogin} />
-        ) : (
-          <LoginPage
-            redirectTarget="admin"
-            onLoginSuccess={(dest) => {
-              const target = dest || 'admin'
-              window.location.hash = target
-              setRoute(target)
-            }}
-            onBack={navigateToHome}
-          />
-        )
+        <AdminPortal onBack={navigateToHome} />
       )}
       {route === 'account' && (
         authLoading ? (
@@ -314,7 +301,7 @@ const AppContent = () => {
         currentUser?.email &&
         !currentUser.profilePrompted &&
         !hasAccountBeenPrompted(currentUser.email) &&
-        (!currentUser.contact || currentUser.contact.trim() === '' || !currentUser.name || currentUser.name.trim() === '' || currentUser.name.includes('@')) && (
+        (!currentUser.contact || currentUser.contact.trim() === '' || !currentUser.hasPassword || !currentUser.name || currentUser.name.trim() === '' || currentUser.name.includes('@')) && (
           <ProfileCompletionModal
             currentUser={currentUser}
             onComplete={(updatedUser) => {
@@ -322,6 +309,7 @@ const AppContent = () => {
               loginUser({
                 ...updatedUser,
                 profilePrompted: true,
+                hasPassword: true,
               })
             }}
             onClose={() => {

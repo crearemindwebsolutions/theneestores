@@ -1,0 +1,1659 @@
+/* ==========================================================================
+   THENEE E-COMMERCE ADMIN PORTAL THEME
+   Executive botanical management workstation matching THENEE aesthetic:
+   Deep Forest Green (#123223), Sage (#CADCBE), Cream (#FAF7F2) & Gold (#C6A15B)
+   ========================================================================== */
+
+.admin-portal-wrapper {
+  background: #FAF7F2;
+  min-height: 100vh;
+  color: #1E3725;
+  font-family: var(--font-body, 'Poppins', -apple-system, BlinkMacSystemFont, sans-serif);
+  display: flex;
+  flex-direction: column;
+}
+
+/* ==========================================================================
+   LOCKED AUTHENTICATION GATE SCREEN
+   ========================================================================== */
+.admin-lock-screen {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  background: radial-gradient(circle at 50% 30%, #F5EFE6 0%, #EBE4D8 100%);
+}
+
+.admin-lock-card {
+  background: #FFFFFF;
+  border-radius: 28px;
+  border: 1.5px solid #EAEFE7;
+  box-shadow: 0 16px 48px rgba(18, 50, 35, 0.08);
+  padding: 44px 38px 36px;
+  max-width: 460px;
+  width: 100%;
+  text-align: center;
+  box-sizing: border-box;
+}
+
+.admin-lock-logo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.admin-seal-tag {
+  display: inline-block;
+  margin-top: 8px;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  color: #556B5C;
+  text-transform: uppercase;
+}
+
+.admin-lock-title {
+  font-family: var(--font-serif, 'Playfair Display', Georgia, serif);
+  font-size: 1.7rem;
+  font-weight: 700;
+  color: #123223;
+  margin: 0 0 8px;
+  line-height: 1.2;
+}
+
+.admin-lock-desc {
+  font-size: 0.85rem;
+  color: #5C6E61;
+  line-height: 1.5;
+  margin: 0 0 24px;
+}
+
+.admin-lock-form {
+  text-align: left;
+  margin-bottom: 22px;
+}
+
+.admin-field-lbl {
+  display: block;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #2D4433;
+  margin-bottom: 6px;
+}
+
+.admin-pin-input-wrap {
+  display: flex;
+  align-items: center;
+  background: #FAF8F4;
+  border: 1.5px solid #D6DCD4;
+  border-radius: 12px;
+  padding: 0 14px;
+  min-height: 48px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.admin-pin-input-wrap:focus-within {
+  border-color: #123223;
+  box-shadow: 0 0 0 3px rgba(18, 50, 35, 0.08);
+  background: #FFFFFF;
+}
+
+.admin-pin-key-icon {
+  font-size: 1.1rem;
+  margin-right: 10px;
+}
+
+.admin-pin-input-wrap input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  outline: none;
+  font-size: 1rem;
+  letter-spacing: 0.2em;
+  color: #123223;
+  font-weight: 700;
+}
+
+.admin-pin-err-msg {
+  font-size: 0.76rem;
+  color: #C0392B;
+  font-weight: 600;
+  margin-top: 6px;
+}
+
+.admin-unlock-btn {
+  width: 100%;
+  height: 48px;
+  background: #123223;
+  color: #FFFFFF;
+  border: none;
+  border-radius: 12px;
+  font-size: 0.94rem;
+  font-weight: 700;
+  cursor: pointer;
+  margin-top: 16px;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 4px 14px rgba(18, 50, 35, 0.15);
+}
+
+.admin-unlock-btn:hover {
+  background: #1B4430;
+  transform: translateY(-1px);
+}
+
+.admin-lock-footer {
+  border-top: 1px solid #F0F4ED;
+  padding-top: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.admin-hint-txt {
+  font-size: 0.74rem;
+  color: #7A8C7F;
+}
+
+.admin-hint-txt strong {
+  color: #123223;
+}
+
+.admin-back-store-btn {
+  background: transparent;
+  border: none;
+  color: #36533F;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+/* ==========================================================================
+   TOP ADMIN NAVIGATION BAR
+   ========================================================================== */
+.admin-top-nav {
+  position: sticky;
+  top: 0;
+  z-index: 500;
+  background: #123223;
+  color: #FFFFFF;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.12);
+}
+
+.admin-brand-cluster {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.admin-brand-meta {
+  display: flex;
+  flex-direction: column;
+}
+
+.admin-brand-name {
+  font-family: var(--font-serif, 'Playfair Display', Georgia, serif);
+  font-size: 1.15rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: #FFFFFF;
+  line-height: 1;
+}
+
+.admin-hub-badge {
+  font-size: 0.65rem;
+  color: #CADCBE;
+  letter-spacing: 0.04em;
+  margin-top: 2px;
+}
+
+.admin-top-center {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.08);
+  padding: 6px 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.admin-live-pulse {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #2ECC71;
+  box-shadow: 0 0 8px #2ECC71;
+}
+
+.admin-clock-txt {
+  font-size: 0.74rem;
+  color: #FFFFFF;
+  font-weight: 500;
+}
+
+.admin-top-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.admin-nav-action-btn {
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #FFFFFF;
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-size: 0.76rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.admin-nav-action-btn:hover {
+  background: rgba(255, 255, 255, 0.22);
+}
+
+.admin-nav-action-btn.store-view-btn {
+  background: #CADCBE;
+  color: #123223;
+  border-color: #CADCBE;
+  font-weight: 700;
+}
+
+.admin-nav-action-btn.store-view-btn:hover {
+  background: #B5CCA7;
+}
+
+/* ==========================================================================
+   ADMIN LAYOUT: SIDEBAR + CONTENT VIEWPORT
+   ========================================================================== */
+.admin-portal-layout {
+  display: flex;
+  flex: 1;
+  min-height: calc(100vh - 64px);
+}
+
+/* Sidebar */
+.admin-sidebar {
+  width: 250px;
+  background: #FAF8F4;
+  border-right: 1.5px solid #E5EBE1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 20px 12px;
+  box-sizing: border-box;
+  flex-shrink: 0;
+}
+
+.admin-sidebar-section-title {
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  color: #7A8C7F;
+  padding: 0 12px 10px;
+  text-transform: uppercase;
+}
+
+.admin-sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.admin-sidebar-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 12px;
+  background: transparent;
+  border: none;
+  border-radius: 10px;
+  color: #36533F;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.15s ease;
+}
+
+.admin-sidebar-item:hover {
+  background: #EAEFE7;
+  color: #123223;
+}
+
+.admin-sidebar-item.is-active {
+  background: #123223;
+  color: #FFFFFF;
+}
+
+.sidebar-item-icon {
+  font-size: 1.05rem;
+  flex-shrink: 0;
+}
+
+.sidebar-item-label {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sidebar-badge {
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: #EAEFE7;
+  color: #556B5C;
+}
+
+.admin-sidebar-item.is-active .sidebar-badge {
+  background: rgba(255, 255, 255, 0.2);
+  color: #FFFFFF;
+}
+
+.sidebar-badge.has-data {
+  background: #CADCBE;
+  color: #123223;
+}
+
+.admin-sidebar-footer {
+  border-top: 1px solid #E5EBE1;
+  padding-top: 14px;
+  margin-top: 14px;
+}
+
+.admin-unit-info {
+  display: flex;
+  flex-direction: column;
+  padding: 0 10px;
+}
+
+.unit-name {
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: #123223;
+}
+
+.unit-fssai {
+  font-size: 0.68rem;
+  color: #6C7F72;
+}
+
+/* Main Content Area */
+.admin-content-area {
+  flex: 1;
+  padding: 28px 32px 60px;
+  box-sizing: border-box;
+  overflow-x: hidden;
+}
+
+.admin-loading-banner {
+  background: #CADCBE;
+  color: #123223;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ==========================================================================
+   PANE HEADERS & ACTION BUTTONS
+   ========================================================================== */
+.pane-header-row {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  margin-bottom: 24px;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.pane-kicker {
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  color: #6A8070;
+  text-transform: uppercase;
+  display: block;
+  margin-bottom: 4px;
+}
+
+.pane-title {
+  font-family: var(--font-serif, 'Playfair Display', Georgia, serif);
+  font-size: 1.85rem;
+  font-weight: 700;
+  color: #123223;
+  margin: 0;
+  line-height: 1.15;
+}
+
+.pane-actions-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.admin-action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 9px 18px;
+  border-radius: 10px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+}
+
+.admin-action-btn.primary {
+  background: #123223;
+  color: #FFFFFF;
+  box-shadow: 0 4px 12px rgba(18, 50, 35, 0.15);
+}
+
+.admin-action-btn.primary:hover {
+  background: #1A442E;
+  transform: translateY(-1px);
+}
+
+.admin-action-btn.secondary {
+  background: #FFFFFF;
+  color: #123223;
+  border: 1.5px solid #D6DCD4;
+}
+
+.admin-action-btn.secondary:hover {
+  border-color: #123223;
+  background: #FAFDF8;
+}
+
+/* ==========================================================================
+   TAB 1: KPI CARDS & DUAL FEED
+   ========================================================================== */
+.admin-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 18px;
+  margin-bottom: 28px;
+}
+
+.kpi-card {
+  background: #FFFFFF;
+  border: 1.5px solid #EAEFE7;
+  border-radius: 18px;
+  padding: 20px 22px;
+  box-shadow: 0 4px 16px rgba(18, 50, 35, 0.04);
+}
+
+.kpi-card.highlight-green {
+  background: #EAF3E6;
+  border-color: #CADCBE;
+}
+
+.kpi-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.kpi-title {
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: #556B5C;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.kpi-icon {
+  font-size: 1.15rem;
+}
+
+.kpi-num {
+  font-size: 1.7rem;
+  font-weight: 800;
+  color: #123223;
+  line-height: 1.1;
+  margin-bottom: 6px;
+}
+
+.kpi-meta {
+  font-size: 0.74rem;
+  color: #6C7F72;
+}
+
+.kpi-badge-confirmed {
+  color: #27AE60;
+  font-weight: 700;
+}
+
+.kpi-badge-dispatched {
+  color: #2980B9;
+  font-weight: 700;
+}
+
+.admin-dual-feed-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.admin-feed-card {
+  background: #FFFFFF;
+  border: 1.5px solid #EAEFE7;
+  border-radius: 18px;
+  padding: 22px;
+  box-shadow: 0 4px 16px rgba(18, 50, 35, 0.04);
+}
+
+.feed-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.feed-header-row h3 {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #123223;
+  margin: 0;
+}
+
+.feed-view-all-link {
+  background: none;
+  border: none;
+  color: #36533F;
+  font-size: 0.76rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.feed-orders-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.feed-order-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  background: #FAF8F4;
+  border: 1px solid #EAEFE7;
+  border-radius: 10px;
+}
+
+.order-main-meta {
+  display: flex;
+  flex-direction: column;
+}
+
+.order-main-meta strong {
+  font-size: 0.84rem;
+  color: #123223;
+}
+
+.order-main-meta span {
+  font-size: 0.74rem;
+  color: #6C7F72;
+}
+
+.inq-tag-line {
+  color: #556B5C !important;
+  font-weight: 600;
+}
+
+.order-amt-status {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.order-amt {
+  font-size: 0.88rem;
+  font-weight: 800;
+  color: #123223;
+}
+
+.btn-feed-whatsapp {
+  background: #25D366;
+  color: #FFFFFF;
+  border: none;
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: 0.74rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-feed-whatsapp:hover {
+  background: #1EBE5D;
+}
+
+/* Status Pills */
+.status-pill {
+  display: inline-block;
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-size: 0.70rem;
+  font-weight: 700;
+  text-transform: capitalize;
+}
+
+.status-confirmed {
+  background: #E8F8F5;
+  color: #16A085;
+}
+
+.status-processing {
+  background: #FEF9E7;
+  color: #D4AC0D;
+}
+
+.status-dispatched {
+  background: #EBF5FB;
+  color: #2980B9;
+}
+
+.status-delivered {
+  background: #EAF3E6;
+  color: #27AE60;
+}
+
+.status-cancelled {
+  background: #FADBD8;
+  color: #C0392B;
+}
+
+/* ==========================================================================
+   TAB 2: ORDERS TABLE & CONTROLS
+   ========================================================================== */
+.orders-control-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.orders-filter-chips {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.filter-chip {
+  background: #FFFFFF;
+  border: 1.5px solid #D6DCD4;
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #36533F;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.15s ease;
+}
+
+.filter-chip.is-active {
+  background: #123223;
+  color: #FFFFFF;
+  border-color: #123223;
+}
+
+.chip-count {
+  background: rgba(0, 0, 0, 0.1);
+  padding: 1px 6px;
+  border-radius: 999px;
+  font-size: 0.66rem;
+}
+
+.filter-chip.is-active .chip-count {
+  background: rgba(255, 255, 255, 0.25);
+  color: #FFFFFF;
+}
+
+.orders-search-wrap {
+  display: flex;
+  align-items: center;
+  background: #FFFFFF;
+  border: 1.5px solid #D6DCD4;
+  border-radius: 10px;
+  padding: 0 12px;
+  height: 40px;
+  min-width: 280px;
+}
+
+.orders-search-wrap:focus-within {
+  border-color: #123223;
+}
+
+.orders-search-wrap input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  outline: none;
+  font-size: 0.82rem;
+  color: #123223;
+  margin-left: 6px;
+}
+
+.clear-search-btn {
+  background: none;
+  border: none;
+  color: #8C9C8F;
+  cursor: pointer;
+  font-size: 0.8rem;
+}
+
+/* Generic Admin Data Table */
+.admin-table-container {
+  background: #FFFFFF;
+  border: 1.5px solid #EAEFE7;
+  border-radius: 16px;
+  overflow-x: auto;
+  box-shadow: 0 4px 16px rgba(18, 50, 35, 0.04);
+}
+
+.admin-data-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 0.82rem;
+}
+
+.admin-data-table th {
+  background: #FAF8F4;
+  color: #556B5C;
+  font-weight: 700;
+  padding: 14px 16px;
+  border-bottom: 1.5px solid #EAEFE7;
+  white-space: nowrap;
+}
+
+.admin-data-table td {
+  padding: 14px 16px;
+  border-bottom: 1px solid #F0F4ED;
+  color: #2D4433;
+  vertical-align: middle;
+}
+
+.admin-data-table tr:hover td {
+  background: #FAFDF8;
+}
+
+.cell-order-id {
+  display: flex;
+  flex-direction: column;
+}
+
+.cell-payment-tag {
+  font-size: 0.65rem;
+  color: #7A8C7F;
+  font-weight: 600;
+  margin-top: 2px;
+}
+
+.cell-customer {
+  display: flex;
+  flex-direction: column;
+}
+
+.cell-customer small {
+  font-size: 0.70rem;
+  color: #8A9B8D;
+}
+
+.cell-items-pill {
+  background: #FAF8F4;
+  border: 1px solid #E2DED4;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+
+.cell-amount {
+  font-weight: 800;
+  color: #123223;
+  font-size: 0.9rem;
+}
+
+.cell-courier-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.awb-num {
+  font-family: monospace;
+  font-size: 0.74rem;
+  color: #2980B9;
+  font-weight: 600;
+}
+
+.cell-no-awb {
+  font-size: 0.72rem;
+  color: #A0B0A4;
+  font-style: italic;
+}
+
+.row-action-btns {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.btn-tbl-action {
+  background: #FAF8F4;
+  border: 1px solid #D6DCD4;
+  border-radius: 6px;
+  padding: 5px 10px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #123223;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+
+.btn-tbl-action:hover {
+  background: #123223;
+  color: #FFFFFF;
+  border-color: #123223;
+}
+
+.btn-tbl-action.invoice {
+  color: #36533F;
+}
+
+.cell-review-text {
+  max-width: 320px;
+  line-height: 1.45;
+  color: #4A5B4F;
+}
+
+.inquiry-type-tag {
+  background: #EAF3E6;
+  color: #123223;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.green-points-badge {
+  background: #EAF3E6;
+  border: 1px solid #CADCBE;
+  color: #123223;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.74rem;
+  font-weight: 700;
+}
+
+/* ==========================================================================
+   TAB 3: PRODUCTS & CATALOG CMS GRID
+   ========================================================================== */
+.admin-section-subhead {
+  margin-bottom: 16px;
+}
+
+.admin-section-subhead h3 {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #123223;
+  margin: 0 0 2px;
+}
+
+.admin-section-subhead span {
+  font-size: 0.76rem;
+  color: #6C7F72;
+}
+
+.admin-products-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 18px;
+}
+
+.admin-product-card {
+  background: #FFFFFF;
+  border: 1.5px solid #EAEFE7;
+  border-radius: 16px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-shadow: 0 4px 14px rgba(18, 50, 35, 0.04);
+}
+
+.prod-card-top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.prod-thumb {
+  width: 58px;
+  height: 58px;
+  border-radius: 10px;
+  object-fit: cover;
+  border: 1px solid #EAEFE7;
+  background: #FAF8F4;
+}
+
+.prod-meta {
+  flex: 1;
+  min-width: 0;
+}
+
+.prod-badge-tag {
+  display: inline-block;
+  background: #EAF3E6;
+  color: #123223;
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 4px;
+  margin-bottom: 3px;
+}
+
+.prod-name {
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: #123223;
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.prod-vol {
+  font-size: 0.72rem;
+  color: #6C7F72;
+}
+
+.prod-card-body {
+  margin-bottom: 14px;
+}
+
+.prod-price-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.selling-price {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #123223;
+}
+
+.mrp-price {
+  font-size: 0.8rem;
+  color: #8C9C8F;
+  text-decoration: line-through;
+}
+
+.stock-pill {
+  margin-left: auto;
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 999px;
+}
+
+.stock-pill.in-stock {
+  background: #E8F8F5;
+  color: #16A085;
+}
+
+.prod-desc-snippet {
+  font-size: 0.74rem;
+  color: #556B5C;
+  line-height: 1.4;
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.prod-card-actions {
+  display: flex;
+  gap: 8px;
+  border-top: 1px solid #F0F4ED;
+  padding-top: 12px;
+}
+
+.btn-prod-edit {
+  flex: 1;
+  background: #123223;
+  color: #FFFFFF;
+  border: none;
+  border-radius: 8px;
+  padding: 7px;
+  font-size: 0.74rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.btn-prod-edit:hover {
+  background: #1B4430;
+}
+
+.btn-prod-del {
+  background: #FAF8F4;
+  border: 1px solid #E2DED4;
+  color: #C0392B;
+  border-radius: 8px;
+  padding: 7px 10px;
+  font-size: 0.74rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.btn-prod-del:hover {
+  background: #FADBD8;
+}
+
+/* ==========================================================================
+   TAB 4: COUPONS GRID
+   ========================================================================== */
+.coupons-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 18px;
+}
+
+.coupon-admin-card {
+  background: #FFFFFF;
+  border: 1.5px solid #EAEFE7;
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 4px 14px rgba(18, 50, 35, 0.04);
+}
+
+.coupon-admin-card.is-disabled {
+  opacity: 0.6;
+  background: #F8F9F8;
+}
+
+.coupon-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.coupon-code-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #EAF3E6;
+  padding: 4px 10px;
+  border-radius: 8px;
+  border: 1px dashed #CADCBE;
+}
+
+.coupon-code-badge strong {
+  font-family: monospace;
+  font-size: 0.92rem;
+  color: #123223;
+}
+
+.coupon-status-tag {
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+
+.coupon-status-tag.active {
+  background: #E8F8F5;
+  color: #16A085;
+}
+
+.coupon-status-tag.inactive {
+  background: #EAEFE7;
+  color: #7A8C7F;
+}
+
+.coupon-card-value {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: #123223;
+  margin-bottom: 4px;
+}
+
+.coupon-desc {
+  font-size: 0.76rem;
+  color: #556B5C;
+  margin: 0 0 14px;
+}
+
+.coupon-meta-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.72rem;
+  color: #6C7F72;
+  border-top: 1px solid #F0F4ED;
+  padding-top: 10px;
+  margin-bottom: 14px;
+}
+
+.coupon-meta-grid strong {
+  color: #123223;
+}
+
+.coupon-card-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.btn-toggle-coupon {
+  flex: 1;
+  background: #FAF8F4;
+  border: 1px solid #D6DCD4;
+  border-radius: 8px;
+  padding: 6px;
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: #123223;
+  cursor: pointer;
+}
+
+.btn-delete-coupon {
+  background: transparent;
+  border: 1px solid #EAEFE7;
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: #C0392B;
+  cursor: pointer;
+}
+
+/* ==========================================================================
+   TAB 5: CMS & SETTINGS FORM BOXES
+   ========================================================================== */
+.cms-editor-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.cms-section-card,
+.settings-form-box {
+  background: #FFFFFF;
+  border: 1.5px solid #EAEFE7;
+  border-radius: 18px;
+  padding: 24px;
+  box-shadow: 0 4px 16px rgba(18, 50, 35, 0.04);
+}
+
+.cms-section-card h3,
+.settings-form-box h3 {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #123223;
+  margin: 0 0 4px;
+}
+
+.cms-hint {
+  font-size: 0.76rem;
+  color: #6C7F72;
+  margin: 0 0 16px;
+}
+
+.cms-dual-columns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.cms-sub-box {
+  background: #FAF8F4;
+  border: 1px solid #EAEFE7;
+  border-radius: 12px;
+  padding: 16px;
+}
+
+.cms-sub-box h4 {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #123223;
+  margin: 0 0 12px;
+}
+
+.cms-fields-row {
+  display: flex;
+  gap: 16px;
+}
+
+.admin-input-group {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 14px;
+  flex: 1;
+}
+
+.admin-input-group label {
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: #2D4433;
+  margin-bottom: 6px;
+}
+
+.admin-input-group input,
+.admin-input-group select,
+.admin-input-group textarea {
+  border: 1.5px solid #D6DCD4;
+  border-radius: 10px;
+  padding: 9px 12px;
+  font-size: 0.84rem;
+  font-family: inherit;
+  color: #123223;
+  outline: none;
+  background: #FFFFFF;
+  box-sizing: border-box;
+}
+
+.admin-input-group input:focus,
+.admin-input-group select:focus,
+.admin-input-group textarea:focus {
+  border-color: #123223;
+  box-shadow: 0 0 0 3px rgba(18, 50, 35, 0.06);
+}
+
+.admin-save-cms-btn {
+  background: #123223;
+  color: #FFFFFF;
+  border: none;
+  border-radius: 12px;
+  height: 48px;
+  font-size: 0.92rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 14px rgba(18, 50, 35, 0.15);
+}
+
+.admin-save-cms-btn:hover {
+  background: #1B4430;
+  transform: translateY(-1px);
+}
+
+.admin-success-note {
+  font-size: 0.76rem;
+  color: #27AE60;
+  font-weight: 700;
+  margin-top: 8px;
+}
+
+/* ==========================================================================
+   MODALS ARCHITECTURE
+   ========================================================================== */
+.admin-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: rgba(18, 50, 35, 0.65);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+.admin-modal-card {
+  background: #FFFFFF;
+  border-radius: 22px;
+  width: 100%;
+  max-width: 520px;
+  padding: 26px 28px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.22);
+  box-sizing: border-box;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.admin-modal-card.modal-lg {
+  max-width: 680px;
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  border-bottom: 1px solid #F0F4ED;
+  padding-bottom: 12px;
+}
+
+.modal-header h3 {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #123223;
+  margin: 0;
+}
+
+.btn-close-modal {
+  background: none;
+  border: none;
+  font-size: 1.1rem;
+  color: #8C9C8F;
+  cursor: pointer;
+}
+
+.modal-actions-row {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.btn-modal-cancel {
+  background: #FAF8F4;
+  border: 1px solid #D6DCD4;
+  border-radius: 10px;
+  padding: 9px 18px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #556B5C;
+  cursor: pointer;
+}
+
+/* ==========================================================================
+   PRINTABLE TAX INVOICE & DISPATCH SLIP
+   ========================================================================== */
+.admin-modal-card.invoice-sheet {
+  max-width: 780px;
+  background: #FFFFFF;
+}
+
+.header-print-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.btn-print-slip {
+  background: #123223;
+  color: #FFFFFF;
+  border: none;
+  border-radius: 8px;
+  padding: 6px 14px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.printable-invoice {
+  padding: 10px 0;
+}
+
+.invoice-brand-strip {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  border-bottom: 2px solid #123223;
+  padding-bottom: 16px;
+  margin-bottom: 18px;
+}
+
+.inv-brand-title {
+  font-family: var(--font-serif, 'Playfair Display', Georgia, serif);
+  font-size: 1.8rem;
+  color: #123223;
+  margin: 0;
+}
+
+.inv-brand-tag {
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: #556B5C;
+  display: block;
+}
+
+.inv-origin {
+  font-size: 0.70rem;
+  color: #6C7F72;
+  margin-top: 6px;
+  line-height: 1.4;
+}
+
+.inv-badge-box {
+  text-align: right;
+  display: flex;
+  flex-direction: column;
+}
+
+.inv-badge-box strong {
+  font-size: 1.1rem;
+  color: #123223;
+}
+
+.inv-badge-box span {
+  font-family: monospace;
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #2980B9;
+}
+
+.inv-badge-box small {
+  font-size: 0.70rem;
+  color: #7A8C7F;
+}
+
+.invoice-parties-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+.inv-party-box {
+  background: #FAF8F4;
+  border: 1px solid #EAEFE7;
+  border-radius: 10px;
+  padding: 12px;
+  font-size: 0.78rem;
+  line-height: 1.45;
+}
+
+.invoice-items-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 20px;
+  font-size: 0.8rem;
+}
+
+.invoice-items-table th {
+  background: #F4F7F2;
+  border-bottom: 1.5px solid #123223;
+  padding: 8px 10px;
+  text-align: left;
+}
+
+.invoice-items-table td {
+  padding: 8px 10px;
+  border-bottom: 1px solid #EAEFE7;
+}
+
+.invoice-totals-strip {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #F4F7F2;
+  border-radius: 10px;
+  padding: 14px 18px;
+  margin-bottom: 16px;
+  font-size: 0.82rem;
+}
+
+.inv-final-sum {
+  text-align: right;
+}
+
+.inv-final-sum h2 {
+  font-size: 1.6rem;
+  color: #123223;
+  margin: 0;
+}
+
+.invoice-footer-seal {
+  text-align: center;
+  font-size: 0.72rem;
+  color: #6C7F72;
+  border-top: 1px solid #EAEFE7;
+  padding-top: 12px;
+}
+
+/* Print Rules */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  .printable-invoice,
+  .printable-invoice * {
+    visibility: visible;
+  }
+  .printable-invoice {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+  }
+  .no-print {
+    display: none !important;
+  }
+}
+
+/* Floating Toast Notification */
+.admin-toast-notice {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 9999;
+  background: #123223;
+  color: #FFFFFF;
+  padding: 14px 20px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.86rem;
+  font-weight: 600;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.22);
+  animation: slideInToast 0.3s ease;
+}
+
+@keyframes slideInToast {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ==========================================================================
+   MOBILE & RESPONSIVE BREAKPOINTS
+   ========================================================================== */
+@media (max-width: 900px) {
+  .admin-kpi-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .admin-dual-feed-grid,
+  .cms-dual-columns {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .admin-portal-layout {
+    flex-direction: column;
+  }
+
+  .admin-sidebar {
+    width: 100%;
+    border-right: none;
+    border-bottom: 1.5px solid #E5EBE1;
+    padding: 12px;
+  }
+
+  .admin-sidebar-nav {
+    display: flex;
+    flex-direction: row;
+    overflow-x: auto;
+    gap: 6px;
+    padding-bottom: 6px;
+  }
+
+  .admin-sidebar-item {
+    white-space: nowrap;
+    padding: 8px 12px;
+    width: auto;
+  }
+
+  .admin-sidebar-footer {
+    display: none;
+  }
+
+  .admin-content-area {
+    padding: 20px 14px 50px;
+  }
+
+  .admin-top-nav {
+    padding: 0 14px;
+  }
+
+  .admin-top-center {
+    display: none;
+  }
+
+  .admin-kpi-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .cms-fields-row {
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .invoice-parties-grid {
+    grid-template-columns: 1fr;
+  }
+}

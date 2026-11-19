@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { updateUserProfile } from '../lib/authApi'
-import { profileService, isSupabaseConfigured } from '../lib/supabase'
+import { profileService, isSupabaseConfigured, supabase } from '../lib/supabase'
 
 export default function ProfileCompletionModal({ currentUser, onComplete, onClose }) {
   const [name, setName] = useState(
@@ -9,6 +9,9 @@ export default function ProfileCompletionModal({ currentUser, onComplete, onClos
   const [phone, setPhone] = useState(
     currentUser?.contact ? currentUser.contact.replace(/\D/g, '').slice(-10) : ''
   )
+  const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
 
@@ -18,6 +21,7 @@ export default function ProfileCompletionModal({ currentUser, onComplete, onClos
 
     const cleanName = name.trim()
     const cleanPhone = phone.replace(/\D/g, '').slice(-10)
+    const cleanPassword = password.trim()
 
     if (!cleanName) {
       setErrorMessage('Please enter your full name.')
@@ -27,18 +31,39 @@ export default function ProfileCompletionModal({ currentUser, onComplete, onClos
       setErrorMessage('Please enter a valid 10-digit mobile number for order delivery.')
       return
     }
+    if (!cleanPassword || cleanPassword.length < 6) {
+      setErrorMessage('Password must be at least 6 characters.')
+      return
+    }
+    if (cleanPassword !== confirmPassword.trim()) {
+      setErrorMessage('Passwords do not match. Please re-enter.')
+      return
+    }
 
     setIsSubmitting(true)
     const fullPhone = `+91 ${cleanPhone}`
 
-    // 1. Update in local registry & session
-    updateUserProfile({
+    // 1. Update in Supabase Auth user password so user can sign in via email & password
+    if (isSupabaseConfigured && supabase) {
+      try {
+        const { error: passErr } = await supabase.auth.updateUser({ password: cleanPassword })
+        if (passErr) {
+          console.warn('Supabase updateUser password notice:', passErr)
+        }
+      } catch (err) {
+        console.warn('Supabase updateUser error:', err)
+      }
+    }
+
+    // 2. Update in local registry & session with hashed password
+    await updateUserProfile({
       email: currentUser.email,
       name: cleanName,
       phone: fullPhone,
+      password: cleanPassword,
     })
 
-    // 2. Update in Supabase profile if configured
+    // 3. Update in Supabase profile if configured
     if (isSupabaseConfigured && currentUser.id) {
       profileService.updateProfile(currentUser.id, {
         full_name: cleanName,
@@ -55,6 +80,8 @@ export default function ProfileCompletionModal({ currentUser, onComplete, onClos
         ...currentUser,
         name: cleanName,
         contact: fullPhone,
+        hasPassword: true,
+        profilePrompted: true,
       })
     }
   }
@@ -74,10 +101,10 @@ export default function ProfileCompletionModal({ currentUser, onComplete, onClos
         )}
 
         <div className="pro-profile-complete-hero">
-          <span className="pro-profile-badge">Required Information</span>
-          <h3 id="modal-title">Complete Your Profile</h3>
+          <span className="pro-profile-badge">Account Setup</span>
+          <h3 id="modal-title">Complete Your Profile & Set Password</h3>
           <p>
-            Welcome to THENEE! Because you signed in with Google, please provide your contact details for India Post Speed Post deliveries.
+            Please provide your delivery contact number and set a password so you can log in with either Google or your email directly.
           </p>
         </div>
 
@@ -117,13 +144,54 @@ export default function ProfileCompletionModal({ currentUser, onComplete, onClos
             <span className="pro-field-hint">Required for Speed Post tracking updates</span>
           </div>
 
+          <div className="pro-input-group">
+            <div className="pro-label-row">
+              <label htmlFor="compulsory-password">Set Account Password (min 6 chars) *</label>
+              <button
+                type="button"
+                className="pro-link-btn"
+                onClick={() => setShowPassword(!showPassword)}
+                style={{ fontSize: '0.74rem' }}
+              >
+                {showPassword ? 'Hide' : 'Show'}
+              </button>
+            </div>
+            <div className="pro-password-field">
+              <input
+                id="compulsory-password"
+                type={showPassword ? 'text' : 'password'}
+                placeholder="Create password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+            </div>
+          </div>
+
+          <div className="pro-input-group">
+            <label htmlFor="compulsory-confirm-password">Confirm Password *</label>
+            <div className="pro-password-field">
+              <input
+                id="compulsory-confirm-password"
+                type={showPassword ? 'text' : 'password'}
+                placeholder="Re-enter password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                required
+              />
+            </div>
+            <span className="pro-field-hint">
+              Use this password to log into THENEE using {currentUser?.email || 'your email'}
+            </span>
+          </div>
+
           <button
             type="submit"
             className="pro-submit-btn"
             disabled={isSubmitting}
             style={{ marginTop: '8px' }}
           >
-            {isSubmitting ? 'Saving Profile...' : 'Save & Enter Store ➔'}
+            {isSubmitting ? 'Saving Account Credentials...' : 'Save & Set Password ➔'}
           </button>
 
           {onClose && (

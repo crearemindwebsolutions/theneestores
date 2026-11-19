@@ -537,15 +537,39 @@ const LoginPage = ({ onLoginSuccess, onBack, redirectTarget }) => {
             <div className="pro-alert-error-box" role="alert">
               <p className="pro-alert-error-text">{errorMessage}</p>
 
-              {/* If no user found, provide quick 1-click Sign Up button */}
+              {/* If account was created with Google without a password */}
+              {errorCode === 'GOOGLE_SIGNIN_REQUIRED' && (
+                <div style={{ marginTop: '8px' }}>
+                  <button
+                    type="button"
+                    className="pro-alert-action-btn"
+                    style={{ background: '#274C37', color: '#FFFFFF', borderColor: '#274C37', fontWeight: 700 }}
+                    onClick={handleGoogleLogin}
+                  >
+                    Continue with Google ➔
+                  </button>
+                </div>
+              )}
+
+              {/* If no user found, provide quick 1-click Sign Up button AND Google Sign In */}
               {errorCode === 'USER_NOT_FOUND' && (
-                <button
-                  type="button"
-                  className="pro-alert-action-btn"
-                  onClick={() => switchToSignupWithEmail(email || forgotEmail)}
-                >
-                  Create New Account ➔
-                </button>
+                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '8px' }}>
+                  <button
+                    type="button"
+                    className="pro-alert-action-btn"
+                    onClick={() => switchToSignupWithEmail(email || forgotEmail)}
+                  >
+                    Create New Account ➔
+                  </button>
+                  <button
+                    type="button"
+                    className="pro-alert-action-btn"
+                    style={{ background: '#274C37', color: '#FFFFFF', borderColor: '#274C37' }}
+                    onClick={handleGoogleLogin}
+                  >
+                    Continue with Google ➔
+                  </button>
+                </div>
               )}
 
               {/* If user is already registered, provide quick 1-click Sign In button */}
@@ -559,15 +583,24 @@ const LoginPage = ({ onLoginSuccess, onBack, redirectTarget }) => {
                 </button>
               )}
 
-              {/* If incorrect password, provide quick Forgot Password link */}
+              {/* If incorrect password, provide quick Forgot Password link and Google fallback */}
               {errorCode === 'INVALID_PASSWORD' && (
-                <button
-                  type="button"
-                  className="pro-alert-action-btn"
-                  onClick={() => switchToForgotWithEmail(email)}
-                >
-                  Forgot Password? Reset Here ➔
-                </button>
+                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '8px' }}>
+                  <button
+                    type="button"
+                    className="pro-alert-action-btn"
+                    onClick={() => switchToForgotWithEmail(email)}
+                  >
+                    Forgot Password? Reset Here ➔
+                  </button>
+                  <button
+                    type="button"
+                    className="pro-alert-action-btn"
+                    onClick={handleGoogleLogin}
+                  >
+                    Continue with Google ➔
+                  </button>
+                </div>
               )}
             </div>
           )}

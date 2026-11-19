@@ -1,4 +1,4 @@
-import { authService, isSupabaseConfigured } from './supabase'
+import { authService, isSupabaseConfigured, supabase } from './supabase'
 
 const RESEND_KEY = import.meta.env.VITE_RESEND_API_KEY || import.meta.env.RESEND_API_KEY || ''
 const STORAGE_KEY_USERS = 'thenee_registered_users'
@@ -222,37 +222,98 @@ export async function signInWithEmailPassword({ email, password }) {
     return { success: false, error: 'Please enter your password.' }
   }
 
-  // Check 1: User existence check
+  // 1. Try Supabase Auth first (for accounts with passwords set in Supabase)
+  if (isSupabaseConfigured && supabase) {
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: cleanEmail,
+        password,
+      })
+
+      if (!error && data?.user) {
+        const u = data.user
+        const fullName =
+          u.user_metadata?.full_name ||
+          u.user_metadata?.name ||
+          cleanEmail.split('@')[0]
+        const phone = u.phone || u.user_metadata?.phone || ''
+
+        // Sync with local registry
+        const existing = findUserByEmail(cleanEmail) || {}
+        const passHash = await hashPassword(password)
+        saveUserToRegistry({
+          ...existing,
+          id: u.id,
+          name: fullName || existing.name || cleanEmail.split('@')[0],
+          email: cleanEmail,
+          phone: phone || existing.phone || '',
+          passwordHash: passHash,
+          hasPassword: true,
+        })
+
+        return {
+          success: true,
+          user: {
+            id: u.id,
+            name: fullName,
+            email: cleanEmail,
+            contact: phone || existing.phone || '',
+            points: existing.points || 100,
+            joinedDate: new Date(u.created_at || Date.now()).toLocaleDateString('en-US', {
+              month: 'short',
+              year: 'numeric',
+            }),
+            hasPassword: true,
+          },
+        }
+      }
+    } catch (supabaseErr) {
+      console.warn('Supabase signInWithPassword notice:', supabaseErr)
+    }
+  }
+
+  // 2. Local Registry Verification Fallback
   const existingUser = findUserByEmail(cleanEmail)
-  if (!existingUser) {
-    return {
-      success: false,
-      code: 'USER_NOT_FOUND',
-      error: 'No account found with this email. Please sign up.',
+
+  if (existingUser) {
+    // If account was created via Google without a password set yet
+    if (!existingUser.passwordHash) {
+      return {
+        success: false,
+        code: 'GOOGLE_SIGNIN_REQUIRED',
+        error:
+          'This account was signed up using Google without a password. Please click "Continue with Google" below to log in.',
+      }
+    }
+
+    const inputHash = await hashPassword(password)
+    if (existingUser.passwordHash === inputHash) {
+      return {
+        success: true,
+        user: {
+          id: existingUser.id,
+          name: existingUser.name,
+          email: existingUser.email,
+          contact: existingUser.phone || '',
+          points: existingUser.points || 100,
+          joinedDate: existingUser.joinedDate || 'Member',
+          hasPassword: true,
+        },
+      }
+    } else {
+      return {
+        success: false,
+        code: 'INVALID_PASSWORD',
+        error: 'Incorrect password. Please try again or use Forgot Password.',
+      }
     }
   }
 
-  // Check 2: Password verification
-  const inputHash = await hashPassword(password)
-  if (existingUser.passwordHash !== inputHash) {
-    return {
-      success: false,
-      code: 'INVALID_PASSWORD',
-      error: 'Incorrect password. Please try again or use Forgot Password.',
-    }
-  }
-
-  // Success
+  // If user not found in local registry
   return {
-    success: true,
-    user: {
-      id: existingUser.id,
-      name: existingUser.name,
-      email: existingUser.email,
-      contact: existingUser.phone || '',
-      points: existingUser.points || 100,
-      joinedDate: existingUser.joinedDate || 'Member',
-    },
+    success: false,
+    code: 'USER_NOT_FOUND',
+    error: 'No account found with this email. Please sign up or continue with Google.',
   }
 }
 
@@ -379,9 +440,9 @@ export async function resetPasswordWithOtp({ email, otp, otpToken, newPassword }
 }
 
 /* ==============================================================================
-   6. UPDATE USER PROFILE (Mandatory for Google Users without Name / Phone)
+   6. UPDATE USER PROFILE (Mandatory for Google Users without Name / Phone / Password)
    ============================================================================== */
-export function updateUserProfile({ email, name, phone }) {
+export async function updateUserProfile({ email, name, phone, password }) {
   const cleanEmail = (email || '').toLowerCase().trim()
   const cleanPhone = (phone || '').replace(/\D/g, '').slice(-10)
   const fullPhone = cleanPhone ? `+91 ${cleanPhone}` : ''
@@ -391,10 +452,20 @@ export function updateUserProfile({ email, name, phone }) {
     email: cleanEmail,
   }
 
+  let passwordHash = user.passwordHash
+  let hasPassword = Boolean(user.hasPassword || user.passwordHash)
+
+  if (password && password.trim().length >= 6) {
+    passwordHash = await hashPassword(password.trim())
+    hasPassword = true
+  }
+
   const updated = {
     ...user,
     name: name?.trim() || user.name || cleanEmail.split('@')[0],
-    phone: fullPhone,
+    phone: fullPhone || user.phone || '',
+    passwordHash,
+    hasPassword,
     profilePrompted: true,
   }
 

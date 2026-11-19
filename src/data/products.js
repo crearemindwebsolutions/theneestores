@@ -1,4 +1,4 @@
-export const products = [
+export const rawProducts = [
   {
     id: 'bliss-tea',
     name: 'Thenee Bliss Tea',
@@ -205,7 +205,7 @@ export const products = [
   },
 ]
 
-export const individualPodis = [
+export const rawIndividualPodis = [
   {
     id: 'garlic-podi',
     name: 'Garlic Powder',
@@ -340,7 +340,7 @@ export const individualPodis = [
   },
 ]
 
-export const brandInfo = {
+export const rawBrandInfo = {
   name: 'THENEE',
   tagline: 'Crafted by Women. Rooted in Nature.',
   tamilTagline: '',
@@ -360,3 +360,45 @@ export const brandInfo = {
   instagramUrl: 'https://instagram.com/theneeroots',
   logo: '/images/custom_thenee/thenee-brand-logo.png',
 }
+
+
+export const getLiveProducts = () => {
+  if (typeof window !== 'undefined') {
+    try {
+      const stored = localStorage.getItem('thenee_cms_products');
+      if (stored) return JSON.parse(stored);
+    } catch (e) {}
+  }
+  return rawProducts;
+};
+
+export const getLivePodis = () => {
+  if (typeof window !== 'undefined') {
+    try {
+      const stored = localStorage.getItem('thenee_cms_podis');
+      if (stored) return JSON.parse(stored);
+    } catch (e) {}
+  }
+  return rawIndividualPodis;
+};
+
+export const getLiveBrandInfo = () => {
+  if (typeof window !== 'undefined') {
+    try {
+      const stored = localStorage.getItem('thenee_cms_store_settings');
+      if (stored) {
+        const s = JSON.parse(stored);
+        return {
+          ...rawBrandInfo,
+          ...s,
+          phones: s.phone ? [s.phone, ...rawBrandInfo.phones.slice(1)] : rawBrandInfo.phones,
+        };
+      }
+    } catch (e) {}
+  }
+  return rawBrandInfo;
+};
+
+export const products = getLiveProducts();
+export const individualPodis = getLivePodis();
+export const brandInfo = getLiveBrandInfo();

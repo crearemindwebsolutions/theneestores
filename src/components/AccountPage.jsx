@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react'
 import { useCart } from '../context/CartContext'
 import { products, individualPodis, brandInfo } from '../data/products'
-import { orderService, profileService, adminService, inquiryService } from '../lib/supabase'
+import { orderService, profileService, adminService, inquiryService, supabase, isSupabaseConfigured } from '../lib/supabase'
+import { updateUserProfile } from '../lib/authApi'
 import { sendOrderStatusUpdateEmail } from '../lib/emailService'
 import { getSavedAddresses, saveAddress, updateAddress, deleteAddress, setDefaultAddress } from '../lib/addressService'
 import { SkeletonOrderCard, ImageWithSkeleton } from './Skeleton'
@@ -233,6 +234,10 @@ const AccountPage = ({ onBack, onLogout, initialTab = 'hub' }) => {
     contact: user.contact || '',
     language: user.language || 'English',
   })
+  const [accPassword, setAccPassword] = useState('')
+  const [accConfirmPassword, setAccConfirmPassword] = useState('')
+  const [showAccPassword, setShowAccPassword] = useState(false)
+  const [isSavingProfile, setIsSavingProfile] = useState(false)
 
   useEffect(() => {
     setProfileForm({
@@ -438,10 +443,45 @@ const AccountPage = ({ onBack, onLogout, initialTab = 'hub' }) => {
 
   const handleSaveProfile = async (e) => {
     e.preventDefault()
+
+    if (accPassword) {
+      if (accPassword.length < 6) {
+        showToast('Password must be at least 6 characters.')
+        return
+      }
+      if (accPassword !== accConfirmPassword) {
+        showToast('Passwords do not match.')
+        return
+      }
+    }
+
+    setIsSavingProfile(true)
     const updated = { ...user, ...profileForm }
     setUser(updated)
     localStorage.setItem('thenee_user', JSON.stringify(updated))
-    if (currentUser?.id) {
+
+    // 1. If password was entered, update Supabase user
+    if (accPassword && isSupabaseConfigured && supabase) {
+      try {
+        const { error: passErr } = await supabase.auth.updateUser({ password: accPassword.trim() })
+        if (passErr) {
+          console.warn('Supabase password update notice:', passErr)
+        }
+      } catch (err) {
+        console.warn('Supabase password update error:', err)
+      }
+    }
+
+    // 2. Update local user registry
+    await updateUserProfile({
+      email: profileForm.email || user.email,
+      name: profileForm.name,
+      phone: profileForm.contact,
+      ...(accPassword ? { password: accPassword.trim() } : {}),
+    })
+
+    // 3. Update Supabase profile
+    if (currentUser?.id && isSupabaseConfigured) {
       try {
         await profileService.updateProfile(currentUser.id, {
           full_name: profileForm.name,
@@ -453,7 +493,15 @@ const AccountPage = ({ onBack, onLogout, initialTab = 'hub' }) => {
         console.warn('Supabase profile update warning:', err)
       }
     }
-    showToast('Profile information saved successfully!')
+
+    setIsSavingProfile(false)
+    if (accPassword) {
+      setAccPassword('')
+      setAccConfirmPassword('')
+      showToast('Profile and login password saved successfully! 🌿')
+    } else {
+      showToast('Profile information saved successfully!')
+    }
   }
 
   const handleOpenAddAddress = () => {
@@ -1357,9 +1405,46 @@ const AccountPage = ({ onBack, onLogout, initialTab = 'hub' }) => {
                     </div>
                   </div>
 
+                  {/* Account Password Section for Google & Direct Email Login */}
+                  <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid #E2EADF' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                      <label style={{ margin: 0, fontWeight: 700, color: '#1B3524', fontSize: '0.9rem' }}>
+                        Set or Update Account Password
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => setShowAccPassword(!showAccPassword)}
+                        style={{ background: 'none', border: 'none', color: '#5A6D5E', fontSize: '0.74rem', fontWeight: 600, cursor: 'pointer' }}
+                      >
+                        {showAccPassword ? 'Hide Password' : 'Show Password'}
+                      </button>
+                    </div>
+                    <p style={{ fontSize: '0.78rem', color: '#5C6E60', margin: '0 0 12px', lineHeight: 1.4 }}>
+                      Allows you to log into THENEE using your email ({profileForm.email || user.email || 'your email'}) and password directly.
+                    </p>
+                    <div className="form-group-row">
+                      <div>
+                        <input
+                          type={showAccPassword ? 'text' : 'password'}
+                          placeholder="New password (min 6 characters)"
+                          value={accPassword}
+                          onChange={(e) => setAccPassword(e.target.value)}
+                        />
+                      </div>
+                      <div>
+                        <input
+                          type={showAccPassword ? 'text' : 'password'}
+                          placeholder="Confirm new password"
+                          value={accConfirmPassword}
+                          onChange={(e) => setAccConfirmPassword(e.target.value)}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
                   <div className="profile-form-actions">
-                    <button type="submit" className="btn-primary">
-                      Save Profile Changes
+                    <button type="submit" className="btn-primary" disabled={isSavingProfile}>
+                      {isSavingProfile ? 'Saving Changes...' : 'Save Profile Changes'}
                     </button>
                     <button
                       type="button"

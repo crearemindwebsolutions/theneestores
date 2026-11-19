@@ -76,12 +76,14 @@ export const CartProvider = ({ children }) => {
       let savedContact = ''
       let savedName = ''
       let isPrompted = false
+      let hasPass = false
       try {
         const storedAuth = JSON.parse(localStorage.getItem('thenee_auth_user') || '{}')
         const storedUser = JSON.parse(localStorage.getItem('thenee_user') || '{}')
         savedContact = storedAuth.contact || storedUser.contact || storedAuth.phone || storedUser.phone || ''
         savedName = storedAuth.name || storedUser.name || ''
         isPrompted = Boolean(storedAuth.profilePrompted || storedUser.profilePrompted)
+        hasPass = Boolean(storedAuth.hasPassword || storedUser.hasPassword)
       } catch { }
 
       const cleanEmail = (u.email || '').toLowerCase().trim()
@@ -93,6 +95,7 @@ export const CartProvider = ({ children }) => {
           if (found?.phone) savedContact = found.phone
           if (found?.name) savedName = found.name
           if (found?.profilePrompted) isPrompted = true
+          if (found?.passwordHash || found?.hasPassword) hasPass = true
         }
       } catch { }
 
@@ -109,7 +112,7 @@ export const CartProvider = ({ children }) => {
         if (typeof savedUser?.points === 'number') {
           existingPoints = savedUser.points
         }
-      } catch {}
+      } catch { }
 
       const userData = {
         id: u.id,
@@ -117,11 +120,30 @@ export const CartProvider = ({ children }) => {
         email: cleanEmail,
         contact: resolvedContact,
         profilePrompted: isPrompted,
+        hasPassword: hasPass,
         avatar: u.user_metadata?.avatar_url || u.user_metadata?.picture || '',
         authProvider: u.app_metadata?.provider || 'google',
         joinedDate: new Date(u.created_at || Date.now()).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }),
         points: existingPoints,
       }
+
+      try {
+        const rawUsers = localStorage.getItem('thenee_registered_users')
+        const usersList = rawUsers ? JSON.parse(rawUsers) : []
+        const existingIdx = usersList.findIndex((usr) => (usr.email || '').toLowerCase().trim() === cleanEmail)
+        if (existingIdx === -1) {
+          usersList.push({
+            id: u.id,
+            name: resolvedName,
+            email: cleanEmail,
+            phone: resolvedContact,
+            profilePrompted: isPrompted,
+            hasPassword: hasPass,
+            createdAt: new Date().toISOString(),
+          })
+          localStorage.setItem('thenee_registered_users', JSON.stringify(usersList))
+        }
+      } catch {}
 
       try {
         localStorage.setItem('thenee_auth_user', JSON.stringify(userData))
