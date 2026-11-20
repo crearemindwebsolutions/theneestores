@@ -3997,42 +3997,15 @@ const AdminPortal = ({ onBack }) => {
                       />
                     </div>
 
-                    <table className="invoice-items-table">
-                      <thead>
-                        <tr>
-                          <th>#</th>
-                          <th>Herbal Formulation Item</th>
-                          <th>Qty</th>
-                          <th>Unit Price</th>
-                          <th>Total</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {(invoiceOrder.items || []).map((it, idx) => (
-                          <tr key={idx}>
-                            <td>{idx + 1}</td>
-                            <td>
-                              <strong>{it.name}</strong>
-                              <small>{it.volume || 'Village Pack'}</small>
-                            </td>
-                            <td>{it.quantity || 1}</td>
-                            <td>₹{it.price}</td>
-                            <td>₹{(it.price || 0) * (it.quantity || 1)}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-
-                    <div className="invoice-totals-strip">
-                      <div>
-                        <span>Courier Partner: <strong>{invoiceOrder.courier_partner || 'India Post Speed Post'}</strong></span><br />
-                        <span>Consignment AWB: <strong>{isRealAwb(invoiceOrder.tracking_number || invoiceOrder.tracking_awb) ? (invoiceOrder.tracking_number || invoiceOrder.tracking_awb) : 'Updated soon'}</strong></span>
-                      </div>
-                      <div className="inv-final-sum">
-                        <span>Grand Total:</span>
-                        <h2>₹{invoiceOrder.total_amount}</h2>
-                        <small>Payment Mode: {invoiceOrder.payment_method || 'Cash on Delivery'}</small>
-                      </div>
+                    <div className="mo-field-group">
+                      <label>Internal Audit Note</label>
+                      <textarea
+                        className="manage-order-input"
+                        value={manageOrderForm.audit_note}
+                        onChange={(e) => setManageOrderForm({ ...manageOrderForm, audit_note: e.target.value })}
+                        placeholder="e.g. Priority dispatched via Tenkasi hub"
+                        rows={3}
+                      />
                     </div>
 
                     <button type="submit" className="btn-save-order-settings">
@@ -4660,573 +4633,573 @@ const AdminPortal = ({ onBack }) => {
         )
       }
 
-{/* ==================================================================== */ }
-{/* MODAL 3: PRODUCT CMS MODAL */ }
-{/* ==================================================================== */ }
-{
-  isProductModalOpen && editingProduct && (
-    <div
-      className="admin-modal-backdrop"
-      onClick={() => setIsProductModalOpen(false)}
-      data-lenis-prevent
-    >
-      <div
-        className="admin-modal-card modal-lg"
-        onClick={(e) => e.stopPropagation()}
-        data-lenis-prevent
-      >
-        <div className="modal-header">
-          <h3>{isNewProduct ? 'Add New Herbal Product' : `Edit Product: ${editingProduct.name}`}</h3>
-          <button type="button" className="btn-close-modal" onClick={() => setIsProductModalOpen(false)} aria-label="Close"><Icons.close /></button>
-        </div>
-        <form onSubmit={handleSaveProduct} className="modal-form">
-          <div className="cms-fields-grid-2">
-            <div className="admin-input-group">
-              <label>Product Name *</label>
-              <input
-                type="text"
-                value={editingProduct.name}
-                onChange={(e) => setEditingProduct({ ...editingProduct, name: e.target.value })}
-                required
-              />
-            </div>
-            <div className="admin-input-group">
-              <label>Category</label>
-              <select
-                value={editingProduct.category}
-                onChange={(e) => setEditingProduct({ ...editingProduct, category: e.target.value })}
-              >
-                <option value="tea">Botanical Tea</option>
-                <option value="superfood">Superfood Powder</option>
-                <option value="podi">Traditional Food Podi</option>
-              </select>
-            </div>
-          </div>
-
-          <div className="cms-fields-grid-4">
-            <div className="admin-input-group">
-              <label>Selling Price (₹) *</label>
-              <input
-                type="number"
-                value={editingProduct.price}
-                onChange={(e) => setEditingProduct({ ...editingProduct, price: Number(e.target.value) })}
-                required
-              />
-            </div>
-            <div className="admin-input-group">
-              <label>Original MRP Price (₹)</label>
-              <input
-                type="number"
-                value={editingProduct.originalPrice || ''}
-                onChange={(e) => setEditingProduct({ ...editingProduct, originalPrice: Number(e.target.value) })}
-              />
-            </div>
-            <div className="admin-input-group">
-              <label>Weight / Volume</label>
-              <input
-                type="text"
-                placeholder="e.g. 100g Pouch"
-                value={editingProduct.volume || ''}
-                onChange={(e) => setEditingProduct({ ...editingProduct, volume: e.target.value })}
-              />
-            </div>
-            <div className="admin-input-group">
-              <label>Badge Tag</label>
-              <input
-                type="text"
-                placeholder="e.g. Best Seller"
-                value={editingProduct.badge || ''}
-                onChange={(e) => setEditingProduct({ ...editingProduct, badge: e.target.value })}
-              />
-            </div>
-          </div>
-
-          {/* Stock & Inventory Status */}
-          <div className="cms-fields-grid-2">
-            <div className="admin-input-group">
-              <label>Stock Quantity Available</label>
-              <input
-                type="number"
-                min="0"
-                value={editingProduct.stockCount !== undefined ? editingProduct.stockCount : 50}
-                onChange={(e) => setEditingProduct({ ...editingProduct, stockCount: Number(e.target.value) })}
-              />
-            </div>
-            <div className="admin-input-group">
-              <label>Stock Availability Status</label>
-              <select
-                value={editingProduct.inStock !== false ? 'in_stock' : 'out_of_stock'}
-                onChange={(e) => setEditingProduct({ ...editingProduct, inStock: e.target.value === 'in_stock' })}
-              >
-                <option value="in_stock">In Stock (Available for Purchase)</option>
-                <option value="out_of_stock">Out of Stock</option>
-              </select>
-            </div>
-          </div>
-
-          {/* Interactive Image Manager (Upload, Edit, Download, Delete) */}
-          {(() => {
-            const currentProductImg = editingProduct.cardImage || editingProduct.image || editingProduct.bottle || ''
-            return (
-              <div className="admin-input-group prod-image-manager-group">
-                <div className="prod-image-header-row">
-                  <label className="prod-image-main-label">
-                    Product Image & Visual Packaging
-                    <span className="prod-image-sub-label">Stored in Database & live synced across the main website</span>
-                  </label>
-                  {currentProductImg && (
-                    <span className="prod-image-status-pill">
-                      <span className="pill-pulse-dot" /> Live Storefront Image
-                    </span>
-                  )}
+      {/* ==================================================================== */}
+      {/* MODAL 3: PRODUCT CMS MODAL */}
+      {/* ==================================================================== */}
+      {
+        isProductModalOpen && editingProduct && (
+          <div
+            className="admin-modal-backdrop"
+            onClick={() => setIsProductModalOpen(false)}
+            data-lenis-prevent
+          >
+            <div
+              className="admin-modal-card modal-lg"
+              onClick={(e) => e.stopPropagation()}
+              data-lenis-prevent
+            >
+              <div className="modal-header">
+                <h3>{isNewProduct ? 'Add New Herbal Product' : `Edit Product: ${editingProduct.name}`}</h3>
+                <button type="button" className="btn-close-modal" onClick={() => setIsProductModalOpen(false)} aria-label="Close"><Icons.close /></button>
+              </div>
+              <form onSubmit={handleSaveProduct} className="modal-form">
+                <div className="cms-fields-grid-2">
+                  <div className="admin-input-group">
+                    <label>Product Name *</label>
+                    <input
+                      type="text"
+                      value={editingProduct.name}
+                      onChange={(e) => setEditingProduct({ ...editingProduct, name: e.target.value })}
+                      required
+                    />
+                  </div>
+                  <div className="admin-input-group">
+                    <label>Category</label>
+                    <select
+                      value={editingProduct.category}
+                      onChange={(e) => setEditingProduct({ ...editingProduct, category: e.target.value })}
+                    >
+                      <option value="tea">Botanical Tea</option>
+                      <option value="superfood">Superfood Powder</option>
+                      <option value="podi">Traditional Food Podi</option>
+                    </select>
+                  </div>
                 </div>
 
-                <input
-                  type="file"
-                  ref={productImageInputRef}
-                  accept="image/png, image/jpeg, image/webp, image/svg+xml, image/jpg"
-                  style={{ display: 'none' }}
-                  onChange={(e) => {
-                    if (e.target.files && e.target.files[0]) {
-                      handleProductImageUpload(e.target.files[0])
-                      e.target.value = ''
-                    }
-                  }}
-                />
-
-                {currentProductImg ? (
-                  <div className="prod-image-active-card">
-                    <div className="prod-image-thumb-col" onClick={() => window.open(currentProductImg, '_blank')} title="Click to view full resolution image">
-                      <img
-                        src={currentProductImg}
-                        alt={editingProduct.name || 'Product'}
-                        className="prod-image-preview-thumb"
-                      />
-                      <div className="prod-image-zoom-overlay">
-                        <Icons.eye width="16" height="16" />
-                      </div>
-                    </div>
-
-                    <div className="prod-image-details-col">
-                      <div className="prod-image-meta-info">
-                        <h4 className="prod-image-name">{editingProduct.name || 'Herbal Product'} Primary Packaging</h4>
-                        <p className="prod-image-meta-desc">
-                          Live catalog image. Click &quot;Edit / Replace Image&quot; to upload a new photo, &quot;Download Image&quot; to save locally, or &quot;Delete Image&quot; to remove.
-                        </p>
-                      </div>
-
-                      <div className="prod-image-actions-bar">
-                        <button
-                          type="button"
-                          className="btn-prod-img-action edit"
-                          onClick={() => productImageInputRef.current?.click()}
-                          disabled={isUploadingProductImage}
-                          title="Upload a new photo to replace this image"
-                        >
-                          <Icons.edit width="14" height="14" />
-                          <span>{isUploadingProductImage ? 'Uploading...' : 'Edit / Replace Image'}</span>
-                        </button>
-
-                        <button
-                          type="button"
-                          className="btn-prod-img-action download"
-                          onClick={() => handleDownloadProductImage(currentProductImg, editingProduct.name)}
-                          title="Download this product image to your computer"
-                        >
-                          <Icons.download width="14" height="14" />
-                          <span>Download Image</span>
-                        </button>
-
-                        <button
-                          type="button"
-                          className="btn-prod-img-action delete"
-                          onClick={handleDeleteProductImage}
-                          title="Delete this image from product"
-                        >
-                          <Icons.trash width="14" height="14" />
-                          <span>Delete Image</span>
-                        </button>
-                      </div>
-                    </div>
+                <div className="cms-fields-grid-4">
+                  <div className="admin-input-group">
+                    <label>Selling Price (₹) *</label>
+                    <input
+                      type="number"
+                      value={editingProduct.price}
+                      onChange={(e) => setEditingProduct({ ...editingProduct, price: Number(e.target.value) })}
+                      required
+                    />
                   </div>
-                ) : (
-                  <div
-                    className={`prod-image-dropzone ${isImageDragOver ? 'is-dragover' : ''}`}
-                    onDragOver={(e) => {
-                      e.preventDefault()
-                      setIsImageDragOver(true)
-                    }}
-                    onDragLeave={() => setIsImageDragOver(false)}
-                    onDrop={(e) => {
-                      e.preventDefault()
-                      setIsImageDragOver(false)
-                      if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-                        handleProductImageUpload(e.dataTransfer.files[0])
-                      }
-                    }}
-                    onClick={() => productImageInputRef.current?.click()}
-                  >
-                    <div className="dropzone-icon-wrap">
-                      {isUploadingProductImage ? (
-                        <Icons.loader className="spin" width="26" height="26" />
+                  <div className="admin-input-group">
+                    <label>Original MRP Price (₹)</label>
+                    <input
+                      type="number"
+                      value={editingProduct.originalPrice || ''}
+                      onChange={(e) => setEditingProduct({ ...editingProduct, originalPrice: Number(e.target.value) })}
+                    />
+                  </div>
+                  <div className="admin-input-group">
+                    <label>Weight / Volume</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. 100g Pouch"
+                      value={editingProduct.volume || ''}
+                      onChange={(e) => setEditingProduct({ ...editingProduct, volume: e.target.value })}
+                    />
+                  </div>
+                  <div className="admin-input-group">
+                    <label>Badge Tag</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Best Seller"
+                      value={editingProduct.badge || ''}
+                      onChange={(e) => setEditingProduct({ ...editingProduct, badge: e.target.value })}
+                    />
+                  </div>
+                </div>
+
+                {/* Stock & Inventory Status */}
+                <div className="cms-fields-grid-2">
+                  <div className="admin-input-group">
+                    <label>Stock Quantity Available</label>
+                    <input
+                      type="number"
+                      min="0"
+                      value={editingProduct.stockCount !== undefined ? editingProduct.stockCount : 50}
+                      onChange={(e) => setEditingProduct({ ...editingProduct, stockCount: Number(e.target.value) })}
+                    />
+                  </div>
+                  <div className="admin-input-group">
+                    <label>Stock Availability Status</label>
+                    <select
+                      value={editingProduct.inStock !== false ? 'in_stock' : 'out_of_stock'}
+                      onChange={(e) => setEditingProduct({ ...editingProduct, inStock: e.target.value === 'in_stock' })}
+                    >
+                      <option value="in_stock">In Stock (Available for Purchase)</option>
+                      <option value="out_of_stock">Out of Stock</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* Interactive Image Manager (Upload, Edit, Download, Delete) */}
+                {(() => {
+                  const currentProductImg = editingProduct.cardImage || editingProduct.image || editingProduct.bottle || ''
+                  return (
+                    <div className="admin-input-group prod-image-manager-group">
+                      <div className="prod-image-header-row">
+                        <label className="prod-image-main-label">
+                          Product Image & Visual Packaging
+                          <span className="prod-image-sub-label">Stored in Database & live synced across the main website</span>
+                        </label>
+                        {currentProductImg && (
+                          <span className="prod-image-status-pill">
+                            <span className="pill-pulse-dot" /> Live Storefront Image
+                          </span>
+                        )}
+                      </div>
+
+                      <input
+                        type="file"
+                        ref={productImageInputRef}
+                        accept="image/png, image/jpeg, image/webp, image/svg+xml, image/jpg"
+                        style={{ display: 'none' }}
+                        onChange={(e) => {
+                          if (e.target.files && e.target.files[0]) {
+                            handleProductImageUpload(e.target.files[0])
+                            e.target.value = ''
+                          }
+                        }}
+                      />
+
+                      {currentProductImg ? (
+                        <div className="prod-image-active-card">
+                          <div className="prod-image-thumb-col" onClick={() => window.open(currentProductImg, '_blank')} title="Click to view full resolution image">
+                            <img
+                              src={currentProductImg}
+                              alt={editingProduct.name || 'Product'}
+                              className="prod-image-preview-thumb"
+                            />
+                            <div className="prod-image-zoom-overlay">
+                              <Icons.eye width="16" height="16" />
+                            </div>
+                          </div>
+
+                          <div className="prod-image-details-col">
+                            <div className="prod-image-meta-info">
+                              <h4 className="prod-image-name">{editingProduct.name || 'Herbal Product'} Primary Packaging</h4>
+                              <p className="prod-image-meta-desc">
+                                Live catalog image. Click &quot;Edit / Replace Image&quot; to upload a new photo, &quot;Download Image&quot; to save locally, or &quot;Delete Image&quot; to remove.
+                              </p>
+                            </div>
+
+                            <div className="prod-image-actions-bar">
+                              <button
+                                type="button"
+                                className="btn-prod-img-action edit"
+                                onClick={() => productImageInputRef.current?.click()}
+                                disabled={isUploadingProductImage}
+                                title="Upload a new photo to replace this image"
+                              >
+                                <Icons.edit width="14" height="14" />
+                                <span>{isUploadingProductImage ? 'Uploading...' : 'Edit / Replace Image'}</span>
+                              </button>
+
+                              <button
+                                type="button"
+                                className="btn-prod-img-action download"
+                                onClick={() => handleDownloadProductImage(currentProductImg, editingProduct.name)}
+                                title="Download this product image to your computer"
+                              >
+                                <Icons.download width="14" height="14" />
+                                <span>Download Image</span>
+                              </button>
+
+                              <button
+                                type="button"
+                                className="btn-prod-img-action delete"
+                                onClick={handleDeleteProductImage}
+                                title="Delete this image from product"
+                              >
+                                <Icons.trash width="14" height="14" />
+                                <span>Delete Image</span>
+                              </button>
+                            </div>
+                          </div>
+                        </div>
                       ) : (
-                        <Icons.plus width="26" height="26" />
+                        <div
+                          className={`prod-image-dropzone ${isImageDragOver ? 'is-dragover' : ''}`}
+                          onDragOver={(e) => {
+                            e.preventDefault()
+                            setIsImageDragOver(true)
+                          }}
+                          onDragLeave={() => setIsImageDragOver(false)}
+                          onDrop={(e) => {
+                            e.preventDefault()
+                            setIsImageDragOver(false)
+                            if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+                              handleProductImageUpload(e.dataTransfer.files[0])
+                            }
+                          }}
+                          onClick={() => productImageInputRef.current?.click()}
+                        >
+                          <div className="dropzone-icon-wrap">
+                            {isUploadingProductImage ? (
+                              <Icons.loader className="spin" width="26" height="26" />
+                            ) : (
+                              <Icons.plus width="26" height="26" />
+                            )}
+                          </div>
+                          <div className="dropzone-text-wrap">
+                            <p className="dropzone-prompt">
+                              <strong>Click to upload product image</strong> or drag and drop file here
+                            </p>
+                            <span className="dropzone-hint">
+                              PNG, JPG, WEBP, or SVG • Stored in Database & synced live across storefront
+                            </span>
+                          </div>
+                          <button
+                            type="button"
+                            className="btn-dropzone-browse"
+                            disabled={isUploadingProductImage}
+                          >
+                            <Icons.download style={{ transform: 'rotate(180deg)' }} width="13" height="13" />
+                            <span>{isUploadingProductImage ? 'Processing...' : 'Upload Image File'}</span>
+                          </button>
+                        </div>
                       )}
                     </div>
-                    <div className="dropzone-text-wrap">
-                      <p className="dropzone-prompt">
-                        <strong>Click to upload product image</strong> or drag and drop file here
-                      </p>
-                      <span className="dropzone-hint">
-                        PNG, JPG, WEBP, or SVG • Stored in Database & synced live across storefront
-                      </span>
-                    </div>
-                    <button
-                      type="button"
-                      className="btn-dropzone-browse"
-                      disabled={isUploadingProductImage}
-                    >
-                      <Icons.download style={{ transform: 'rotate(180deg)' }} width="13" height="13" />
-                      <span>{isUploadingProductImage ? 'Processing...' : 'Upload Image File'}</span>
-                    </button>
-                  </div>
-                )}
-              </div>
-            )
-          })()}
+                  )
+                })()}
 
-          <div className="admin-input-group">
-            <label>Tagline / Short Summary</label>
-            <input
-              type="text"
-              value={editingProduct.tagline || editingProduct.shortDesc || ''}
-              onChange={(e) => setEditingProduct({ ...editingProduct, tagline: e.target.value, shortDesc: e.target.value })}
-            />
-          </div>
+                <div className="admin-input-group">
+                  <label>Tagline / Short Summary</label>
+                  <input
+                    type="text"
+                    value={editingProduct.tagline || editingProduct.shortDesc || ''}
+                    onChange={(e) => setEditingProduct({ ...editingProduct, tagline: e.target.value, shortDesc: e.target.value })}
+                  />
+                </div>
 
-          <div className="admin-input-group">
-            <label>Full Product Description</label>
-            <textarea
-              rows={3}
-              value={editingProduct.description || editingProduct.desc || ''}
-              onChange={(e) => setEditingProduct({ ...editingProduct, description: e.target.value, desc: e.target.value })}
-            />
-          </div>
+                <div className="admin-input-group">
+                  <label>Full Product Description</label>
+                  <textarea
+                    rows={3}
+                    value={editingProduct.description || editingProduct.desc || ''}
+                    onChange={(e) => setEditingProduct({ ...editingProduct, description: e.target.value, desc: e.target.value })}
+                  />
+                </div>
 
-          <div className="admin-input-group">
-            <label>Botanical Ingredients List</label>
-            <input
-              type="text"
-              value={editingProduct.ingredients || ''}
-              onChange={(e) => setEditingProduct({ ...editingProduct, ingredients: e.target.value })}
-            />
-          </div>
+                <div className="admin-input-group">
+                  <label>Botanical Ingredients List</label>
+                  <input
+                    type="text"
+                    value={editingProduct.ingredients || ''}
+                    onChange={(e) => setEditingProduct({ ...editingProduct, ingredients: e.target.value })}
+                  />
+                </div>
 
-          <div className="modal-actions-row">
-            <button type="button" className="btn-modal-cancel" onClick={() => setIsProductModalOpen(false)}>Cancel</button>
-            <button type="submit" className="admin-action-btn primary">Save Product & Sync Live</button>
-          </div>
-        </form>
-      </div>
-    </div>
-  )
-}
-
-{/* ==================================================================== */ }
-{/* MODAL 4: COUPON MODAL */ }
-{/* ==================================================================== */ }
-{
-  isCouponModalOpen && (
-    <div
-      className="admin-modal-backdrop"
-      onClick={() => setIsCouponModalOpen(false)}
-      data-lenis-prevent
-    >
-      <div
-        className="admin-modal-card"
-        onClick={(e) => e.stopPropagation()}
-        data-lenis-prevent
-      >
-        <div className="modal-header">
-          <h3>Create Promotional Coupon</h3>
-          <button type="button" className="btn-close-modal" onClick={() => setIsCouponModalOpen(false)} aria-label="Close"><Icons.close /></button>
-        </div>
-        <form onSubmit={handleSaveCoupon} className="modal-form">
-          <div className="admin-input-group">
-            <label>Coupon Code * (Auto Uppercase)</label>
-            <input
-              type="text"
-              placeholder="e.g. ROOTS50"
-              value={editingCoupon.code}
-              onChange={(e) => setEditingCoupon({ ...editingCoupon, code: e.target.value.toUpperCase() })}
-              required
-            />
-          </div>
-
-          <div className="cms-fields-row">
-            <div className="admin-input-group">
-              <label>Discount Type</label>
-              <select
-                value={editingCoupon.discountType}
-                onChange={(e) => setEditingCoupon({ ...editingCoupon, discountType: e.target.value })}
-              >
-                <option value="flat">Flat ₹ Discount</option>
-                <option value="percent">Percentage (%) Discount</option>
-              </select>
-            </div>
-            <div className="admin-input-group">
-              <label>Discount Value ({editingCoupon.discountType === 'percent' ? '%' : '₹'})</label>
-              <input
-                type="number"
-                value={editingCoupon.discountValue}
-                onChange={(e) => setEditingCoupon({ ...editingCoupon, discountValue: Number(e.target.value) })}
-                required
-              />
+                <div className="modal-actions-row">
+                  <button type="button" className="btn-modal-cancel" onClick={() => setIsProductModalOpen(false)}>Cancel</button>
+                  <button type="submit" className="admin-action-btn primary">Save Product & Sync Live</button>
+                </div>
+              </form>
             </div>
           </div>
+        )
+      }
 
-          <div className="cms-fields-row">
-            <div className="admin-input-group">
-              <label>Minimum Order Value (₹)</label>
-              <input
-                type="number"
-                value={editingCoupon.minOrder}
-                onChange={(e) => setEditingCoupon({ ...editingCoupon, minOrder: Number(e.target.value) })}
-                required
-              />
-            </div>
-            <div className="admin-input-group">
-              <label>Expiry Date</label>
-              <input
-                type="date"
-                value={editingCoupon.expiryDate}
-                onChange={(e) => setEditingCoupon({ ...editingCoupon, expiryDate: e.target.value })}
-                required
-              />
-            </div>
-          </div>
-
-          <div className="admin-input-group">
-            <label>Description Note</label>
-            <input
-              type="text"
-              placeholder="e.g. Flat ₹50 off on orders above ₹499"
-              value={editingCoupon.description}
-              onChange={(e) => setEditingCoupon({ ...editingCoupon, description: e.target.value })}
-            />
-          </div>
-
-          <div className="modal-actions-row">
-            <button type="button" className="btn-modal-cancel" onClick={() => setIsCouponModalOpen(false)}>Cancel</button>
-            <button type="submit" className="admin-action-btn primary">Save & Launch Coupon</button>
-          </div>
-        </form>
-      </div>
-    </div>
-  )
-}
-
-{/* ==================================================================== */ }
-{/* MODAL 5: CUSTOMER GREEN POINTS ADJUSTMENT */ }
-{/* ==================================================================== */ }
-{
-  isPointsModalOpen && selectedCustomer && (
-    <div
-      className="admin-modal-backdrop"
-      onClick={() => setIsPointsModalOpen(false)}
-      data-lenis-prevent
-    >
-      <div
-        className="admin-modal-card"
-        onClick={(e) => e.stopPropagation()}
-        data-lenis-prevent
-      >
-        <div className="modal-header">
-          <h3>Adjust Green Rewards: {selectedCustomer.name}</h3>
-          <button type="button" className="btn-close-modal" onClick={() => setIsPointsModalOpen(false)} aria-label="Close"><Icons.close /></button>
-        </div>
-        <form
-          onSubmit={async (e) => {
-            e.preventDefault()
-            const res = await adminService.updateCustomerPoints(selectedCustomer, pointsDelta, pointsReason)
-            selectedCustomer.greenPoints = res.newPoints !== undefined ? res.newPoints : (selectedCustomer.greenPoints + Number(pointsDelta))
-            showToast(`Adjusted Green Points by ${Number(pointsDelta) > 0 ? '+' : ''}${pointsDelta} for ${selectedCustomer.name}!`)
-            setIsPointsModalOpen(false)
-            loadStoreData()
-          }}
-          className="modal-form"
-        >
-          <p className="cms-hint">
-            Patron: <strong>{selectedCustomer.name}</strong> • User ID: <strong>{getNumericUserId(selectedCustomer)}</strong> • Current Wallet: <strong>{selectedCustomer.greenPoints} Points</strong> (₹{Math.floor(selectedCustomer.greenPoints / 2)} credit).
-          </p>
-
-          <div className="admin-input-group">
-            <label>Points to Add / Deduct (Use - for deduction)</label>
-            <input
-              type="number"
-              value={pointsDelta}
-              onChange={(e) => setPointsDelta(Number(e.target.value))}
-              required
-            />
-          </div>
-
-          <div className="admin-input-group">
-            <label>Reason / Note for Patron</label>
-            <input
-              type="text"
-              value={pointsReason}
-              onChange={(e) => setPointsReason(e.target.value)}
-              required
-            />
-          </div>
-
-          <div className="modal-actions-row">
-            <button type="button" className="btn-modal-cancel" onClick={() => setIsPointsModalOpen(false)}>Cancel</button>
-            <button type="submit" className="admin-action-btn primary">Confirm Points Adjustment</button>
-          </div>
-        </form>
-      </div>
-    </div>
-  )
-}
-
-{/* ==================================================================== */ }
-{/* MODAL 6: PERMANENT ORDER DELETE CONFIRMATION */ }
-{/* ==================================================================== */ }
-{
-  orderToDelete && (
-    <div
-      className="admin-modal-backdrop"
-      onClick={() => !isDeletingOrder && setOrderToDelete(null)}
-      data-lenis-prevent
-    >
-      <div
-        className="admin-modal-card order-delete-confirm-modal"
-        onClick={(e) => e.stopPropagation()}
-        style={{ maxWidth: 460, padding: '28px 24px' }}
-        data-lenis-prevent
-      >
-        <div style={{ textAlign: 'center', marginBottom: 18 }}>
+      {/* ==================================================================== */}
+      {/* MODAL 4: COUPON MODAL */}
+      {/* ==================================================================== */}
+      {
+        isCouponModalOpen && (
           <div
-            style={{
-              width: 52,
-              height: 52,
-              borderRadius: '50%',
-              background: '#FEE2E2',
-              color: '#DC2626',
-              display: 'inline-flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              marginBottom: 12,
-              fontSize: '1.4rem',
-            }}
+            className="admin-modal-backdrop"
+            onClick={() => setIsCouponModalOpen(false)}
+            data-lenis-prevent
           >
-            <Icons.trash width="24" height="24" />
-          </div>
-          <h3 style={{ fontSize: '1.25rem', color: '#1B3524', marginBottom: 6, fontWeight: 700 }}>
-            Delete Order Permanently?
-          </h3>
-          <p style={{ fontSize: '0.88rem', color: '#64748B', lineHeight: 1.5, margin: 0 }}>
-            Are you sure you want to delete order <strong>{orderToDelete.order_number || orderToDelete.id}</strong>?
-          </p>
-        </div>
+            <div
+              className="admin-modal-card"
+              onClick={(e) => e.stopPropagation()}
+              data-lenis-prevent
+            >
+              <div className="modal-header">
+                <h3>Create Promotional Coupon</h3>
+                <button type="button" className="btn-close-modal" onClick={() => setIsCouponModalOpen(false)} aria-label="Close"><Icons.close /></button>
+              </div>
+              <form onSubmit={handleSaveCoupon} className="modal-form">
+                <div className="admin-input-group">
+                  <label>Coupon Code * (Auto Uppercase)</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. ROOTS50"
+                    value={editingCoupon.code}
+                    onChange={(e) => setEditingCoupon({ ...editingCoupon, code: e.target.value.toUpperCase() })}
+                    required
+                  />
+                </div>
 
-        <div
-          style={{
-            background: '#F8FAFC',
-            border: '1px solid #E2E8F0',
-            borderRadius: 10,
-            padding: '12px 16px',
-            marginBottom: 18,
-            fontSize: '0.84rem',
-            color: '#334155',
-          }}
-        >
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
-            <span style={{ color: '#64748B' }}>Customer:</span>
-            <strong>{orderToDelete.customer_name || 'Customer'}</strong>
-          </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
-            <span style={{ color: '#64748B' }}>Total Amount:</span>
-            <strong>₹{orderToDelete.total_amount || orderToDelete.total || 0}</strong>
-          </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-            <span style={{ color: '#64748B' }}>Status:</span>
-            <span style={{ fontWeight: 600, color: '#0F766E' }}>{orderToDelete.order_status || orderToDelete.status || 'Confirmed'}</span>
-          </div>
-        </div>
+                <div className="cms-fields-row">
+                  <div className="admin-input-group">
+                    <label>Discount Type</label>
+                    <select
+                      value={editingCoupon.discountType}
+                      onChange={(e) => setEditingCoupon({ ...editingCoupon, discountType: e.target.value })}
+                    >
+                      <option value="flat">Flat ₹ Discount</option>
+                      <option value="percent">Percentage (%) Discount</option>
+                    </select>
+                  </div>
+                  <div className="admin-input-group">
+                    <label>Discount Value ({editingCoupon.discountType === 'percent' ? '%' : '₹'})</label>
+                    <input
+                      type="number"
+                      value={editingCoupon.discountValue}
+                      onChange={(e) => setEditingCoupon({ ...editingCoupon, discountValue: Number(e.target.value) })}
+                      required
+                    />
+                  </div>
+                </div>
 
-        <div
-          style={{
-            background: '#FEF2F2',
-            border: '1px solid #FECACA',
-            borderRadius: 8,
-            padding: '10px 12px',
-            marginBottom: 20,
-            fontSize: '0.78rem',
-            color: '#991B1B',
-            lineHeight: 1.45,
-          }}
-        >
-          ⚠️ <strong>Warning:</strong> This will delete this order from the Supabase database and immediately erase it from the customer's account page. This action cannot be reversed.
-        </div>
+                <div className="cms-fields-row">
+                  <div className="admin-input-group">
+                    <label>Minimum Order Value (₹)</label>
+                    <input
+                      type="number"
+                      value={editingCoupon.minOrder}
+                      onChange={(e) => setEditingCoupon({ ...editingCoupon, minOrder: Number(e.target.value) })}
+                      required
+                    />
+                  </div>
+                  <div className="admin-input-group">
+                    <label>Expiry Date</label>
+                    <input
+                      type="date"
+                      value={editingCoupon.expiryDate}
+                      onChange={(e) => setEditingCoupon({ ...editingCoupon, expiryDate: e.target.value })}
+                      required
+                    />
+                  </div>
+                </div>
 
-        <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
-          <button
-            type="button"
-            className="admin-action-btn secondary"
-            onClick={() => setOrderToDelete(null)}
-            disabled={isDeletingOrder}
+                <div className="admin-input-group">
+                  <label>Description Note</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Flat ₹50 off on orders above ₹499"
+                    value={editingCoupon.description}
+                    onChange={(e) => setEditingCoupon({ ...editingCoupon, description: e.target.value })}
+                  />
+                </div>
+
+                <div className="modal-actions-row">
+                  <button type="button" className="btn-modal-cancel" onClick={() => setIsCouponModalOpen(false)}>Cancel</button>
+                  <button type="submit" className="admin-action-btn primary">Save & Launch Coupon</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )
+      }
+
+      {/* ==================================================================== */}
+      {/* MODAL 5: CUSTOMER GREEN POINTS ADJUSTMENT */}
+      {/* ==================================================================== */}
+      {
+        isPointsModalOpen && selectedCustomer && (
+          <div
+            className="admin-modal-backdrop"
+            onClick={() => setIsPointsModalOpen(false)}
+            data-lenis-prevent
           >
-            Cancel
-          </button>
-          <button
-            type="button"
-            onClick={handleConfirmDeleteOrder}
-            disabled={isDeletingOrder}
-            style={{
-              background: '#DC2626',
-              color: '#FFFFFF',
-              border: 'none',
-              borderRadius: 8,
-              padding: '9px 18px',
-              fontSize: '0.86rem',
-              fontWeight: 700,
-              cursor: isDeletingOrder ? 'not-allowed' : 'pointer',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 6,
-              opacity: isDeletingOrder ? 0.7 : 1,
-              transition: 'background 0.15s ease',
-            }}
-          >
-            {isDeletingOrder ? (
-              <>
-                <Icons.loader className="spin" width="14" height="14" />
-                <span>Deleting...</span>
-              </>
-            ) : (
-              <>
-                <Icons.trash width="14" height="14" />
-                <span>Confirm Delete</span>
-              </>
-            )}
-          </button>
-        </div>
-      </div>
-    </div>
-  )
-}
+            <div
+              className="admin-modal-card"
+              onClick={(e) => e.stopPropagation()}
+              data-lenis-prevent
+            >
+              <div className="modal-header">
+                <h3>Adjust Green Rewards: {selectedCustomer.name}</h3>
+                <button type="button" className="btn-close-modal" onClick={() => setIsPointsModalOpen(false)} aria-label="Close"><Icons.close /></button>
+              </div>
+              <form
+                onSubmit={async (e) => {
+                  e.preventDefault()
+                  const res = await adminService.updateCustomerPoints(selectedCustomer, pointsDelta, pointsReason)
+                  selectedCustomer.greenPoints = res.newPoints !== undefined ? res.newPoints : (selectedCustomer.greenPoints + Number(pointsDelta))
+                  showToast(`Adjusted Green Points by ${Number(pointsDelta) > 0 ? '+' : ''}${pointsDelta} for ${selectedCustomer.name}!`)
+                  setIsPointsModalOpen(false)
+                  loadStoreData()
+                }}
+                className="modal-form"
+              >
+                <p className="cms-hint">
+                  Patron: <strong>{selectedCustomer.name}</strong> • User ID: <strong>{getNumericUserId(selectedCustomer)}</strong> • Current Wallet: <strong>{selectedCustomer.greenPoints} Points</strong> (₹{Math.floor(selectedCustomer.greenPoints / 2)} credit).
+                </p>
 
-{/* Floating Notification Toast */ }
-{
-  toastMsg && (
-    <div className="admin-toast-notice">
-      <span style={{ display: 'inline-flex', alignItems: 'center', marginRight: '6px' }}><Icons.leaf width="15" height="15" /></span>
-      {toastMsg}
-    </div>
-  )
-}
+                <div className="admin-input-group">
+                  <label>Points to Add / Deduct (Use - for deduction)</label>
+                  <input
+                    type="number"
+                    value={pointsDelta}
+                    onChange={(e) => setPointsDelta(Number(e.target.value))}
+                    required
+                  />
+                </div>
+
+                <div className="admin-input-group">
+                  <label>Reason / Note for Patron</label>
+                  <input
+                    type="text"
+                    value={pointsReason}
+                    onChange={(e) => setPointsReason(e.target.value)}
+                    required
+                  />
+                </div>
+
+                <div className="modal-actions-row">
+                  <button type="button" className="btn-modal-cancel" onClick={() => setIsPointsModalOpen(false)}>Cancel</button>
+                  <button type="submit" className="admin-action-btn primary">Confirm Points Adjustment</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )
+      }
+
+      {/* ==================================================================== */}
+      {/* MODAL 6: PERMANENT ORDER DELETE CONFIRMATION */}
+      {/* ==================================================================== */}
+      {
+        orderToDelete && (
+          <div
+            className="admin-modal-backdrop"
+            onClick={() => !isDeletingOrder && setOrderToDelete(null)}
+            data-lenis-prevent
+          >
+            <div
+              className="admin-modal-card order-delete-confirm-modal"
+              onClick={(e) => e.stopPropagation()}
+              style={{ maxWidth: 460, padding: '28px 24px' }}
+              data-lenis-prevent
+            >
+              <div style={{ textAlign: 'center', marginBottom: 18 }}>
+                <div
+                  style={{
+                    width: 52,
+                    height: 52,
+                    borderRadius: '50%',
+                    background: '#FEE2E2',
+                    color: '#DC2626',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    marginBottom: 12,
+                    fontSize: '1.4rem',
+                  }}
+                >
+                  <Icons.trash width="24" height="24" />
+                </div>
+                <h3 style={{ fontSize: '1.25rem', color: '#1B3524', marginBottom: 6, fontWeight: 700 }}>
+                  Delete Order Permanently?
+                </h3>
+                <p style={{ fontSize: '0.88rem', color: '#64748B', lineHeight: 1.5, margin: 0 }}>
+                  Are you sure you want to delete order <strong>{orderToDelete.order_number || orderToDelete.id}</strong>?
+                </p>
+              </div>
+
+              <div
+                style={{
+                  background: '#F8FAFC',
+                  border: '1px solid #E2E8F0',
+                  borderRadius: 10,
+                  padding: '12px 16px',
+                  marginBottom: 18,
+                  fontSize: '0.84rem',
+                  color: '#334155',
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+                  <span style={{ color: '#64748B' }}>Customer:</span>
+                  <strong>{orderToDelete.customer_name || 'Customer'}</strong>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+                  <span style={{ color: '#64748B' }}>Total Amount:</span>
+                  <strong>₹{orderToDelete.total_amount || orderToDelete.total || 0}</strong>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <span style={{ color: '#64748B' }}>Status:</span>
+                  <span style={{ fontWeight: 600, color: '#0F766E' }}>{orderToDelete.order_status || orderToDelete.status || 'Confirmed'}</span>
+                </div>
+              </div>
+
+              <div
+                style={{
+                  background: '#FEF2F2',
+                  border: '1px solid #FECACA',
+                  borderRadius: 8,
+                  padding: '10px 12px',
+                  marginBottom: 20,
+                  fontSize: '0.78rem',
+                  color: '#991B1B',
+                  lineHeight: 1.45,
+                }}
+              >
+                ⚠️ <strong>Warning:</strong> This will delete this order from the Supabase database and immediately erase it from the customer's account page. This action cannot be reversed.
+              </div>
+
+              <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+                <button
+                  type="button"
+                  className="admin-action-btn secondary"
+                  onClick={() => setOrderToDelete(null)}
+                  disabled={isDeletingOrder}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleConfirmDeleteOrder}
+                  disabled={isDeletingOrder}
+                  style={{
+                    background: '#DC2626',
+                    color: '#FFFFFF',
+                    border: 'none',
+                    borderRadius: 8,
+                    padding: '9px 18px',
+                    fontSize: '0.86rem',
+                    fontWeight: 700,
+                    cursor: isDeletingOrder ? 'not-allowed' : 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    opacity: isDeletingOrder ? 0.7 : 1,
+                    transition: 'background 0.15s ease',
+                  }}
+                >
+                  {isDeletingOrder ? (
+                    <>
+                      <Icons.loader className="spin" width="14" height="14" />
+                      <span>Deleting...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Icons.trash width="14" height="14" />
+                      <span>Confirm Delete</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        )
+      }
+
+      {/* Floating Notification Toast */}
+      {
+        toastMsg && (
+          <div className="admin-toast-notice">
+            <span style={{ display: 'inline-flex', alignItems: 'center', marginRight: '6px' }}><Icons.leaf width="15" height="15" /></span>
+            {toastMsg}
+          </div>
+        )
+      }
     </div >
   )
 }
