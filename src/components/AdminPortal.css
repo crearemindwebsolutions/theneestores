@@ -3578,8 +3578,51 @@ body.admin-modal-open .admin-content-area {
 }
 
 /* ==========================================================================
-   SYSTEM & STORAGE CAPACITY DASHBOARD
+   SYSTEM & STORAGE CAPACITY DASHBOARD (ENTERPRISE SaaS TELEMETRY)
    ========================================================================== */
+.admin-tab-pane.tab-storage {
+  animation: fadeIn 0.3s ease;
+}
+
+.spin {
+  animation: storageSpin 1s linear infinite;
+}
+
+@keyframes storageSpin {
+  100% { transform: rotate(360deg); }
+}
+
+.storage-telemetry-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #FFFFFF;
+  border: 1px solid #D6E4D9;
+  color: #123223;
+  padding: 7px 16px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(18, 50, 35, 0.04);
+}
+
+.storage-pulse-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #10B981;
+  display: inline-block;
+  position: relative;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+  animation: storagePulseBeacon 2s infinite;
+}
+
+@keyframes storagePulseBeacon {
+  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.5); }
+  70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+}
+
 .admin-kpi-grid.admin-kpi-3-col {
   display: grid;
   grid-template-columns: repeat(3, 1fr) !important;
@@ -3593,121 +3636,389 @@ body.admin-modal-open .admin-content-area {
   }
 }
 
-.kpi-card.storage-card {
+/* Modern Storage Metric Cards */
+.storage-kpi-card {
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 16px;
+  padding: 22px 24px;
+  box-shadow: 0 4px 18px rgba(15, 23, 42, 0.04);
   position: relative;
   overflow: hidden;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
 }
 
-.kpi-card.storage-card:hover {
+.storage-kpi-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(18, 50, 35, 0.08);
+  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.08);
+  border-color: #CBD5E1;
 }
 
-.kpi-card.storage-card.total {
-  border-left: 4px solid #C69214;
+.storage-kpi-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
 }
 
-.kpi-card.storage-card.used {
-  border-left: 4px solid #10B981;
+.storage-kpi-card.total::before {
+  background: linear-gradient(90deg, #F59E0B, #D97706);
 }
 
-.kpi-card.storage-card.balance {
-  border-left: 4px solid #2563EB;
-  background: #F8FAFC;
+.storage-kpi-card.used::before {
+  background: linear-gradient(90deg, #10B981, #059669);
 }
 
+.storage-kpi-card.balance::before {
+  background: linear-gradient(90deg, #3B82F6, #2563EB);
+}
+
+.storage-kpi-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.storage-kpi-label-group {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.storage-kpi-category {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #64748B;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.storage-kpi-tier-name {
+  font-size: 0.84rem;
+  font-weight: 600;
+  color: #1E293B;
+}
+
+.storage-kpi-icon-badge {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.storage-kpi-icon-badge.amber {
+  background: #FEF9C3;
+  color: #B45309;
+  border: 1px solid #FEF08A;
+}
+
+.storage-kpi-icon-badge.emerald {
+  background: #DCFCE7;
+  color: #15803D;
+  border: 1px solid #BBF7D0;
+}
+
+.storage-kpi-icon-badge.blue {
+  background: #DBEAFE;
+  color: #1D4ED8;
+  border: 1px solid #BFDBFE;
+}
+
+.storage-kpi-value-row {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.storage-kpi-num {
+  font-size: 2rem;
+  font-weight: 800;
+  color: #0F172A;
+  line-height: 1;
+  letter-spacing: -0.03em;
+  font-feature-settings: 'tnum';
+}
+
+.storage-kpi-unit {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #64748B;
+}
+
+.storage-kpi-approx {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: #94A3B8;
+  margin-left: auto;
+}
+
+/* Micro bar inside each card */
+.storage-kpi-micro-track {
+  width: 100%;
+  height: 5px;
+  background: #F1F5F9;
+  border-radius: 999px;
+  overflow: hidden;
+  margin-bottom: 14px;
+}
+
+.storage-kpi-micro-bar {
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.5s ease;
+}
+
+.storage-kpi-micro-bar.amber {
+  background: linear-gradient(90deg, #F59E0B, #D97706);
+}
+
+.storage-kpi-micro-bar.emerald {
+  background: linear-gradient(90deg, #10B981, #059669);
+}
+
+.storage-kpi-micro-bar.blue {
+  background: linear-gradient(90deg, #3B82F6, #2563EB);
+}
+
+/* Card bottom footer row */
+.storage-kpi-bottom-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding-top: 12px;
+  border-top: 1px solid #F1F5F9;
+  margin-top: auto;
+}
+
+.storage-badge-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.storage-badge-pill.amber {
+  background: #FEF3C7;
+  color: #92400E;
+  border: 1px solid #FDE68A;
+}
+
+.storage-badge-pill.emerald {
+  background: #D1FAE5;
+  color: #065F46;
+  border: 1px solid #A7F3D0;
+}
+
+.storage-badge-pill.blue {
+  background: #DBEAFE;
+  color: #1E40AF;
+  border: 1px solid #BFDBFE;
+}
+
+.storage-subtext-detail {
+  font-size: 0.74rem;
+  color: #64748B;
+  font-weight: 500;
+  text-align: right;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ==========================================================================
+   STORAGE PROGRESS / UTILIZATION OVERVIEW
+   ========================================================================== */
 .storage-progress-card {
   background: #FFFFFF;
-  border: 1.5px solid #EAEFE7;
+  border: 1px solid #E2E8F0;
   border-radius: 18px;
   padding: 24px 28px;
-  box-shadow: 0 4px 16px rgba(18, 50, 35, 0.04);
+  box-shadow: 0 4px 18px rgba(15, 23, 42, 0.04);
   margin-bottom: 24px;
 }
 
 .storage-bar-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  margin-bottom: 14px;
+  align-items: flex-start;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.storage-bar-header-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
 .storage-bar-title {
-  font-family: var(--font-serif, 'Playfair Display', Georgia, serif);
   font-size: 1.15rem;
   font-weight: 700;
-  color: #123223;
+  color: #0F172A;
+  margin: 0;
+  letter-spacing: -0.01em;
 }
 
-.storage-bar-percentage {
-  font-size: 0.86rem;
+.storage-bar-subtitle {
+  font-size: 0.82rem;
+  color: #64748B;
+  margin: 0;
+}
+
+.storage-bar-percentage-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.84rem;
   font-weight: 700;
-  color: #15803D;
-  background: #EAF7EE;
-  padding: 4px 14px;
+  color: #065F46;
+  background: #D1FAE5;
+  padding: 6px 14px;
   border-radius: 999px;
-  border: 1px solid #C6EBD1;
+  border: 1px solid #A7F3D0;
 }
 
 .storage-progress-bar-wrap {
   width: 100%;
-  height: 20px;
+  height: 22px;
   border-radius: 999px;
   background: #F1F5F9;
   display: flex;
   overflow: hidden;
-  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.06);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05);
+  margin-bottom: 20px;
 }
 
 .storage-progress-segment {
   height: 100%;
-  transition: width 0.4s ease;
+  transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
 }
 
 .storage-progress-segment.media-segment {
-  background: #10B981;
+  background: linear-gradient(90deg, #10B981, #059669);
 }
 
 .storage-progress-segment.db-segment {
-  background: #3B82F6;
+  background: linear-gradient(90deg, #3B82F6, #2563EB);
 }
 
 .storage-progress-segment.free-segment {
-  background: #CBD5E1;
+  background: #E2E8F0;
 }
 
-.storage-legend-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 24px;
-  margin-top: 18px;
-  padding-top: 16px;
+/* 3 Segment Stats Tiles */
+.storage-segments-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-top: 16px;
+  padding-top: 20px;
   border-top: 1px solid #F1F5F9;
 }
 
-.storage-legend-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 0.84rem;
-  color: #334155;
+@media (max-width: 800px) {
+  .storage-segments-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
-.storage-legend-item .legend-dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
+.storage-seg-tile {
+  background: #F8FAFC;
+  border: 1px solid #E2E8F0;
+  border-radius: 12px;
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.storage-seg-tile:hover {
+  background: #F1F5F9;
+  border-color: #CBD5E1;
+}
+
+.storage-seg-dot-badge {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   flex-shrink: 0;
 }
 
+.storage-seg-dot-badge.media {
+  background: #DCFCE7;
+  color: #15803D;
+  border: 1px solid #BBF7D0;
+}
+
+.storage-seg-dot-badge.db {
+  background: #DBEAFE;
+  color: #1D4ED8;
+  border: 1px solid #BFDBFE;
+}
+
+.storage-seg-dot-badge.free {
+  background: #F1F5F9;
+  color: #475569;
+  border: 1px solid #E2E8F0;
+}
+
+.storage-seg-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.storage-seg-title {
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: #64748B;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 2px;
+}
+
+.storage-seg-val {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: #0F172A;
+  line-height: 1.2;
+}
+
+.storage-seg-meta {
+  font-size: 0.74rem;
+  color: #64748B;
+  margin-top: 2px;
+}
+
+/* ==========================================================================
+   STORAGE BREAKDOWN & INFRASTRUCTURE HEALTH
+   ========================================================================== */
 .storage-details-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 20px;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 900px) {
   .storage-details-grid {
     grid-template-columns: 1fr;
   }
@@ -3715,45 +4026,181 @@ body.admin-modal-open .admin-content-area {
 
 .storage-detail-box {
   background: #FFFFFF;
-  border: 1.5px solid #EAEFE7;
+  border: 1px solid #E2E8F0;
   border-radius: 18px;
   padding: 24px 28px;
-  box-shadow: 0 4px 16px rgba(18, 50, 35, 0.04);
+  box-shadow: 0 4px 18px rgba(15, 23, 42, 0.04);
+  display: flex;
+  flex-direction: column;
 }
 
-.storage-detail-box h3 {
-  font-family: var(--font-serif, 'Playfair Display', Georgia, serif);
-  font-size: 1.15rem;
-  font-weight: 700;
-  color: #123223;
-  margin: 0 0 16px 0;
-  padding-bottom: 12px;
+.storage-box-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
+  padding-bottom: 14px;
   border-bottom: 1.5px solid #F1F5F9;
+}
+
+.storage-box-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #0F172A;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.storage-box-badge {
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: #F1F5F9;
+  color: #475569;
+  border: 1px solid #E2E8F0;
 }
 
 .storage-metric-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 10px 0;
+  padding: 12px 0;
   border-bottom: 1px solid #F8FAFC;
+  font-size: 0.86rem;
+  transition: background 0.15s ease;
+}
+
+.storage-metric-row:hover {
+  background: #FAFAFA;
+  margin: 0 -8px;
+  padding: 12px 8px;
+  border-radius: 6px;
+}
+
+.storage-row-label-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.storage-row-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  background: #F8FAFC;
+  border: 1px solid #E2E8F0;
+  color: #475569;
+  flex-shrink: 0;
+}
+
+.storage-row-label-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.storage-row-label-title {
+  font-weight: 600;
+  color: #1E293B;
   font-size: 0.86rem;
 }
 
-.storage-metric-row:last-child {
-  border-bottom: none;
-  padding-top: 14px;
-  font-weight: 700;
-  font-size: 0.95rem;
-}
-
-.storage-metric-row .metric-label {
+.storage-row-label-desc {
+  font-size: 0.72rem;
   color: #64748B;
 }
 
-.storage-metric-row .metric-value {
+.storage-row-value-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-align: right;
+}
+
+.storage-val-primary {
+  font-weight: 700;
   color: #0F172A;
-  font-weight: 600;
+  font-size: 0.88rem;
+}
+
+.storage-val-badge {
+  font-size: 0.74rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.storage-val-badge.green {
+  background: #DCFCE7;
+  color: #15803D;
+  border: 1px solid #BBF7D0;
+}
+
+.storage-val-badge.blue {
+  background: #DBEAFE;
+  color: #1D4ED8;
+  border: 1px solid #BFDBFE;
+}
+
+.storage-val-badge.slate {
+  background: #F1F5F9;
+  color: #475569;
+  border: 1px solid #E2E8F0;
+}
+
+.storage-summary-total-row {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 2px dashed #E2E8F0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.storage-summary-total-label {
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: #0F172A;
+}
+
+.storage-summary-total-val {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #0F172A;
+}
+
+.storage-health-alert-box {
+  margin-top: auto;
+  padding-top: 18px;
+}
+
+.storage-health-alert-inner {
+  background: #F0FDF4;
+  border: 1px solid #BBF7D0;
+  border-radius: 12px;
+  padding: 12px 14px;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.storage-health-alert-icon {
+  color: #16A34A;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.storage-health-alert-text {
+  font-size: 0.78rem;
+  color: #166534;
+  line-height: 1.45;
 }
 
 .admin-kpi-5-col {

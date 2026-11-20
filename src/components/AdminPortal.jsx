@@ -3506,12 +3506,17 @@ const AdminPortal = ({ onBack }) => {
 
               return (
                 <section className="admin-tab-pane tab-storage">
+                  {/* Top Header Row */}
                   <div className="pane-header-row">
                     <div>
-                      <span className="pane-kicker">INFRASTRUCTURE & CAPACITY</span>
+                      <span className="pane-kicker">INFRASTRUCTURE & CAPACITY TELEMETRY</span>
                       <h1 className="pane-title">System & Storage Allocation</h1>
                     </div>
-                    <div className="pane-actions-row">
+                    <div className="pane-actions-row" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                      <div className="storage-telemetry-pill">
+                        <span className="storage-pulse-dot" />
+                        <span>Supabase Cloud • Status: Operational</span>
+                      </div>
                       <button
                         type="button"
                         className="admin-action-btn secondary"
@@ -3519,156 +3524,333 @@ const AdminPortal = ({ onBack }) => {
                         disabled={isPingingDb}
                         title="Check live storage status"
                       >
-                        <Icons.refresh />
+                        <Icons.refresh className={isPingingDb ? 'spin' : ''} />
                         <span style={{ marginLeft: 6 }}>{isPingingDb ? 'Updating...' : 'Refresh Storage'}</span>
                       </button>
                     </div>
                   </div>
 
-                  {/* The 3 Core Metric Cards: TOTAL, USED, BALANCE */}
+                  {/* 3 Core Metric Cards: TOTAL, USED, BALANCE */}
                   <div className="admin-kpi-grid admin-kpi-3-col">
-                    {/* Card 1: TOTAL STORAGE */}
-                    <div className="kpi-card storage-card total">
-                      <div className="kpi-header">
-                        <span className="kpi-label">TOTAL STORAGE</span>
-                        <span className="kpi-icon-pill" style={{ color: '#C69214' }}><Icons.database /></span>
+                    {/* Card 1: TOTAL ALLOCATION */}
+                    <div className="storage-kpi-card total">
+                      <div className="storage-kpi-top">
+                        <div className="storage-kpi-label-group">
+                          <span className="storage-kpi-category">TOTAL ALLOCATION</span>
+                          <span className="storage-kpi-tier-name">Cloud Disk Quota</span>
+                        </div>
+                        <div className="storage-kpi-icon-badge amber">
+                          <Icons.database style={{ width: 20, height: 20 }} />
+                        </div>
                       </div>
-                      <div className="kpi-value">
-                        {totalStorageMb.toLocaleString('en-IN')} <span style={{ fontSize: '0.9rem', color: '#6A8070' }}>MB</span>
+                      <div className="storage-kpi-value-row">
+                        <span className="storage-kpi-num">{totalStorageMb.toLocaleString('en-IN')}</span>
+                        <span className="storage-kpi-unit">MB</span>
+                        <span className="storage-kpi-approx">(1.00 GB)</span>
                       </div>
-                      <div className="kpi-caption">
-                        <span className="kpi-change neutral" style={{ background: '#FAF0DE', color: '#8A5800' }}>
-                          1.00 GB Full Quota
-                        </span>
-                        <span>Allocated Cloud Disk</span>
+                      <div className="storage-kpi-micro-track">
+                        <div className="storage-kpi-micro-bar amber" style={{ width: '100%' }} />
                       </div>
-                    </div>
-
-                    {/* Card 2: USED STORAGE */}
-                    <div className="kpi-card storage-card used">
-                      <div className="kpi-header">
-                        <span className="kpi-label">USED STORAGE</span>
-                        <span className="kpi-icon-pill" style={{ color: '#10B981' }}><Icons.dashboard /></span>
-                      </div>
-                      <div className="kpi-value">
-                        {usedStorageMb.toLocaleString('en-IN')} <span style={{ fontSize: '0.9rem', color: '#6A8070' }}>MB</span>
-                      </div>
-                      <div className="kpi-caption">
-                        <span className="kpi-change positive">
-                          {usedPercent}% Utilized
-                        </span>
-                        <span>Media & Database Files</span>
+                      <div className="storage-kpi-bottom-row">
+                        <span className="storage-badge-pill amber">1.00 GB Full Quota</span>
+                        <span className="storage-subtext-detail">Allocated Cloud Disk</span>
                       </div>
                     </div>
 
-                    {/* Card 3: BALANCE STORAGE */}
-                    <div className="kpi-card storage-card balance">
-                      <div className="kpi-header">
-                        <span className="kpi-label">BALANCE STORAGE</span>
-                        <span className="kpi-icon-pill" style={{ color: '#2563EB' }}><Icons.check /></span>
+                    {/* Card 2: ACTIVE CONSUMPTION */}
+                    <div className="storage-kpi-card used">
+                      <div className="storage-kpi-top">
+                        <div className="storage-kpi-label-group">
+                          <span className="storage-kpi-category">ACTIVE CONSUMPTION</span>
+                          <span className="storage-kpi-tier-name">Media & DB Storage</span>
+                        </div>
+                        <div className="storage-kpi-icon-badge emerald">
+                          <Icons.dashboard style={{ width: 20, height: 20 }} />
+                        </div>
                       </div>
-                      <div className="kpi-value" style={{ color: '#1D4ED8' }}>
-                        {balanceStorageMb.toLocaleString('en-IN')} <span style={{ fontSize: '0.9rem', color: '#6A8070' }}>MB</span>
+                      <div className="storage-kpi-value-row">
+                        <span className="storage-kpi-num">{usedStorageMb.toLocaleString('en-IN')}</span>
+                        <span className="storage-kpi-unit">MB</span>
+                        <span className="storage-kpi-approx">({usedPercent}%)</span>
                       </div>
-                      <div className="kpi-caption">
-                        <span className="kpi-change positive" style={{ background: '#DBEAFE', color: '#1E40AF' }}>
-                          {freePercent}% Available Space
-                        </span>
-                        <span>Ready for Future Data</span>
+                      <div className="storage-kpi-micro-track">
+                        <div className="storage-kpi-micro-bar emerald" style={{ width: `${Math.min(100, Math.max(3, usedPercent))}%` }} />
+                      </div>
+                      <div className="storage-kpi-bottom-row">
+                        <span className="storage-badge-pill emerald">{usedPercent}% Utilized</span>
+                        <span className="storage-subtext-detail">Media & Database Files</span>
+                      </div>
+                    </div>
+
+                    {/* Card 3: AVAILABLE HEADROOM */}
+                    <div className="storage-kpi-card balance">
+                      <div className="storage-kpi-top">
+                        <div className="storage-kpi-label-group">
+                          <span className="storage-kpi-category">AVAILABLE HEADROOM</span>
+                          <span className="storage-kpi-tier-name">Ready for Expansion</span>
+                        </div>
+                        <div className="storage-kpi-icon-badge blue">
+                          <Icons.check style={{ width: 20, height: 20 }} />
+                        </div>
+                      </div>
+                      <div className="storage-kpi-value-row">
+                        <span className="storage-kpi-num" style={{ color: '#1D4ED8' }}>{balanceStorageMb.toLocaleString('en-IN')}</span>
+                        <span className="storage-kpi-unit">MB</span>
+                        <span className="storage-kpi-approx">({freePercent}%)</span>
+                      </div>
+                      <div className="storage-kpi-micro-track">
+                        <div className="storage-kpi-micro-bar blue" style={{ width: `${Math.min(100, Math.max(3, freePercent))}%` }} />
+                      </div>
+                      <div className="storage-kpi-bottom-row">
+                        <span className="storage-badge-pill blue">{freePercent}% Available</span>
+                        <span className="storage-subtext-detail">Ready for Future Data</span>
                       </div>
                     </div>
                   </div>
 
-                  {/* Visual Storage Progress Bar */}
+                  {/* Visual Storage Progress Bar & Segment Tiles */}
                   <div className="storage-progress-card">
                     <div className="storage-bar-header">
-                      <span className="storage-bar-title">Storage Utilization Overview</span>
-                      <span className="storage-bar-percentage">{usedPercent}% Used • {freePercent}% Free</span>
+                      <div className="storage-bar-header-info">
+                        <h2 className="storage-bar-title">Storage Utilization Overview</h2>
+                        <p className="storage-bar-subtitle">
+                          Real-time breakdown between Edge CDN media assets, PostgreSQL tables, and available headroom
+                        </p>
+                      </div>
+                      <div className="storage-bar-percentage-pill">
+                        <span className="storage-pulse-dot" style={{ width: 6, height: 6 }} />
+                        <span>{usedPercent}% Used • {freePercent}% Free</span>
+                      </div>
                     </div>
+
                     <div className="storage-progress-bar-wrap">
                       <div
                         className="storage-progress-segment media-segment"
                         style={{ width: `${mediaPercent}%` }}
-                        title={`Media Assets: ${mediaStorageMb} MB`}
+                        title={`Media Assets: ${mediaStorageMb} MB (${mediaPercent}%)`}
                       />
                       <div
                         className="storage-progress-segment db-segment"
                         style={{ width: `${dbPercent}%` }}
-                        title={`Database Records: ${dbStorageMb} MB`}
+                        title={`Database Records: ${dbStorageMb} MB (${dbPercent}%)`}
                       />
                       <div
                         className="storage-progress-segment free-segment"
                         style={{ width: `${freePercent}%` }}
-                        title={`Balance Free: ${balanceStorageMb} MB`}
+                        title={`Available Balance: ${balanceStorageMb} MB (${freePercent}%)`}
                       />
                     </div>
-                    <div className="storage-legend-row">
-                      <div className="storage-legend-item">
-                        <span className="legend-dot" style={{ background: '#10B981' }} />
-                        <span><strong>Media Assets:</strong> {mediaStorageMb} MB ({mediaCount} files)</span>
+
+                    {/* 3 Interactive Segment Stat Tiles */}
+                    <div className="storage-segments-grid">
+                      <div className="storage-seg-tile">
+                        <div className="storage-seg-dot-badge media">
+                          <Icons.products style={{ width: 18, height: 18 }} />
+                        </div>
+                        <div className="storage-seg-content">
+                          <div className="storage-seg-title">Media Assets (CDN)</div>
+                          <div className="storage-seg-val">{mediaStorageMb} MB</div>
+                          <div className="storage-seg-meta">{mediaCount} files • {mediaPercent}% share</div>
+                        </div>
                       </div>
-                      <div className="storage-legend-item">
-                        <span className="legend-dot" style={{ background: '#3B82F6' }} />
-                        <span><strong>Database Records:</strong> {dbStorageMb} MB ({recordsCount}+ rows)</span>
+
+                      <div className="storage-seg-tile">
+                        <div className="storage-seg-dot-badge db">
+                          <Icons.database style={{ width: 18, height: 18 }} />
+                        </div>
+                        <div className="storage-seg-content">
+                          <div className="storage-seg-title">Database Records</div>
+                          <div className="storage-seg-val">{dbStorageMb} MB</div>
+                          <div className="storage-seg-meta">{recordsCount}+ rows • {dbPercent}% share</div>
+                        </div>
                       </div>
-                      <div className="storage-legend-item">
-                        <span className="legend-dot" style={{ background: '#CBD5E1' }} />
-                        <span><strong>Balance Available:</strong> {balanceStorageMb} MB Free Storage</span>
+
+                      <div className="storage-seg-tile">
+                        <div className="storage-seg-dot-badge free">
+                          <Icons.check style={{ width: 18, height: 18 }} />
+                        </div>
+                        <div className="storage-seg-content">
+                          <div className="storage-seg-title">Available Headroom</div>
+                          <div className="storage-seg-val" style={{ color: '#1D4ED8' }}>{balanceStorageMb} MB</div>
+                          <div className="storage-seg-meta">High headroom • {freePercent}% free</div>
+                        </div>
                       </div>
                     </div>
                   </div>
 
-                  {/* Detailed Clean Breakdown */}
+                  {/* Detailed 2-Column Grid */}
                   <div className="storage-details-grid">
+                    {/* Column 1: Breakdown Summary */}
                     <div className="storage-detail-box">
-                      <h3>Storage Breakdown Summary</h3>
-                      <div className="storage-metric-row">
-                        <span className="metric-label">Website Media Assets (CDN)</span>
-                        <span className="metric-value">{mediaStorageMb} MB ({mediaCount} images)</span>
+                      <div className="storage-box-head">
+                        <h3 className="storage-box-title">
+                          <Icons.fileText style={{ width: 18, height: 18, color: '#123223' }} />
+                          Storage Breakdown Summary
+                        </h3>
+                        <span className="storage-box-badge">Tier 1 Cloud Disk</span>
                       </div>
+
                       <div className="storage-metric-row">
-                        <span className="metric-label">PostgreSQL Database Records</span>
-                        <span className="metric-value">{dbStorageMb} MB ({recordsCount}+ rows)</span>
+                        <div className="storage-row-label-wrap">
+                          <div className="storage-row-icon">
+                            <Icons.products style={{ width: 15, height: 15 }} />
+                          </div>
+                          <div className="storage-row-label-text">
+                            <span className="storage-row-label-title">Website Media Assets (CDN)</span>
+                            <span className="storage-row-label-desc">Product photos, hero banners & brand artwork</span>
+                          </div>
+                        </div>
+                        <div className="storage-row-value-wrap">
+                          <span className="storage-val-primary">{mediaStorageMb} MB</span>
+                          <span className="storage-val-badge green">{mediaCount} files</span>
+                        </div>
                       </div>
+
                       <div className="storage-metric-row">
-                        <span className="metric-label">Total Used Space</span>
-                        <span className="metric-value" style={{ color: '#166534', fontWeight: 700 }}>{usedStorageMb} MB</span>
+                        <div className="storage-row-label-wrap">
+                          <div className="storage-row-icon">
+                            <Icons.database style={{ width: 15, height: 15 }} />
+                          </div>
+                          <div className="storage-row-label-text">
+                            <span className="storage-row-label-title">PostgreSQL Database Records</span>
+                            <span className="storage-row-label-desc">Customer accounts, ledger orders & telemetry</span>
+                          </div>
+                        </div>
+                        <div className="storage-row-value-wrap">
+                          <span className="storage-val-primary">{dbStorageMb} MB</span>
+                          <span className="storage-val-badge blue">{recordsCount}+ rows</span>
+                        </div>
                       </div>
+
                       <div className="storage-metric-row">
-                        <span className="metric-label">Balance Available Space</span>
-                        <span className="metric-value" style={{ color: '#1D4ED8', fontWeight: 700 }}>{balanceStorageMb} MB Free</span>
+                        <div className="storage-row-label-wrap">
+                          <div className="storage-row-icon">
+                            <Icons.pulse style={{ width: 15, height: 15 }} />
+                          </div>
+                          <div className="storage-row-label-text">
+                            <span className="storage-row-label-title">Total Active Space Used</span>
+                            <span className="storage-row-label-desc">Combined disk footprint on Supabase</span>
+                          </div>
+                        </div>
+                        <div className="storage-row-value-wrap">
+                          <span className="storage-val-primary" style={{ color: '#166534' }}>{usedStorageMb} MB</span>
+                          <span className="storage-val-badge green">{usedPercent}% utilized</span>
+                        </div>
                       </div>
-                      <div className="storage-metric-row" style={{ borderTop: '1.5px solid #E2E8F0', marginTop: 4 }}>
-                        <span className="metric-label">Total Allocated Storage</span>
-                        <span className="metric-value">{totalStorageMb} MB (1.00 GB)</span>
+
+                      <div className="storage-metric-row">
+                        <div className="storage-row-label-wrap">
+                          <div className="storage-row-icon">
+                            <Icons.check style={{ width: 15, height: 15, color: '#1D4ED8' }} />
+                          </div>
+                          <div className="storage-row-label-text">
+                            <span className="storage-row-label-title">Balance Available Headroom</span>
+                            <span className="storage-row-label-desc">Remaining capacity before quota limit</span>
+                          </div>
+                        </div>
+                        <div className="storage-row-value-wrap">
+                          <span className="storage-val-primary" style={{ color: '#1D4ED8' }}>{balanceStorageMb} MB</span>
+                          <span className="storage-val-badge blue">{freePercent}% free</span>
+                        </div>
+                      </div>
+
+                      <div className="storage-summary-total-row">
+                        <span className="storage-summary-total-label">Total Allocated Quota</span>
+                        <span className="storage-summary-total-val">{totalStorageMb} MB (1.00 GB)</span>
                       </div>
                     </div>
 
+                    {/* Column 2: Health & Capacity */}
                     <div className="storage-detail-box">
-                      <h3>Cloud Storage Health & Capacity</h3>
+                      <div className="storage-box-head">
+                        <h3 className="storage-box-title">
+                          <Icons.dashboard style={{ width: 18, height: 18, color: '#123223' }} />
+                          Cloud Storage Health & Capacity
+                        </h3>
+                        <span className="storage-box-badge">Live Diagnostics</span>
+                      </div>
+
                       <div className="storage-metric-row">
-                        <span className="metric-label">Storage Status</span>
-                        <span className="metric-value" style={{ color: '#166534', fontWeight: 700 }}>
-                          ● Optimal & Healthy
+                        <div className="storage-row-label-wrap">
+                          <div className="storage-row-icon">
+                            <Icons.pulse style={{ width: 15, height: 15, color: '#16A34A' }} />
+                          </div>
+                          <div className="storage-row-label-text">
+                            <span className="storage-row-label-title">Storage Operational Status</span>
+                            <span className="storage-row-label-desc">Edge CDN cache & Postgres availability</span>
+                          </div>
+                        </div>
+                        <div className="storage-row-value-wrap">
+                          <span className="storage-val-badge green" style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                            <span className="storage-pulse-dot" style={{ width: 6, height: 6 }} />
+                            Optimal & Healthy
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="storage-metric-row">
+                        <div className="storage-row-label-wrap">
+                          <div className="storage-row-icon">
+                            <Icons.database style={{ width: 15, height: 15 }} />
+                          </div>
+                          <div className="storage-row-label-text">
+                            <span className="storage-row-label-title">Cloud Infrastructure</span>
+                            <span className="storage-row-label-desc">High-speed relational storage tier</span>
+                          </div>
+                        </div>
+                        <div className="storage-row-value-wrap">
+                          <span className="storage-val-primary">Supabase PostgreSQL & Edge CDN</span>
+                        </div>
+                      </div>
+
+                      <div className="storage-metric-row">
+                        <div className="storage-row-label-wrap">
+                          <div className="storage-row-icon">
+                            <Icons.refresh style={{ width: 15, height: 15 }} />
+                          </div>
+                          <div className="storage-row-label-text">
+                            <span className="storage-row-label-title">Automated Backups</span>
+                            <span className="storage-row-label-desc">Continuous point-in-time snapshot recovery</span>
+                          </div>
+                        </div>
+                        <div className="storage-row-value-wrap">
+                          <span className="storage-val-badge slate">Daily Automated Snapshots</span>
+                        </div>
+                      </div>
+
+                      <div className="storage-metric-row">
+                        <div className="storage-row-label-wrap">
+                          <div className="storage-row-icon">
+                            <Icons.check style={{ width: 15, height: 15, color: '#16A34A' }} />
+                          </div>
+                          <div className="storage-row-label-text">
+                            <span className="storage-row-label-title">Storage Capacity Headroom</span>
+                            <span className="storage-row-label-desc">Headroom before tier upgrade needed</span>
+                          </div>
+                        </div>
+                        <div className="storage-row-value-wrap">
+                          <span className="storage-val-primary" style={{ color: '#166534' }}>
+                            {freePercent}% Headroom Remaining
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="storage-summary-total-row">
+                        <span className="storage-summary-total-label">Capacity Assessment</span>
+                        <span className="storage-val-badge green" style={{ fontSize: '0.84rem', padding: '4px 12px' }}>
+                          Optimal — No Upgrade Needed
                         </span>
                       </div>
-                      <div className="storage-metric-row">
-                        <span className="metric-label">Cloud Infrastructure</span>
-                        <span className="metric-value">Supabase PostgreSQL & Edge CDN</span>
-                      </div>
-                      <div className="storage-metric-row">
-                        <span className="metric-label">Automated Backups</span>
-                        <span className="metric-value">Daily Automated Snapshots</span>
-                      </div>
-                      <div className="storage-metric-row">
-                        <span className="metric-label">Storage Capacity Health</span>
-                        <span className="metric-value" style={{ color: '#166534' }}>
-                          {freePercent}% Headroom Remaining
-                        </span>
-                      </div>
-                      <div className="storage-metric-row" style={{ borderTop: '1.5px solid #E2E8F0', marginTop: 4 }}>
-                        <span className="metric-label">Capacity Assessment</span>
-                        <span className="metric-value" style={{ color: '#1D4ED8', fontWeight: 700 }}>No Upgrade Needed</span>
+
+                      <div className="storage-health-alert-box">
+                        <div className="storage-health-alert-inner">
+                          <div className="storage-health-alert-icon">
+                            <Icons.check style={{ width: 16, height: 16 }} />
+                          </div>
+                          <div className="storage-health-alert-text">
+                            <strong>High-Efficiency Storage Engine:</strong> Product images are optimized with CDN caching, and order records use lightweight JSONB schemas. Your 1.00 GB quota easily accommodates thousands of orders.
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>

@@ -166,12 +166,19 @@ const Footer = () => {
         </div>
       </div>
 
-      {/* Bottom Bar: Copyright & Made in India & Powered by Creare Mind */}
+      {/* Bottom Bar: Copyright, Legal Links & Made in India & Powered by Creare Mind */}
       <div className="footer-bottom-bar">
         <div className="footer-bottom-bar-inner">
-          <span className="footer-bottom-copy">
-            © {new Date().getFullYear()} THENEE. All rights reserved.
-          </span>
+          <div className="footer-bottom-copy-group">
+            <span className="footer-bottom-copy">
+              © {new Date().getFullYear()} THENEE. All rights reserved.
+            </span>
+            <div className="footer-bottom-legal-links">
+              <a href="#privacy" className="footer-legal-link">Privacy Policy</a>
+              <span className="footer-legal-sep">•</span>
+              <a href="#terms" className="footer-legal-link">Terms of Service</a>
+            </div>
+          </div>
           <div className="footer-bottom-credits">
             <span className="footer-made-in-india">Made in India</span>
             <span className="footer-credit-sep">•</span>

@@ -22,6 +22,8 @@ import HealthGoalsPage from './components/HealthGoalsPage'
 import OurStoryPage from './components/OurStoryPage'
 import ReviewsPage from './components/ReviewsPage'
 import ContactPage from './components/ContactPage'
+import PrivacyPolicyPage from './components/PrivacyPolicyPage'
+import TermsOfServicePage from './components/TermsOfServicePage'
 import CheckoutPage from './components/CheckoutPage'
 import LoginPage from './components/LoginPage'
 import ProfileCompletionModal from './components/ProfileCompletionModal'
@@ -53,6 +55,8 @@ const parseRouteFromHash = () => {
   if (hash === 'about' || hash === 'our-story') return 'about'
   if (hash === 'reviews') return 'reviews'
   if (hash === 'contact') return 'contact'
+  if (hash === 'privacy' || hash === 'privacy-policy') return 'privacy'
+  if (hash === 'terms' || hash === 'terms-of-service' || hash === 'terms-and-conditions') return 'terms'
   return 'home'
 }
 
@@ -284,6 +288,8 @@ const AppContent = () => {
       {route === 'about' && <OurStoryPage onOpenAccount={navigateToAccount} />}
       {route === 'reviews' && <ReviewsPage onOpenAccount={navigateToAccount} />}
       {route === 'contact' && <ContactPage onOpenAccount={navigateToAccount} />}
+      {route === 'privacy' && <PrivacyPolicyPage onOpenAccount={navigateToAccount} />}
+      {route === 'terms' && <TermsOfServicePage onOpenAccount={navigateToAccount} />}
 
       {route === 'home' && (
         <div className="home-page-wrapper">
