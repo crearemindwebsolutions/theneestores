@@ -2,23 +2,11 @@ import { createContext, useContext, useState, useEffect } from 'react'
 import { brandInfo } from '../data/products'
 import { authService, isSupabaseConfigured, supabase, profileService } from '../lib/supabase'
 import { getNumericUserId, attachNumericUserId } from '../lib/userIdHelper'
+import { getUserDataKey } from '../lib/userScope'
 
 const CartContext = createContext()
 
 export const CartProvider = ({ children }) => {
-  const [cartItems, setCartItems] = useState(() => {
-    try {
-      const saved = localStorage.getItem('thenee_cart')
-      return saved ? JSON.parse(saved) : []
-    } catch {
-      return []
-    }
-  })
-
-  const [isCartOpen, setIsCartOpen] = useState(false)
-  const [selectedProduct, setSelectedProduct] = useState(null)
-  const [toastMessage, setToastMessage] = useState(null)
-
   // Authenticated user state
   const [currentUser, setCurrentUser] = useState(() => {
     try {
@@ -40,6 +28,21 @@ export const CartProvider = ({ children }) => {
       return parsed
     } catch {
       return null
+    }
+  })
+
+  const [cartItems, setCartItems] = useState(() => {
+    try {
+      const savedUser = localStorage.getItem('thenee_auth_user')
+      let userCartKey = 'thenee_cart_guest'
+      if (savedUser) {
+        const u = JSON.parse(savedUser)
+        userCartKey = getUserDataKey('cart', u?.email, u?.id)
+      }
+      const saved = localStorage.getItem(userCartKey)
+      return saved ? JSON.parse(saved) : []
+    } catch {
+      return []
     }
   })
 
@@ -395,6 +398,10 @@ export const CartProvider = ({ children }) => {
       localStorage.setItem('thenee_auth_user', JSON.stringify(finalUser))
       localStorage.setItem('thenee_user', JSON.stringify(finalUser))
       setCurrentUser(finalUser)
+      // Load user's isolated cart
+      const userCartKey = getUserDataKey('cart', finalUser.email, finalUser.id)
+      const savedCart = localStorage.getItem(userCartKey)
+      setCartItems(savedCart ? JSON.parse(savedCart) : [])
       showToast(`Welcome, ${finalUser.name || 'Member'}! 🌿`)
     } catch {
       setCurrentUser(finalUser)
@@ -408,8 +415,12 @@ export const CartProvider = ({ children }) => {
       }
       localStorage.removeItem('thenee_auth_user')
       localStorage.removeItem('thenee_user')
+      localStorage.removeItem('thenee_checkout_address')
+      setCartItems([])
+      setAppliedCoupon(null)
       setCurrentUser(null)
       showToast('You have been signed out safely.')
+      window.dispatchEvent(new Event('thenee_user_logout'))
     } catch {
       setCurrentUser(null)
     }
@@ -432,13 +443,28 @@ export const CartProvider = ({ children }) => {
     }
   }, [appliedCoupon])
 
+  // Synchronize cart whenever active user account changes
   useEffect(() => {
     try {
-      localStorage.setItem('thenee_cart', JSON.stringify(cartItems))
+      const cartKey = getUserDataKey('cart', currentUser?.email, currentUser?.id)
+      const saved = localStorage.getItem(cartKey)
+      if (saved) {
+        setCartItems(JSON.parse(saved))
+      } else if (currentUser) {
+        setCartItems([])
+      }
+    } catch { }
+  }, [currentUser?.id, currentUser?.email])
+
+  // Persist cart updates strictly to active user's storage
+  useEffect(() => {
+    try {
+      const cartKey = getUserDataKey('cart', currentUser?.email, currentUser?.id)
+      localStorage.setItem(cartKey, JSON.stringify(cartItems))
     } catch {
       // storage error fallback
     }
-  }, [cartItems])
+  }, [cartItems, currentUser?.id, currentUser?.email])
 
   const showToast = (msg) => {
     setToastMessage(msg)

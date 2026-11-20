@@ -6,6 +6,7 @@ import { updateUserProfile } from '../lib/authApi'
 import { getNumericUserId } from '../lib/userIdHelper'
 import { sendOrderStatusUpdateEmail } from '../lib/emailService'
 import { getSavedAddresses, saveAddress, updateAddress, deleteAddress, setDefaultAddress } from '../lib/addressService'
+import { getUserDataKey } from '../lib/userScope'
 import { SkeletonOrderCard, ImageWithSkeleton } from './Skeleton'
 import LoginPage from './LoginPage'
 import './AccountPage.css'
@@ -82,36 +83,14 @@ const AccountPage = ({ onBack, onLogout, initialTab = 'hub' }) => {
     return () => clearTimeout(timer)
   }, [activeTab])
 
-  // Orders State (loaded from Supabase / localStorage)
+  // Orders State (loaded strictly isolated for this specific user account)
   const [ordersList, setOrdersList] = useState(() => {
     try {
-      const saved = localStorage.getItem('thenee_user_orders')
+      const orderKey = getUserDataKey('orders', currentUser?.email, currentUser?.id)
+      const saved = localStorage.getItem(orderKey)
       if (!saved) return []
       const parsed = JSON.parse(saved)
-      const cleaned = Array.isArray(parsed)
-        ? parsed
-          .filter(
-            (o) =>
-              !['THN-884102', 'THN-884095', 'THN-883981'].includes(o.id || o.order_number) &&
-              o.customer_name !== 'Dr. Anand Raman' &&
-              o.customer_name !== 'Meenakshi Sundaram' &&
-              o.customer_name !== 'Suresh Narayanan'
-          )
-          .map((o) => {
-            const hasReal = isRealAwb(o.awb || o.tracking_awb)
-            const rawStatus = o.order_status || o.status || 'Processing'
-            const currentStatus = (rawStatus === 'Confirmed' || rawStatus === 'Order Confirmed') ? 'Processing' : rawStatus
-            return {
-              ...o,
-              status: currentStatus,
-              order_status: currentStatus,
-              awb: hasReal ? (o.awb || o.tracking_awb) : '',
-              tracking_awb: hasReal ? (o.tracking_awb || o.awb) : '',
-            }
-          })
-        : []
-      localStorage.setItem('thenee_user_orders', JSON.stringify(cleaned))
-      return cleaned
+      return Array.isArray(parsed) ? parsed : []
     } catch {
       return []
     }
@@ -133,43 +112,48 @@ const AccountPage = ({ onBack, onLogout, initialTab = 'hub' }) => {
   // Permanent 8-digit numeric user id
   const userIdNumber = getNumericUserId(user || currentUser)
 
-  // Fetch Supabase data on mount / auth change
+  // Fetch Supabase data & isolated orders on mount / currentUser change
   useEffect(() => {
     let isMounted = true
-    const loadSupabaseData = async () => {
-      if (currentUser?.id) {
+    const loadUserData = async () => {
+      const userOrderKey = getUserDataKey('orders', currentUser?.email, currentUser?.id)
+      if (currentUser?.id || currentUser?.email) {
         try {
-          const res = await orderService.getUserOrders(currentUser.id)
+          const res = await orderService.getUserOrders(currentUser.id, currentUser.email)
           const dbOrders = res?.data || (Array.isArray(res) ? res : null)
           if (isMounted && Array.isArray(dbOrders)) {
             setOrdersList(dbOrders)
-            localStorage.setItem('thenee_user_orders', JSON.stringify(dbOrders))
+            localStorage.setItem(userOrderKey, JSON.stringify(dbOrders))
           }
         } catch (e) {
-          console.warn('Could not fetch orders from Supabase:', e)
+          console.warn('Could not fetch orders:', e)
         }
 
         try {
-          const res = await profileService.getProfile(currentUser.id)
-          const profile = res?.data || res
-          if (isMounted && profile) {
-            setUser((prev) => ({
-              ...prev,
-              ...profile,
-              name: profile.full_name || prev.name,
-              points: profile.reward_points ?? profile.green_points ?? prev.points ?? 0,
-            }))
+          if (currentUser?.id && isSupabaseConfigured) {
+            const res = await profileService.getProfile(currentUser.id)
+            const profile = res?.data || res
+            if (isMounted && profile) {
+              setUser((prev) => ({
+                ...prev,
+                ...profile,
+                name: profile.full_name || prev.name,
+                points: profile.reward_points ?? profile.green_points ?? prev.points ?? 0,
+              }))
+            }
           }
         } catch (e) {
           console.warn('Could not fetch profile from Supabase:', e)
         }
+      } else {
+        if (isMounted) setOrdersList([])
       }
     }
-    loadSupabaseData()
+    loadUserData()
     return () => {
       isMounted = false
     }
-  }, [currentUser])
+  }, [currentUser?.id, currentUser?.email])
 
   // Re-sync orders when tab changes or storage updates
   useEffect(() => {
@@ -185,7 +169,8 @@ const AccountPage = ({ onBack, onLogout, initialTab = 'hub' }) => {
             })
           )
         }
-        const saved = localStorage.getItem('thenee_user_orders')
+        const orderKey = getUserDataKey('orders', currentUser?.email, currentUser?.id)
+        const saved = localStorage.getItem(orderKey)
         if (saved) {
           const parsed = JSON.parse(saved)
           const cleaned = (Array.isArray(parsed) ? parsed : []).map((o) => {
@@ -216,7 +201,7 @@ const AccountPage = ({ onBack, onLogout, initialTab = 'hub' }) => {
       window.removeEventListener('thenee_orders_updated', handleStorage)
       window.removeEventListener('focus', handleStorage)
     }
-  }, [])
+  }, [currentUser?.id, currentUser?.email])
 
   useEffect(() => {
     if (currentUser) {
@@ -256,22 +241,35 @@ const AccountPage = ({ onBack, onLogout, initialTab = 'hub' }) => {
     type: 'Home',
   })
 
-  // Wishlist State (loaded live from localStorage)
+  // Wishlist State (loaded live strictly for this specific user account)
   const [wishlist, setWishlist] = useState(() => {
     try {
-      const saved = localStorage.getItem('thenee_user_wishlist')
+      const wishlistKey = getUserDataKey('wishlist', currentUser?.email, currentUser?.id)
+      const saved = localStorage.getItem(wishlistKey)
       return saved ? JSON.parse(saved) : []
     } catch {
       return []
     }
   })
 
-  // Sync wishlist updates to localStorage
+  // Synchronize wishlist when currentUser changes
   useEffect(() => {
     try {
-      localStorage.setItem('thenee_user_wishlist', JSON.stringify(wishlist))
+      const wishlistKey = getUserDataKey('wishlist', currentUser?.email, currentUser?.id)
+      const saved = localStorage.getItem(wishlistKey)
+      setWishlist(saved ? JSON.parse(saved) : [])
+    } catch {
+      setWishlist([])
+    }
+  }, [currentUser?.id, currentUser?.email])
+
+  // Sync wishlist updates strictly to this user's storage
+  useEffect(() => {
+    try {
+      const wishlistKey = getUserDataKey('wishlist', currentUser?.email, currentUser?.id)
+      localStorage.setItem(wishlistKey, JSON.stringify(wishlist))
     } catch { }
-  }, [wishlist])
+  }, [wishlist, currentUser?.id, currentUser?.email])
 
   // Profile Edit State
   const [profileForm, setProfileForm] = useState({
@@ -324,11 +322,12 @@ const AccountPage = ({ onBack, onLogout, initialTab = 'hub' }) => {
     window.scrollTo({ top: 0, behavior: 'instant' })
   }
 
-  // Admin Authorization State
+  // Admin Authorization State - Strictly enforced by account role
   const isUserAdmin = Boolean(
-    adminService.isAdmin(currentUser) ||
-    currentUser?.role === 'admin' ||
-    (currentUser?.email && currentUser.email.toLowerCase() === 'rootsenterprises2025@gmail.com')
+    currentUser &&
+    (currentUser.role === 'admin' ||
+     adminService.isAdmin(currentUser) ||
+     (currentUser.email && currentUser.email.toLowerCase().trim() === 'rootsenterprises2025@gmail.com'))
   )
 
   // When activeTab is set to admin, automatically navigate to the direct full Admin Workstation

@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
 import { getNumericUserId, attachNumericUserId } from './userIdHelper'
+import { getUserDataKey } from './userScope'
 
 export { getNumericUserId, attachNumericUserId }
 
@@ -25,8 +26,8 @@ export const resolveSignupProvider = (item) => {
   return 'email'
 }
 
-const supabaseUrl = (typeof import.meta !== 'undefined' && import.meta?.env?.VITE_SUPABASE_URL) || (typeof process !== 'undefined' && process.env?.VITE_SUPABASE_URL) || ''
-const supabaseAnonKey = (typeof import.meta !== 'undefined' && import.meta?.env?.VITE_SUPABASE_ANON_KEY) || (typeof process !== 'undefined' && process.env?.VITE_SUPABASE_ANON_KEY) || ''
+const supabaseUrl = (typeof import.meta !== 'undefined' && import.meta?.env?.VITE_SUPABASE_URL) || (typeof process !== 'undefined' && process.env?.VITE_SUPABASE_URL) || 'https://fdfqtfocdqvontrwkclf.supabase.co'
+const supabaseAnonKey = (typeof import.meta !== 'undefined' && import.meta?.env?.VITE_SUPABASE_ANON_KEY) || (typeof process !== 'undefined' && process.env?.VITE_SUPABASE_ANON_KEY) || 'sb_publishable_Vg1laRvRoaPpk_ZMLdgT0A_jIe6yOoO'
 
 export const isSupabaseConfigured = Boolean(
   supabaseUrl &&
@@ -356,11 +357,10 @@ export const orderService = {
     if (payload.tracking_url && !shipping.tracking_url) shipping.tracking_url = payload.tracking_url
     if (payload.timeline && !shipping.timeline) shipping.timeline = payload.timeline
 
-    // Map order fields to match database schema flexibly
-    const orderData = {
+    // Clean payload for Supabase database (only columns that exist in the DB table)
+    const dbPayload = {
       order_number: payload.order_number || payload.order_id || payload.id,
       user_id: validUserId,
-      user_id_number: getNumericUserId(payload.user_id_number || payload.user_id || payload.customer_phone || payload.customer_email || 'patron'),
       customer_name: payload.customer_name || shipping.recipient || shipping.name || 'Customer',
       customer_phone: payload.customer_phone || shipping.phone || '',
       customer_email: payload.customer_email || shipping.email || '',
@@ -377,36 +377,74 @@ export const orderService = {
       courier: payload.courier || payload.courier_partner || 'India Post Speed Post',
     }
 
-    // Persist to local all-orders ledger for admin visibility
+    // Complete in-memory/local order representation (includes client numeric user id)
+    const fullOrder = {
+      ...dbPayload,
+      user_id_number: getNumericUserId(payload.user_id_number || payload.user_id || payload.customer_phone || payload.customer_email || 'patron'),
+      created_at: payload.created_at || new Date().toISOString(),
+      timeline: payload.timeline || shipping.timeline || [],
+    }
+
+    // Persist to common store ledger for all store admins
     try {
       const allOrders = JSON.parse(localStorage.getItem('thenee_all_orders') || '[]')
-      const merged = [orderData, ...allOrders.filter((o) => (o.order_number || o.id) !== orderData.order_number && !isDemoOrder(o))]
+      const merged = [fullOrder, ...allOrders.filter((o) => (o.order_number || o.id) !== fullOrder.order_number && !isDemoOrder(o))]
       localStorage.setItem('thenee_all_orders', JSON.stringify(merged))
     } catch { }
 
-    if (!isSupabaseConfigured || !supabase) {
+    // Persist to the specific ordering customer's isolated sandbox
+    const customerEmail = (payload.customer_email || payload.email || shipping.email || '').toLowerCase().trim()
+    const customerUserId = payload.user_id || null
+    if (customerEmail || customerUserId) {
       try {
-        const existing = JSON.parse(localStorage.getItem('thenee_user_orders') || '[]')
-        const updated = [payload, ...existing.filter((o) => !isDemoOrder(o))]
-        localStorage.setItem('thenee_user_orders', JSON.stringify(updated))
-        return { data: payload, error: null }
-      } catch (e) {
-        return { data: payload, error: e }
+        const userOrderKey = getUserDataKey('orders', customerEmail, customerUserId)
+        const existing = JSON.parse(localStorage.getItem(userOrderKey) || '[]')
+        const updated = [fullOrder, ...existing.filter((o) => (o.order_number || o.id) !== fullOrder.order_number && !isDemoOrder(o))]
+        localStorage.setItem(userOrderKey, JSON.stringify(updated))
+      } catch { }
+    }
+
+    // Broadcast live event across browser sessions
+    try {
+      window.dispatchEvent(new Event('storage'))
+      window.dispatchEvent(new CustomEvent('thenee_orders_updated', { detail: { order: fullOrder, orderId: fullOrder.order_number } }))
+    } catch { }
+
+    // Persist to central cloud Supabase database
+    if (isSupabaseConfigured && supabase) {
+      try {
+        const { data, error } = await supabase
+          .from('orders')
+          .insert([dbPayload])
+          .select()
+          .maybeSingle()
+
+        if (!error && data) {
+          return { data: { ...fullOrder, ...data }, error: null }
+        }
+        if (error) {
+          console.warn('Supabase order insert warning:', error)
+        }
+      } catch (sbErr) {
+        console.warn('Supabase order insert error:', sbErr)
       }
     }
 
-    const { data, error } = await supabase
-      .from('orders')
-      .insert([orderData])
-      .select()
-      .maybeSingle()
-
-    return { data: data || payload, error }
+    return { data: fullOrder, error: null }
   },
 
-  // Fetch orders for a user
-  async getUserOrders(userId) {
+  // Fetch orders strictly isolated for a specific user
+  async getUserOrders(userId, email = '') {
     purgeLegacyDemoOrders()
+
+    const cleanEmail = (email || '').toLowerCase().trim()
+    const cleanUserId = userId ? String(userId).trim() : ''
+
+    // If neither userId nor email is present, return empty list (never expose other accounts' orders)
+    if (!cleanUserId && !cleanEmail) {
+      return { data: [], error: null }
+    }
+
     const cleanLocalOrders = (list) =>
       (Array.isArray(list) ? list : []).map((o) => {
         const rawAwb = o.awb || o.tracking_awb || o.tracking_number || ''
@@ -423,60 +461,100 @@ export const orderService = {
         }
       })
 
-    if (!isSupabaseConfigured || !supabase || !userId) {
+    const userOrderKey = getUserDataKey('orders', cleanEmail, cleanUserId)
+
+    // Helper: read and strictly match orders belonging to this customer only
+    const getStrictUserLocalOrders = () => {
       try {
-        const local = JSON.parse(localStorage.getItem('thenee_user_orders') || '[]')
-        return { data: cleanLocalOrders(local), error: null }
+        // First check user's isolated local list
+        const raw = localStorage.getItem(userOrderKey)
+        let list = raw ? JSON.parse(raw) : []
+        if (Array.isArray(list) && list.length > 0) {
+          return cleanLocalOrders(list)
+        }
+
+        // Fallback: strictly filter from the store all-orders ledger
+        const all = JSON.parse(localStorage.getItem('thenee_all_orders') || '[]')
+        const matched = (Array.isArray(all) ? all : []).filter((o) => {
+          if (isDemoOrder(o)) return false
+          const oEmail = (o.customer_email || o.email || '').toLowerCase().trim()
+          const oUid = o.user_id ? String(o.user_id).trim() : ''
+          if (cleanUserId && oUid && oUid === cleanUserId) return true
+          if (cleanEmail && oEmail && oEmail === cleanEmail) return true
+          return false
+        })
+
+        if (matched.length > 0) {
+          localStorage.setItem(userOrderKey, JSON.stringify(matched))
+        }
+        return cleanLocalOrders(matched)
       } catch {
-        return { data: [], error: null }
+        return []
       }
     }
 
-    const { data, error } = await supabase
-      .from('orders')
-      .select('*')
-      .eq('user_id', userId)
-      .order('created_at', { ascending: false })
-
-    if (error) {
-      try {
-        const local = JSON.parse(localStorage.getItem('thenee_user_orders') || '[]')
-        return { data: cleanLocalOrders(local), error }
-      } catch {
-        return { data: [], error }
-      }
+    if (!isSupabaseConfigured || !supabase) {
+      return { data: getStrictUserLocalOrders(), error: null }
     }
 
-    // Normalize database rows to match UI expectations
-    const normalized = (data || []).map((row) => {
-      const realAwb = isRealAwb(row.tracking_awb || row.awb) ? (row.tracking_awb || row.awb).trim() : ''
-      const rawStatus = row.order_status || row.status || 'Processing'
-      const currentStatus = (rawStatus === 'Confirmed' || rawStatus === 'Order Confirmed') ? 'Processing' : rawStatus
-      return {
-        id: row.order_number || row.id,
-        date: new Date(row.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
-        items: row.items || [],
-        total: row.total_amount || row.total || 0,
-        subtotal: row.subtotal || 0,
-        discount: row.discount || 0,
-        status: currentStatus,
-        order_status: currentStatus,
-        step: currentStatus === 'Delivered' ? 4 : currentStatus === 'Out for Delivery' ? 3 : 2,
-        courier: row.courier || 'India Post Speed Post',
-        awb: realAwb,
-        tracking_awb: realAwb,
-        destination: row.shipping_address ? `${row.shipping_address.city || ''}, ${row.shipping_address.state || ''}` : 'Tamil Nadu',
-        address: row.shipping_address ? `${row.shipping_address.street || ''}, ${row.shipping_address.city || ''} - ${row.shipping_address.pincode || ''}` : '',
-        timeline: [
-          { title: 'Payment Authorized & Order Received', time: new Date(row.created_at).toLocaleDateString('en-GB'), done: true },
-          { title: 'Processing & Handcrafting at Tenkasi Rural Unit', time: 'In Progress', done: true },
-          { title: 'Dispatched via Courier', time: realAwb ? `AWB: ${realAwb}` : 'Updated soon', done: !!realAwb },
-          { title: currentStatus || 'Out for Delivery', time: 'Estimated 2-3 Days', done: currentStatus === 'Delivered' },
-        ],
+    try {
+      let query = supabase.from('orders').select('*')
+      if (cleanUserId && cleanEmail) {
+        query = query.or(`user_id.eq.${cleanUserId},customer_email.eq.${cleanEmail}`)
+      } else if (cleanUserId) {
+        query = query.eq('user_id', cleanUserId)
+      } else {
+        query = query.eq('customer_email', cleanEmail)
       }
-    })
 
-    return { data: normalized, error: null }
+      const { data, error } = await query.order('created_at', { ascending: false })
+
+      if (error || !data || data.length === 0) {
+        const local = getStrictUserLocalOrders()
+        if (local.length > 0) {
+          return { data: local, error: null }
+        }
+        if (error) return { data: [], error }
+      }
+
+      // Normalize database rows to match UI expectations
+      const normalized = (data || []).map((row) => {
+        const realAwb = isRealAwb(row.tracking_awb || row.awb) ? (row.tracking_awb || row.awb).trim() : ''
+        const rawStatus = row.order_status || row.status || 'Processing'
+        const currentStatus = (rawStatus === 'Confirmed' || rawStatus === 'Order Confirmed') ? 'Processing' : rawStatus
+        return {
+          id: row.order_number || row.id,
+          date: new Date(row.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
+          items: row.items || [],
+          total: row.total_amount || row.total || 0,
+          subtotal: row.subtotal || 0,
+          discount: row.discount || 0,
+          status: currentStatus,
+          order_status: currentStatus,
+          step: currentStatus === 'Delivered' ? 4 : currentStatus === 'Out for Delivery' ? 3 : 2,
+          courier: row.courier || 'India Post Speed Post',
+          awb: realAwb,
+          tracking_awb: realAwb,
+          destination: row.shipping_address ? `${row.shipping_address.city || ''}, ${row.shipping_address.state || ''}` : 'Tamil Nadu',
+          address: row.shipping_address ? `${row.shipping_address.street || ''}, ${row.shipping_address.city || ''} - ${row.shipping_address.pincode || ''}` : '',
+          timeline: [
+            { title: 'Payment Authorized & Order Received', time: new Date(row.created_at).toLocaleDateString('en-GB'), done: true },
+            { title: 'Processing & Handcrafting at Tenkasi Rural Unit', time: 'In Progress', done: true },
+            { title: 'Dispatched via Courier', time: realAwb ? `AWB: ${realAwb}` : 'Updated soon', done: !!realAwb },
+            { title: currentStatus || 'Out for Delivery', time: 'Estimated 2-3 Days', done: currentStatus === 'Delivered' },
+          ],
+        }
+      })
+
+      // Cache strictly in this user's storage key
+      try {
+        localStorage.setItem(userOrderKey, JSON.stringify(normalized))
+      } catch { }
+
+      return { data: normalized, error: null }
+    } catch {
+      return { data: getStrictUserLocalOrders(), error: null }
+    }
   },
 
   // Permanently delete order from Supabase database and customer local storage
@@ -532,42 +610,31 @@ export const adminService = {
         if (stored) u = JSON.parse(stored)
       } catch { }
     }
-    if (!u) {
-      return typeof window !== 'undefined' && localStorage.getItem('thenee_admin_unlocked') === 'true'
-    }
+    // Strict authentication required: Guest visitors cannot access admin
+    if (!u) return false
 
     const email = (u.email || '').toLowerCase().trim()
     const uid = u.id || ''
 
-    // 1. Check custom role assignments saved from Customer Base
+    // 1. Root store owner always has admin privileges
+    if (email === 'rootsenterprises2025@gmail.com') return true
+
+    // 2. Check live / custom role assignments saved from Customer Base directory
     if (typeof window !== 'undefined') {
       try {
         const storedRoles = JSON.parse(localStorage.getItem('thenee_customer_roles') || '{}')
-        if ((uid && storedRoles[uid] === 'admin') || (email && storedRoles[email] === 'admin')) {
-          return true
-        }
-        if ((uid && storedRoles[uid] && storedRoles[uid] !== 'admin') || (email && storedRoles[email] && storedRoles[email] !== 'admin')) {
-          if (email !== 'rootsenterprises2025@gmail.com') return false
-        }
+        const roleByUid = uid ? storedRoles[uid] : null
+        const roleByEmail = email ? storedRoles[email] : null
+        const assignedRole = roleByUid || roleByEmail
+        if (assignedRole === 'admin') return true
+        if (assignedRole && assignedRole !== 'admin') return false
       } catch { }
     }
 
-    // 2. Check user object role
+    // 3. Check user object role
     if (u.role === 'admin') return true
 
-    // 3. Check store owner / admin emails
-    if (
-      email.includes('admin') ||
-      email === 'rootsenterprises2025@gmail.com' ||
-      email === 'admin@thenee.com' ||
-      email.endsWith('@theneestores.com') ||
-      email.startsWith('admin@') ||
-      email.startsWith('admin_') ||
-      (typeof window !== 'undefined' && localStorage.getItem('thenee_admin_unlocked') === 'true')
-    ) {
-      return true
-    }
-
+    // Customers and all non-admin roles are strictly blocked
     return false
   },
 
@@ -604,12 +671,23 @@ export const adminService = {
       }
     }
 
-    // Load locally saved orders (placed via CheckoutPage)
+    // Load locally saved orders across store ledger and user sandboxes
     let localOrders = []
     try {
       const all = JSON.parse(localStorage.getItem('thenee_all_orders') || '[]')
-      const userList = JSON.parse(localStorage.getItem('thenee_user_orders') || '[]')
-      localOrders = [...all, ...userList].filter((o) => !isDemoOrder(o))
+      const userOrders = []
+      if (typeof window !== 'undefined') {
+        for (let i = 0; i < localStorage.length; i++) {
+          const k = localStorage.key(i)
+          if (k && (k.startsWith('thenee_orders_') || k === 'thenee_user_orders')) {
+            try {
+              const parsed = JSON.parse(localStorage.getItem(k) || '[]')
+              if (Array.isArray(parsed)) userOrders.push(...parsed)
+            } catch { }
+          }
+        }
+      }
+      localOrders = [...all, ...userOrders].filter((o) => !isDemoOrder(o))
     } catch { }
 
     const orderMap = new Map()
@@ -756,6 +834,14 @@ export const adminService = {
       }
       updateList('thenee_all_orders')
       updateList('thenee_user_orders')
+      if (typeof window !== 'undefined') {
+        for (let i = 0; i < localStorage.length; i++) {
+          const k = localStorage.key(i)
+          if (k && k.startsWith('thenee_orders_')) {
+            updateList(k)
+          }
+        }
+      }
       window.dispatchEvent(new Event('storage'))
       window.dispatchEvent(new CustomEvent('thenee_orders_updated', { detail: { orderId: orderIdentifier } }))
     } catch (e) {
@@ -822,6 +908,15 @@ export const adminService = {
         'theneestores_orders',
         'thenee_orders',
       ]
+
+      if (typeof window !== 'undefined') {
+        for (let i = 0; i < localStorage.length; i++) {
+          const k = localStorage.key(i)
+          if (k && k.startsWith('thenee_orders_') && !keys.includes(k)) {
+            keys.push(k)
+          }
+        }
+      }
 
       keys.forEach((key) => {
         try {
@@ -1160,12 +1255,19 @@ export const adminService = {
 
   // Update customer role (admin / customer / staff)
   async updateCustomerRole(customer, newRole) {
-    if (isSupabaseConfigured && supabase && customer.id && !customer.id.startsWith('cust-') && !customer.id.startsWith('reg-')) {
+    if (isSupabaseConfigured && supabase) {
       try {
-        await supabase
-          .from('profiles')
-          .update({ role: newRole, updated_at: new Date().toISOString() })
-          .eq('id', customer.id)
+        if (customer.id && !customer.id.startsWith('cust-') && !customer.id.startsWith('reg-')) {
+          await supabase
+            .from('profiles')
+            .update({ role: newRole, updated_at: new Date().toISOString() })
+            .eq('id', customer.id)
+        } else if (customer.email) {
+          await supabase
+            .from('profiles')
+            .update({ role: newRole, updated_at: new Date().toISOString() })
+            .eq('email', customer.email.toLowerCase().trim())
+        }
       } catch (err) {
         console.warn('Supabase update customer role error:', err)
       }

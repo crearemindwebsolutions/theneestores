@@ -4,6 +4,7 @@ import { brandInfo } from '../data/products'
 import { orderService, isRealAwb } from '../lib/supabase'
 import { sendOrderConfirmationEmail, sendAdminOrderAlertEmail } from '../lib/emailService'
 import { getSavedAddresses, saveAddress, updateAddress } from '../lib/addressService'
+import { getUserDataKey } from '../lib/userScope'
 import { ImageWithSkeleton } from './Skeleton'
 import './CheckoutPage.css'
 
@@ -58,14 +59,13 @@ const CheckoutPage = ({ onBack, onOpenAccount }) => {
     pincode: '',
   })
 
-  // Load existing user & address data on mount
+  // Load existing user & address data on mount or when currentUser changes
   useEffect(() => {
     try {
       const addrs = getSavedAddresses(currentUser?.email, currentUser?.id)
       setSavedAddresses(addrs)
 
-      const savedUser = localStorage.getItem('thenee_user')
-      let name = currentUser?.name || ''
+      let name = currentUser?.name && !currentUser.name.includes('@') ? currentUser.name : ''
       let phone = currentUser?.contact ? currentUser.contact.replace(/\D/g, '').slice(-10) : ''
       let alt_mobile = ''
       let email = currentUser?.email || ''
@@ -75,16 +75,6 @@ const CheckoutPage = ({ onBack, onOpenAccount }) => {
       let district = ''
       let state = 'Tamil Nadu'
       let pincode = ''
-
-      if (savedUser) {
-        try {
-          const u = JSON.parse(savedUser)
-          if (u.name && !name) name = u.name
-          if (u.contact && !phone) phone = u.contact.replace(/\D/g, '').slice(-10)
-          if (u.alt_mobile && !alt_mobile) alt_mobile = u.alt_mobile
-          if (u.email && !email) email = u.email
-        } catch {}
-      }
 
       if (Array.isArray(addrs) && addrs.length > 0) {
         const def = addrs.find((a) => a.isDefault) || addrs[0]
@@ -104,12 +94,14 @@ const CheckoutPage = ({ onBack, onOpenAccount }) => {
           setIsEditingAddress(false)
         }
       } else {
+        setSelectedAddressId(null)
         setIsAddingNewAddress(true)
         setIsEditingAddress(true)
       }
 
       setShippingForm({ name, phone, alt_mobile, email, line1, line2, city, district, state, pincode })
     } catch {
+      setSelectedAddressId(null)
       setIsAddingNewAddress(true)
       setIsEditingAddress(true)
     }
@@ -357,13 +349,21 @@ const CheckoutPage = ({ onBack, onOpenAccount }) => {
       ],
     }
 
-    // Persist to Supabase Database
+    // Persist to central Supabase Database & Common Store Ledger
     try {
       await orderService.createOrder({
         user_id: currentUser?.id || null,
+        order_number: orderId,
         order_id: orderId,
+        id: orderId,
+        customer_name: shippingForm.name,
+        customer_phone: shippingForm.phone,
+        customer_email: shippingForm.email || currentUser?.email || '',
+        recipient: shippingForm.name,
+        phone: shippingForm.phone,
         items: orderItems,
         total: grandTotal,
+        total_amount: grandTotal,
         subtotal,
         discount: couponDiscount,
         delivery_fee: deliveryFee,
@@ -373,12 +373,21 @@ const CheckoutPage = ({ onBack, onOpenAccount }) => {
         awb: null,
         tracking_awb: null,
         payment_method: 'Online Payment (UPI, Cards, NetBanking)',
+        payment_status: 'paid',
         shipping_address: shippingAddressPayload,
         timeline: newOrder.timeline,
+        created_at: new Date().toISOString(),
       })
     } catch (dbErr) {
-      console.warn('Supabase order creation skipped/errored:', dbErr)
+      console.warn('Order creation notice:', dbErr)
     }
+
+    // Also persist directly to common store ledger so ALL admins see it immediately
+    try {
+      const allOrders = JSON.parse(localStorage.getItem('thenee_all_orders') || '[]')
+      const merged = [newOrder, ...allOrders.filter((o) => (o.order_number || o.id) !== newOrder.id)]
+      localStorage.setItem('thenee_all_orders', JSON.stringify(merged))
+    } catch { }
 
     // Trigger Resend automated emails (Customer receipt & Store owner alert)
     try {
@@ -395,13 +404,16 @@ const CheckoutPage = ({ onBack, onOpenAccount }) => {
       console.warn('Resend email trigger skipped:', emailNotice)
     }
 
-    // Persist to local storage for immediate access
+    // Persist to user-isolated storage for immediate access
     try {
-      const saved = localStorage.getItem('thenee_user_orders')
+      const targetCustomerEmail = shippingForm.email || currentUser?.email || ''
+      const userOrderKey = getUserDataKey('orders', targetCustomerEmail, currentUser?.id)
+      const saved = localStorage.getItem(userOrderKey)
       const currentOrders = saved ? JSON.parse(saved) : []
       const updated = [newOrder, ...currentOrders]
-      localStorage.setItem('thenee_user_orders', JSON.stringify(updated))
+      localStorage.setItem(userOrderKey, JSON.stringify(updated))
       window.dispatchEvent(new Event('storage'))
+      window.dispatchEvent(new CustomEvent('thenee_orders_updated', { detail: { orderId: newOrder.id } }))
     } catch {
       // fallback
     }

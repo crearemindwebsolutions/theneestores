@@ -1,52 +1,84 @@
 import { profileService, isSupabaseConfigured } from './supabase'
+import { getUserDataKey, migrateLegacyDataIfNeeded } from './userScope'
 
-const STORAGE_KEY = 'thenee_addresses'
-
-// Retrieve all saved addresses
+// Retrieve saved addresses strictly isolated for the active user account
 export function getSavedAddresses(email = '', userId = null) {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY)
+    // Clean up any old unpartitioned storage
+    migrateLegacyDataIfNeeded()
+
+    const cleanEmail = (email || '').toLowerCase().trim()
+    const cleanUserId = userId ? String(userId).trim() : ''
+
+    // If unauthenticated guest, only check isolated guest storage
+    if (!cleanEmail && !cleanUserId) {
+      const guestKey = getUserDataKey('addresses', '', null)
+      const rawGuest = localStorage.getItem(guestKey)
+      return rawGuest ? JSON.parse(rawGuest) : []
+    }
+
+    const storageKey = getUserDataKey('addresses', cleanEmail, cleanUserId)
+    const raw = localStorage.getItem(storageKey)
     let addresses = raw ? JSON.parse(raw) : []
 
-    // If local list is empty, fallback to registered user record
-    if (addresses.length === 0 && email) {
+    // If local list is empty, fallback to registered user record in local registry
+    if (addresses.length === 0 && cleanEmail) {
       try {
         const rawUsers = localStorage.getItem('thenee_registered_users')
         if (rawUsers) {
-          const cleanEmail = email.toLowerCase().trim()
           const users = JSON.parse(rawUsers)
-          const found = users.find((u) => (u.email || '').toLowerCase().trim() === cleanEmail)
+          const found = users.find(
+            (u) =>
+              (u.email || '').toLowerCase().trim() === cleanEmail ||
+              (cleanUserId && (u.id === cleanUserId || u.userIdNumber === cleanUserId))
+          )
           if (found && Array.isArray(found.addresses) && found.addresses.length > 0) {
             addresses = found.addresses
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(addresses))
+            localStorage.setItem(storageKey, JSON.stringify(addresses))
           }
         }
-      } catch {}
+      } catch { }
     }
 
     // Proactively sync from Supabase if configured & authenticated
-    if (userId && isSupabaseConfigured) {
-      profileService.getProfile(userId).then(({ data }) => {
-        if (data && Array.isArray(data.addresses) && data.addresses.length > 0) {
-          try {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(data.addresses))
-          } catch {}
-        }
-      }).catch(() => {})
+    if (cleanUserId && isSupabaseConfigured) {
+      profileService
+        .getProfile(cleanUserId)
+        .then(({ data }) => {
+          if (data && Array.isArray(data.addresses) && data.addresses.length > 0) {
+            try {
+              localStorage.setItem(storageKey, JSON.stringify(data.addresses))
+            } catch { }
+          }
+        })
+        .catch(() => { })
     }
 
-    return Array.isArray(addresses) ? addresses : []
+    // Strict privacy filter: Ensure no address belonging to another account is ever returned
+    const userAddresses = (Array.isArray(addresses) ? addresses : []).filter((a) => {
+      const aEmail = (a.email || '').toLowerCase().trim()
+      const aUid = a.userId ? String(a.userId).trim() : ''
+      if (cleanEmail && aEmail && aEmail !== cleanEmail) return false
+      if (cleanUserId && aUid && aUid !== cleanUserId) return false
+      return true
+    })
+
+    return userAddresses
   } catch {
     return []
   }
 }
 
-// Save a new address or update if it exists
+// Save a new address or update if it exists for the specific user account
 export function saveAddress(newAddr, email = '', userId = null) {
   if (!newAddr || (!newAddr.street && !newAddr.line1) || !newAddr.city) return []
 
   try {
-    const currentList = getSavedAddresses(email, userId)
+    const cleanEmail = (email || newAddr.email || '').toLowerCase().trim()
+    const cleanUserId = userId || newAddr.userId || null
+    const storageKey = getUserDataKey('addresses', cleanEmail, cleanUserId)
+
+    const currentList = getSavedAddresses(cleanEmail, cleanUserId)
     const addrId = newAddr.id || `addr_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`
 
     const isFirst = currentList.length === 0
@@ -54,11 +86,12 @@ export function saveAddress(newAddr, email = '', userId = null) {
 
     const normalizedAddr = {
       id: addrId,
+      userId: cleanUserId,
+      email: cleanEmail,
       name: newAddr.name?.trim() || newAddr.recipient?.trim() || 'Receiver',
       recipient: newAddr.recipient?.trim() || newAddr.name?.trim() || 'Receiver',
       phone: newAddr.phone?.trim() || '',
       alt_mobile: newAddr.alt_mobile?.trim() || newAddr.altPhone?.trim() || '',
-      email: newAddr.email?.trim() || email || '',
       line1: newAddr.line1?.trim() || newAddr.street?.trim() || '',
       line2: newAddr.line2?.trim() || newAddr.area?.trim() || '',
       street: newAddr.line1?.trim() || newAddr.street?.trim() || '',
@@ -88,28 +121,31 @@ export function saveAddress(newAddr, email = '', userId = null) {
       updatedList = [normalizedAddr, ...base]
     }
 
-    // Persist to local storage
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedList))
+    // Persist to user-scoped storage
+    localStorage.setItem(storageKey, JSON.stringify(updatedList))
 
     // Persist to registered user profile in registry
-    if (email) {
+    if (cleanEmail) {
       try {
         const rawUsers = localStorage.getItem('thenee_registered_users')
         if (rawUsers) {
-          const cleanEmail = email.toLowerCase().trim()
           const users = JSON.parse(rawUsers)
-          const uIdx = users.findIndex((u) => (u.email || '').toLowerCase().trim() === cleanEmail)
+          const uIdx = users.findIndex(
+            (u) =>
+              (u.email || '').toLowerCase().trim() === cleanEmail ||
+              (cleanUserId && (u.id === cleanUserId || u.userIdNumber === cleanUserId))
+          )
           if (uIdx >= 0) {
             users[uIdx].addresses = updatedList
             localStorage.setItem('thenee_registered_users', JSON.stringify(users))
           }
         }
-      } catch {}
+      } catch { }
     }
 
     // Sync to Supabase profiles
-    if (userId && isSupabaseConfigured) {
-      profileService.updateProfile(userId, { addresses: updatedList }).catch((err) => {
+    if (cleanUserId && isSupabaseConfigured) {
+      profileService.updateProfile(cleanUserId, { addresses: updatedList }).catch((err) => {
         console.warn('Supabase address sync notice:', err)
       })
     }
@@ -121,38 +157,52 @@ export function saveAddress(newAddr, email = '', userId = null) {
   }
 }
 
-// Update existing address
+// Update existing address for the specific user account
 export function updateAddress(id, updates, email = '', userId = null) {
   try {
-    const list = getSavedAddresses(email, userId)
+    const cleanEmail = (email || updates.email || '').toLowerCase().trim()
+    const cleanUserId = userId || updates.userId || null
+    const storageKey = getUserDataKey('addresses', cleanEmail, cleanUserId)
+
+    const list = getSavedAddresses(cleanEmail, cleanUserId)
     const isDefault = Boolean(updates.isDefault)
 
     const updatedList = list.map((a) => {
       if (a.id === id) {
-        return { ...a, ...updates, isDefault: isDefault ? true : a.isDefault, updatedAt: new Date().toISOString() }
+        return {
+          ...a,
+          ...updates,
+          email: cleanEmail || a.email,
+          userId: cleanUserId || a.userId,
+          isDefault: isDefault ? true : a.isDefault,
+          updatedAt: new Date().toISOString(),
+        }
       }
       return isDefault ? { ...a, isDefault: false } : a
     })
 
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedList))
+    localStorage.setItem(storageKey, JSON.stringify(updatedList))
 
-    if (email) {
+    if (cleanEmail) {
       try {
         const rawUsers = localStorage.getItem('thenee_registered_users')
         if (rawUsers) {
-          const cleanEmail = email.toLowerCase().trim()
           const users = JSON.parse(rawUsers)
-          const uIdx = users.findIndex((u) => (u.email || '').toLowerCase().trim() === cleanEmail)
+          const uIdx = users.findIndex(
+            (u) =>
+              (u.email || '').toLowerCase().trim() === cleanEmail ||
+              (cleanUserId && (u.id === cleanUserId || u.userIdNumber === cleanUserId))
+          )
           if (uIdx >= 0) {
             users[uIdx].addresses = updatedList
             localStorage.setItem('thenee_registered_users', JSON.stringify(users))
           }
         }
-      } catch {}
+      } catch { }
     }
 
-    if (userId && isSupabaseConfigured) {
-      profileService.updateProfile(userId, { addresses: updatedList }).catch(() => {})
+    if (cleanUserId && isSupabaseConfigured) {
+      profileService.updateProfile(cleanUserId, { addresses: updatedList }).catch(() => { })
     }
 
     return updatedList
@@ -161,10 +211,14 @@ export function updateAddress(id, updates, email = '', userId = null) {
   }
 }
 
-// Delete an address
+// Delete an address for the specific user account
 export function deleteAddress(id, email = '', userId = null) {
   try {
-    const list = getSavedAddresses(email, userId)
+    const cleanEmail = (email || '').toLowerCase().trim()
+    const cleanUserId = userId || null
+    const storageKey = getUserDataKey('addresses', cleanEmail, cleanUserId)
+
+    const list = getSavedAddresses(cleanEmail, cleanUserId)
     let updatedList = list.filter((a) => a.id !== id)
 
     // Ensure at least one default remains if list is not empty
@@ -172,25 +226,28 @@ export function deleteAddress(id, email = '', userId = null) {
       updatedList[0].isDefault = true
     }
 
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedList))
+    localStorage.setItem(storageKey, JSON.stringify(updatedList))
 
-    if (email) {
+    if (cleanEmail) {
       try {
         const rawUsers = localStorage.getItem('thenee_registered_users')
         if (rawUsers) {
-          const cleanEmail = email.toLowerCase().trim()
           const users = JSON.parse(rawUsers)
-          const uIdx = users.findIndex((u) => (u.email || '').toLowerCase().trim() === cleanEmail)
+          const uIdx = users.findIndex(
+            (u) =>
+              (u.email || '').toLowerCase().trim() === cleanEmail ||
+              (cleanUserId && (u.id === cleanUserId || u.userIdNumber === cleanUserId))
+          )
           if (uIdx >= 0) {
             users[uIdx].addresses = updatedList
             localStorage.setItem('thenee_registered_users', JSON.stringify(users))
           }
         }
-      } catch {}
+      } catch { }
     }
 
-    if (userId && isSupabaseConfigured) {
-      profileService.updateProfile(userId, { addresses: updatedList }).catch(() => {})
+    if (cleanUserId && isSupabaseConfigured) {
+      profileService.updateProfile(cleanUserId, { addresses: updatedList }).catch(() => { })
     }
 
     return updatedList
@@ -199,34 +256,41 @@ export function deleteAddress(id, email = '', userId = null) {
   }
 }
 
-// Set default address
+// Set default address for the specific user account
 export function setDefaultAddress(id, email = '', userId = null) {
   try {
-    const list = getSavedAddresses(email, userId)
+    const cleanEmail = (email || '').toLowerCase().trim()
+    const cleanUserId = userId || null
+    const storageKey = getUserDataKey('addresses', cleanEmail, cleanUserId)
+
+    const list = getSavedAddresses(cleanEmail, cleanUserId)
     const updatedList = list.map((a) => ({
       ...a,
       isDefault: a.id === id,
     }))
 
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedList))
+    localStorage.setItem(storageKey, JSON.stringify(updatedList))
 
-    if (email) {
+    if (cleanEmail) {
       try {
         const rawUsers = localStorage.getItem('thenee_registered_users')
         if (rawUsers) {
-          const cleanEmail = email.toLowerCase().trim()
           const users = JSON.parse(rawUsers)
-          const uIdx = users.findIndex((u) => (u.email || '').toLowerCase().trim() === cleanEmail)
+          const uIdx = users.findIndex(
+            (u) =>
+              (u.email || '').toLowerCase().trim() === cleanEmail ||
+              (cleanUserId && (u.id === cleanUserId || u.userIdNumber === cleanUserId))
+          )
           if (uIdx >= 0) {
             users[uIdx].addresses = updatedList
             localStorage.setItem('thenee_registered_users', JSON.stringify(users))
           }
         }
-      } catch {}
+      } catch { }
     }
 
-    if (userId && isSupabaseConfigured) {
-      profileService.updateProfile(userId, { addresses: updatedList }).catch(() => {})
+    if (cleanUserId && isSupabaseConfigured) {
+      profileService.updateProfile(cleanUserId, { addresses: updatedList }).catch(() => { })
     }
 
     return updatedList

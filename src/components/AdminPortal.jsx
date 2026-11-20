@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useRef } from 'react'
 import { cmsService } from '../lib/cmsService'
-import { adminService, profileService, mediaService, resolveSignupProvider, databaseService, purgeLegacyDemoOrders, isRealAwb } from '../lib/supabase'
+import { adminService, profileService, mediaService, resolveSignupProvider, databaseService, purgeLegacyDemoOrders, isRealAwb, isSupabaseConfigured, supabase } from '../lib/supabase'
 import { getNumericUserId } from '../lib/userIdHelper'
 import {
   getOrderStatusCounts,
@@ -330,7 +330,12 @@ const AdminPortal = ({ onBack }) => {
   const [pinInput, setPinInput] = useState('')
   const [pinError, setPinError] = useState('')
   const { currentUser } = useCart()
-  const isUserAdmin = adminService.isAdmin(currentUser) || currentUser?.role === 'admin'
+  const isUserAdmin = Boolean(
+    currentUser &&
+    (currentUser.role === 'admin' ||
+     adminService.isAdmin(currentUser) ||
+     (currentUser.email && currentUser.email.toLowerCase().trim() === 'rootsenterprises2025@gmail.com'))
+  )
 
   // Active Tab
   const [activeTab, setActiveTab] = useState('dashboard')
@@ -598,6 +603,49 @@ const AdminPortal = ({ onBack }) => {
     }
   }, [isUserAdmin])
 
+  // Real-time listener for live order creation and status changes across all admins
+  useEffect(() => {
+    if (!isUserAdmin) return
+
+    const handleOrdersUpdated = () => {
+      adminService.getAllOrders().then((res) => {
+        if (res && Array.isArray(res.data)) {
+          setOrders(res.data)
+        }
+      }).catch(() => {})
+    }
+
+    window.addEventListener('thenee_orders_updated', handleOrdersUpdated)
+    window.addEventListener('storage', handleOrdersUpdated)
+
+    // Supabase Realtime Channel: all store admins receive instant live updates
+    let channel = null
+    if (isSupabaseConfigured && supabase) {
+      try {
+        channel = supabase
+          .channel('store_admin_orders_channel')
+          .on(
+            'postgres_changes',
+            { event: '*', schema: 'public', table: 'orders' },
+            () => {
+              handleOrdersUpdated()
+            }
+          )
+          .subscribe()
+      } catch (rtErr) {
+        console.warn('Realtime subscription notice:', rtErr)
+      }
+    }
+
+    return () => {
+      window.removeEventListener('thenee_orders_updated', handleOrdersUpdated)
+      window.removeEventListener('storage', handleOrdersUpdated)
+      if (channel && supabase) {
+        try { supabase.removeChannel(channel) } catch {}
+      }
+    }
+  }, [isUserAdmin])
+
   // Listen to CMS update broadcasts
   useEffect(() => {
     const handleCmsUpdate = () => {
@@ -661,10 +709,32 @@ const AdminPortal = ({ onBack }) => {
   // Filtered Orders
   const filteredOrders = useMemo(() => {
     return orders.filter((o) => {
-      const rawSt = (o.order_status || o.status || 'processing').toLowerCase()
-      const st = (rawSt === 'confirmed' || rawSt === 'order confirmed') ? 'processing' : rawSt
-      const filterTarget = orderFilter.toLowerCase()
-      const matchFilter = orderFilter === 'all' || st === filterTarget || (filterTarget === 'processing' && (rawSt === 'confirmed' || rawSt === 'processing'))
+      const rawSt = (o.order_status || o.status || 'processing').toLowerCase().trim()
+      const filterTarget = orderFilter.toLowerCase().trim()
+
+      let matchFilter = filterTarget === 'all'
+      if (!matchFilter) {
+        if (filterTarget === 'pending') {
+          matchFilter = rawSt === 'pending'
+        } else if (filterTarget === 'confirmed' || filterTarget === 'processing') {
+          matchFilter = rawSt === 'confirmed' || rawSt === 'processing' || rawSt === 'packed' || rawSt === 'order confirmed'
+        } else if (filterTarget === 'shipped') {
+          matchFilter = rawSt === 'shipped' || rawSt === 'dispatched' || rawSt === 'in_transit'
+        } else if (filterTarget === 'delivered') {
+          matchFilter = rawSt === 'delivered'
+        } else if (filterTarget === 'returned') {
+          matchFilter = rawSt === 'returned'
+        } else if (filterTarget === 'rejected') {
+          matchFilter = rawSt === 'rejected' || rawSt === 'cancelled'
+        } else if (filterTarget === 'free_delivery') {
+          matchFilter = Number(o.delivery_fee || 0) === 0
+        } else if (filterTarget === 'charged_delivery') {
+          matchFilter = Number(o.delivery_fee || 0) > 0
+        } else {
+          matchFilter = rawSt === filterTarget
+        }
+      }
+
       const q = orderSearch.toLowerCase().trim()
       const uid = getNumericUserId(o).toLowerCase()
       const matchSearch =
@@ -673,7 +743,9 @@ const AdminPortal = ({ onBack }) => {
         (o.id && o.id.toLowerCase().includes(q)) ||
         (o.customer_name && o.customer_name.toLowerCase().includes(q)) ||
         (o.customer_phone && o.customer_phone.includes(q)) ||
+        (o.customer_email && o.customer_email.toLowerCase().includes(q)) ||
         (o.tracking_number && o.tracking_number.toLowerCase().includes(q)) ||
+        (o.tracking_awb && o.tracking_awb.toLowerCase().includes(q)) ||
         (o.shipping_city && o.shipping_city.toLowerCase().includes(q)) ||
         uid.includes(q)
       return matchFilter && matchSearch
@@ -1356,7 +1428,7 @@ const AdminPortal = ({ onBack }) => {
         )
       )
       await adminService.updateCustomerRole(customer, newRole)
-      showToast(`Updated role for ${customer.name || 'Patron'} to ${newRole}!`)
+      showToast(`Account role for ${customer.name || customer.email || 'Patron'} updated to "${newRole}" live!`)
     } catch (err) {
       console.warn('Role update notice:', err)
       showToast('Could not persist role change')
@@ -1606,24 +1678,36 @@ const AdminPortal = ({ onBack }) => {
 
           <h2 className="admin-lock-title">Store Administrator Access Only</h2>
           <p className="admin-lock-desc">
-            Direct access to village dispatch ledger, live catalog editor, coupon manager, and website CMS is reserved for store administrators.
+            Direct access to dispatch ledger, product catalog editor, coupon settings, and website CMS is reserved strictly for store administrators.
           </p>
 
           <div style={{ background: '#F4FAF6', border: '1px solid #D6EDE0', borderRadius: '12px', padding: '16px', margin: '20px 0', textAlign: 'left', fontSize: '0.85rem', color: '#1B3524', lineHeight: '1.55' }}>
-            <strong style={{ display: 'block', marginBottom: '6px', color: '#123223' }}>How to access this Admin Panel:</strong>
-            1. An administrator can assign your patron account as <strong>admin</strong> from the Customer Base table.<br />
-            2. Once assigned, you will see a direct <strong>Open Admin Dashboard</strong> option on your Account Page.<br />
-            3. Clicking it opens this admin console directly without any password or PIN!
+            <strong style={{ display: 'block', marginBottom: '6px', color: '#123223' }}>Account Access Status:</strong>
+            Signed in as: <strong>{currentUser ? (currentUser.email || currentUser.name) : 'Guest / Not signed in'}</strong><br />
+            Current Account Role: <span style={{ textTransform: 'uppercase', fontWeight: 700, color: currentUser?.role === 'admin' ? '#166534' : '#C53030' }}>{currentUser?.role || 'customer'}</span><br />
+            <span style={{ fontSize: '0.8rem', color: '#556B5C', marginTop: 6, display: 'inline-block' }}>
+              Only patrons assigned the <strong>admin</strong> role in the Customer Base directory are authorized to access this panel. Customers are restricted to patron account services.
+            </span>
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', width: '100%' }}>
-            <button
-              type="button"
-              className="admin-unlock-btn"
-              onClick={() => { window.location.hash = 'account' }}
-            >
-              Go to My Account
-            </button>
+            {!currentUser ? (
+              <button
+                type="button"
+                className="admin-unlock-btn"
+                onClick={() => { window.location.hash = 'login' }}
+              >
+                Sign In with Admin Account
+              </button>
+            ) : (
+              <button
+                type="button"
+                className="admin-unlock-btn"
+                onClick={() => { window.location.hash = 'account' }}
+              >
+                Go to My Account
+              </button>
+            )}
             <button
               type="button"
               className="admin-back-store-btn"
@@ -3454,10 +3538,10 @@ const AdminPortal = ({ onBack }) => {
                             </td>
                             <td>
                               <select
-                                className="role-select"
+                                className={`role-select ${c.role === 'admin' ? 'is-admin' : ''}`}
                                 value={c.role || 'customer'}
                                 onChange={(e) => handleUpdateCustomerRole(c, e.target.value)}
-                                title="Change Account Role"
+                                title="Change Account Role (Live)"
                               >
                                 <option value="customer">customer</option>
                                 <option value="admin">admin</option>

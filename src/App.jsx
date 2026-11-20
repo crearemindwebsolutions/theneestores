@@ -30,6 +30,7 @@ import ProfileCompletionModal from './components/ProfileCompletionModal'
 import AdminPortal from './components/AdminPortal'
 import { CartProvider, useCart } from './context/CartContext'
 import { analyticsService } from './lib/analyticsService'
+import { migrateLegacyDataIfNeeded } from './lib/userScope'
 
 const parseRouteFromHash = () => {
   if (typeof window !== 'undefined') {
@@ -143,6 +144,10 @@ const AppContent = () => {
 
   useLenis()
   const { toastMessage, isLoggedIn, authLoading, currentUser, loginUser } = useCart()
+
+  useEffect(() => {
+    migrateLegacyDataIfNeeded()
+  }, [])
 
   useEffect(() => {
     const handleHashChange = () => {

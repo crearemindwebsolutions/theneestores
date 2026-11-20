@@ -2006,6 +2006,13 @@
   box-shadow: 0 0 0 2px rgba(45, 88, 59, 0.12);
 }
 
+.role-select.is-admin {
+  background-color: #EAF7EE;
+  border-color: #8FD8A8;
+  color: #125528;
+  font-weight: 700;
+}
+
 /* Joined Date Stacked (Matching Screenshot) */
 .cell-joined-date {
   display: flex;
