@@ -7,6 +7,10 @@ import { getUserDataKey } from '../lib/userScope'
 const CartContext = createContext()
 
 export const CartProvider = ({ children }) => {
+  const [isCartOpen, setIsCartOpen] = useState(false)
+  const [selectedProduct, setSelectedProduct] = useState(null)
+  const [toastMessage, setToastMessage] = useState(null)
+
   // Authenticated user state
   const [currentUser, setCurrentUser] = useState(() => {
     try {

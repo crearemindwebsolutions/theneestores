@@ -73,7 +73,15 @@ export default defineConfig({
       'Cache-Control': 'no-store',
     },
     watch: {
-      ignored: ['**/public/perfume/**', '**/public/perfume bg/**', '**/public/ui layout/**'],
+      ignored: [
+        '**/public/perfume/**',
+        '**/public/perfume bg/**',
+        '**/public/ui layout/**',
+        '**/scratch/**',
+        '**/scratch*/**',
+        '**/*Copy*/**',
+        '**/*copy*/**',
+      ],
     },
   },
 })
