@@ -43,7 +43,7 @@ export default function ProfileCompletionModal({ currentUser, onComplete }) {
 
     setIsSubmitting(true)
     const fullPhone = `+91 ${cleanPhone}`
-    const numericUserId = currentUser.user_id_number || currentUser.userIdNumber || getNumericUserId(currentUser)
+    const numericUserId = getNumericUserId(currentUser)
 
     // 1. Update in Supabase Auth user password AND metadata so user can sign in via email & password
     if (isSupabaseConfigured && supabase) {

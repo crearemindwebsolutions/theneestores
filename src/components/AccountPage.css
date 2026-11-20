@@ -1783,6 +1783,12 @@
   border-radius: 999px;
 }
 
+.order-status-badge.status-processing {
+  background: #FEF9C3;
+  color: #854D0E;
+  border: 1px solid #FEF08A;
+}
+
 .order-status-badge.status-live {
   background: #E8F5E9;
   color: #2E7D32;

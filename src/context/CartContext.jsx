@@ -152,10 +152,11 @@ export const CartProvider = ({ children }) => {
         }
       } catch { }
 
-      const numericUserId =
+      const numericUserId = getNumericUserId(
         u.user_id_number ||
         u.user_metadata?.user_id_number ||
-        getNumericUserId(u)
+        u
+      )
 
       let assignedRole = 'customer'
       try {
@@ -200,7 +201,8 @@ export const CartProvider = ({ children }) => {
         } else {
           usersList[existingIdx] = {
             ...usersList[existingIdx],
-            user_id_number: usersList[existingIdx].user_id_number || numericUserId,
+            user_id_number: getNumericUserId(usersList[existingIdx].user_id_number || numericUserId),
+            userIdNumber: getNumericUserId(usersList[existingIdx].user_id_number || numericUserId),
           }
           localStorage.setItem('thenee_registered_users', JSON.stringify(usersList))
         }
@@ -220,7 +222,7 @@ export const CartProvider = ({ children }) => {
       if (isSupabaseConfigured && supabase && u.id) {
         profileService.getProfile(u.id).then(({ data: prof }) => {
           if (prof) {
-            const liveNumericId = prof.user_id_number || numericUserId
+            const liveNumericId = getNumericUserId(prof.user_id_number || numericUserId)
             if (isMounted) {
               setCurrentUser((prev) => {
                 if (!prev || prev.id !== u.id) return prev

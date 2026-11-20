@@ -1626,8 +1626,9 @@
 }
 
 .status-processing {
-  background: #FEF9E7;
-  color: #D4AC0D;
+  background: #FEF9C3;
+  color: #854D0E;
+  border: 1px solid #FEF08A;
 }
 
 .status-dispatched {
@@ -4308,4 +4309,287 @@ textarea.manage-order-input {
   font-weight: 600;
   line-height: 1.35;
   margin-top: 4px;
+}
+
+/* ==========================================================================
+   PRODUCT IMAGE MANAGER & ACTIONS (UPLOAD, EDIT, DOWNLOAD, DELETE)
+   ========================================================================== */
+.prod-image-manager-group {
+  margin-top: 6px;
+  margin-bottom: 18px;
+}
+
+.prod-image-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.prod-image-main-label {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #123223;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.prod-image-sub-label {
+  font-size: 0.76rem;
+  font-weight: 400;
+  color: #6A8070;
+}
+
+.prod-image-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: #166534;
+  background: #DCFCE7;
+  border: 1px solid #BBF7D0;
+  padding: 4px 10px;
+  border-radius: 999px;
+}
+
+.pill-pulse-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #16A34A;
+  box-shadow: 0 0 0 2px rgba(22, 163, 74, 0.25);
+}
+
+.prod-image-active-card {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  background: #FBFDFB;
+  border: 1.5px solid #E2E8F0;
+  border-radius: 14px;
+  padding: 16px 18px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.prod-image-active-card:hover {
+  border-color: #CBD5E1;
+  box-shadow: 0 4px 16px rgba(18, 50, 35, 0.04);
+}
+
+.prod-image-thumb-col {
+  position: relative;
+  width: 104px;
+  height: 104px;
+  flex-shrink: 0;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #F1F5F9;
+  border: 1px solid #E2E8F0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  cursor: pointer;
+}
+
+.prod-image-preview-thumb {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.25s ease;
+}
+
+.prod-image-thumb-col:hover .prod-image-preview-thumb {
+  transform: scale(1.05);
+}
+
+.prod-image-zoom-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(18, 50, 35, 0.4);
+  color: #FFFFFF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.prod-image-thumb-col:hover .prod-image-zoom-overlay {
+  opacity: 1;
+}
+
+.prod-image-details-col {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.prod-image-meta-info {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.prod-image-name {
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: #123223;
+  margin: 0;
+}
+
+.prod-image-meta-desc {
+  font-size: 0.78rem;
+  color: #64748B;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.prod-image-actions-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.btn-prod-img-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  border-radius: 8px;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: all 0.15s ease;
+}
+
+.btn-prod-img-action.edit {
+  background: #FAF0DE;
+  color: #8A5800;
+  border-color: #ECC980;
+}
+
+.btn-prod-img-action.edit:hover {
+  background: #F6E2BC;
+  color: #6D4400;
+}
+
+.btn-prod-img-action.download {
+  background: #EFF6FF;
+  color: #1D4ED8;
+  border-color: #BFDBFE;
+}
+
+.btn-prod-img-action.download:hover {
+  background: #DBEAFE;
+  color: #1E40AF;
+}
+
+.btn-prod-img-action.delete {
+  background: #FEF2F2;
+  color: #DC2626;
+  border-color: #FECACA;
+}
+
+.btn-prod-img-action.delete:hover {
+  background: #FEE2E2;
+  color: #B91C1C;
+}
+
+/* Upload Dropzone when no image is uploaded */
+.prod-image-dropzone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 24px 20px;
+  border: 2px dashed #CBD5E1;
+  border-radius: 14px;
+  background: #F8FAFC;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.2s ease;
+}
+
+.prod-image-dropzone:hover,
+.prod-image-dropzone.is-dragover {
+  border-color: #166534;
+  background: #F0FDF4;
+}
+
+.dropzone-icon-wrap {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: #E2E8F0;
+  color: #475569;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.prod-image-dropzone:hover .dropzone-icon-wrap,
+.prod-image-dropzone.is-dragover .dropzone-icon-wrap {
+  background: #DCFCE7;
+  color: #166534;
+}
+
+.dropzone-text-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.dropzone-prompt {
+  margin: 0;
+  font-size: 0.88rem;
+  color: #334155;
+}
+
+.dropzone-prompt strong {
+  color: #123223;
+  text-decoration: underline;
+}
+
+.dropzone-hint {
+  font-size: 0.76rem;
+  color: #64748B;
+}
+
+.btn-dropzone-browse {
+  margin-top: 4px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 18px;
+  background: #123223;
+  color: #FAF0DE;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.btn-dropzone-browse:hover {
+  background: #184430;
+}
+
+@media (max-width: 600px) {
+  .prod-image-active-card {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .prod-image-thumb-col {
+    width: 100%;
+    height: 160px;
+  }
 }

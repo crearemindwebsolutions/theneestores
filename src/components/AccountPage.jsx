@@ -99,8 +99,12 @@ const AccountPage = ({ onBack, onLogout, initialTab = 'hub' }) => {
           )
           .map((o) => {
             const hasReal = isRealAwb(o.awb || o.tracking_awb)
+            const rawStatus = o.order_status || o.status || 'Processing'
+            const currentStatus = (rawStatus === 'Confirmed' || rawStatus === 'Order Confirmed') ? 'Processing' : rawStatus
             return {
               ...o,
+              status: currentStatus,
+              order_status: currentStatus,
               awb: hasReal ? (o.awb || o.tracking_awb) : '',
               tracking_awb: hasReal ? (o.tracking_awb || o.awb) : '',
             }
@@ -127,7 +131,7 @@ const AccountPage = ({ onBack, onLogout, initialTab = 'hub' }) => {
   })
 
   // Permanent 8-digit numeric user id
-  const userIdNumber = user.user_id_number || user.userIdNumber || getNumericUserId(user || currentUser)
+  const userIdNumber = getNumericUserId(user || currentUser)
 
   // Fetch Supabase data on mount / auth change
   useEffect(() => {
@@ -186,8 +190,12 @@ const AccountPage = ({ onBack, onLogout, initialTab = 'hub' }) => {
           const parsed = JSON.parse(saved)
           const cleaned = (Array.isArray(parsed) ? parsed : []).map((o) => {
             const hasReal = isRealAwb(o.awb || o.tracking_awb)
+            const rawStatus = o.order_status || o.status || 'Processing'
+            const currentStatus = (rawStatus === 'Confirmed' || rawStatus === 'Order Confirmed') ? 'Processing' : rawStatus
             return {
               ...o,
+              status: currentStatus,
+              order_status: currentStatus,
               awb: hasReal ? (o.awb || o.tracking_awb) : '',
               tracking_awb: hasReal ? (o.tracking_awb || o.awb) : '',
             }
@@ -932,8 +940,14 @@ const AccountPage = ({ onBack, onLogout, initialTab = 'hub' }) => {
                           <span className="order-card-date">Ordered on {order.date}</span>
                         </div>
                         <div className="order-card-status-wrap">
-                          <span className={`order-status-badge ${order.status === 'Out for Delivery' ? 'status-live' : 'status-done'}`}>
-                            {order.status === 'Out for Delivery' ? '● ' : '✓ '} {order.status}
+                          <span className={`order-status-badge ${
+                            order.status === 'Processing'
+                              ? 'status-processing'
+                              : order.status === 'Out for Delivery' || order.status === 'Dispatched' || order.status === 'In Transit'
+                              ? 'status-live'
+                              : 'status-done'
+                          }`}>
+                            {order.status === 'Processing' ? '⏳ ' : order.status === 'Out for Delivery' ? '● ' : '✓ '} {order.status}
                           </span>
                           <strong className="order-total-amount">₹{order.total}</strong>
                         </div>

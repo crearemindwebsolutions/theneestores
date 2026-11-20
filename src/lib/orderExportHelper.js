@@ -3,7 +3,7 @@
 // Generates single-order detail sheets, status-filtered reports, and bulk invoices
 // ==============================================================================
 
-import { isRealAwb } from './supabase'
+import { isRealAwb, getNumericUserId } from './supabase'
 
 /**
  * Computes dynamic counts for the 9 status filters based on the active orders ledger
@@ -531,7 +531,7 @@ export const openSingleOrderDetailSheet = (order) => {
         </div>
         <div class="detail-row">
           <span>Patron User ID:</span>
-          <strong>${order.user_id_number || order.customer_id || 'PATRON'}</strong>
+          <strong>${getNumericUserId(order)}</strong>
         </div>
       </div>
 

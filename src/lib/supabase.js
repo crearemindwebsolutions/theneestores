@@ -176,7 +176,7 @@ export const profileService = {
       .eq('id', userId)
       .maybeSingle()
     if (data) {
-      data.user_id_number = data.user_id_number || getNumericUserId(data)
+      data.user_id_number = getNumericUserId(data)
     }
     return { data, error }
   },
@@ -184,7 +184,7 @@ export const profileService = {
   // Update profile data
   async updateProfile(userId, updates) {
     if (!isSupabaseConfigured || !supabase || !userId) return { data: null, error: null }
-    const numericId = updates?.user_id_number || getNumericUserId(userId)
+    const numericId = getNumericUserId(updates?.user_id_number || userId)
     const { data, error } = await supabase
       .from('profiles')
       .update({
@@ -196,7 +196,7 @@ export const profileService = {
       .select()
       .maybeSingle()
     if (data) {
-      data.user_id_number = data.user_id_number || numericId
+      data.user_id_number = getNumericUserId(data)
     }
     return { data, error }
   },
@@ -260,6 +260,30 @@ export const purgeLegacyDemoOrders = () => {
                 copy.tracking_number = ''
                 changed = true
               }
+              if (copy.status === 'Confirmed' || copy.status === 'Order Confirmed') {
+                copy.status = 'Processing'
+                changed = true
+              }
+              if (copy.order_status === 'Confirmed' || copy.order_status === 'Order Confirmed') {
+                copy.order_status = 'Processing'
+                changed = true
+              }
+              if (copy.user_id_number && !/^\d{8}$/.test(String(copy.user_id_number).trim())) {
+                copy.user_id_number = getNumericUserId(copy)
+                changed = true
+              }
+              if (copy.status === 'Confirmed' || copy.status === 'Order Confirmed') {
+                copy.status = 'Processing'
+                changed = true
+              }
+              if (copy.order_status === 'Confirmed' || copy.order_status === 'Order Confirmed') {
+                copy.order_status = 'Processing'
+                changed = true
+              }
+              if (copy.user_id_number && !/^\d{8}$/.test(String(copy.user_id_number).trim())) {
+                copy.user_id_number = getNumericUserId(copy)
+                changed = true
+              }
               if (changed) modified = true
               return copy
             })
@@ -273,6 +297,41 @@ export const purgeLegacyDemoOrders = () => {
         localStorage.removeItem(k)
       }
     })
+
+    try {
+      const uKeys = ['thenee_auth_user', 'thenee_user', 'thenee_user_profile']
+      uKeys.forEach((key) => {
+        const authUser = JSON.parse(localStorage.getItem(key) || 'null')
+        if (authUser && (!authUser.user_id_number || !/^\d{8}$/.test(String(authUser.user_id_number).trim()))) {
+          const correctId = getNumericUserId(authUser)
+          authUser.user_id_number = correctId
+          authUser.userIdNumber = correctId
+          localStorage.setItem(key, JSON.stringify(authUser))
+        }
+      })
+    } catch { }
+
+    try {
+      const regUsers = JSON.parse(localStorage.getItem('thenee_registered_users') || '[]')
+      if (Array.isArray(regUsers)) {
+        let regMod = false
+        const cleanedReg = regUsers.map((u) => {
+          if (!u.user_id_number || !/^\d{8}$/.test(String(u.user_id_number).trim())) {
+            regMod = true
+            const correctId = getNumericUserId(u)
+            return {
+              ...u,
+              user_id_number: correctId,
+              userIdNumber: correctId,
+            }
+          }
+          return u
+        })
+        if (regMod) {
+          localStorage.setItem('thenee_registered_users', JSON.stringify(cleanedReg))
+        }
+      }
+    } catch { }
   } catch { }
 }
 
@@ -301,6 +360,7 @@ export const orderService = {
     const orderData = {
       order_number: payload.order_number || payload.order_id || payload.id,
       user_id: validUserId,
+      user_id_number: getNumericUserId(payload.user_id_number || payload.user_id || payload.customer_phone || payload.customer_email || 'patron'),
       customer_name: payload.customer_name || shipping.recipient || shipping.name || 'Customer',
       customer_phone: payload.customer_phone || shipping.phone || '',
       customer_email: payload.customer_email || shipping.email || '',
@@ -312,7 +372,7 @@ export const orderService = {
       shipping_address: shipping,
       payment_method: payload.payment_method || 'Online Payment',
       payment_status: payload.payment_status || 'paid',
-      order_status: payload.order_status || payload.status || 'Confirmed',
+      order_status: payload.order_status || payload.status || 'Processing',
       tracking_awb: payload.tracking_awb || payload.awb || null,
       courier: payload.courier || payload.courier_partner || 'India Post Speed Post',
     }
@@ -351,8 +411,12 @@ export const orderService = {
       (Array.isArray(list) ? list : []).map((o) => {
         const rawAwb = o.awb || o.tracking_awb || o.tracking_number || ''
         const realAwb = isRealAwb(rawAwb) ? rawAwb.trim() : ''
+        const rawStatus = o.order_status || o.status || 'Processing'
+        const currentStatus = (rawStatus === 'Confirmed' || rawStatus === 'Order Confirmed') ? 'Processing' : rawStatus
         return {
           ...o,
+          status: currentStatus,
+          order_status: currentStatus,
           awb: realAwb,
           tracking_awb: realAwb,
           tracking_number: realAwb,
@@ -386,6 +450,8 @@ export const orderService = {
     // Normalize database rows to match UI expectations
     const normalized = (data || []).map((row) => {
       const realAwb = isRealAwb(row.tracking_awb || row.awb) ? (row.tracking_awb || row.awb).trim() : ''
+      const rawStatus = row.order_status || row.status || 'Processing'
+      const currentStatus = (rawStatus === 'Confirmed' || rawStatus === 'Order Confirmed') ? 'Processing' : rawStatus
       return {
         id: row.order_number || row.id,
         date: new Date(row.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
@@ -393,18 +459,19 @@ export const orderService = {
         total: row.total_amount || row.total || 0,
         subtotal: row.subtotal || 0,
         discount: row.discount || 0,
-        status: row.order_status || row.status || 'Confirmed',
-        step: row.order_status === 'Delivered' ? 4 : row.order_status === 'Out for Delivery' ? 3 : 2,
+        status: currentStatus,
+        order_status: currentStatus,
+        step: currentStatus === 'Delivered' ? 4 : currentStatus === 'Out for Delivery' ? 3 : 2,
         courier: row.courier || 'India Post Speed Post',
         awb: realAwb,
         tracking_awb: realAwb,
         destination: row.shipping_address ? `${row.shipping_address.city || ''}, ${row.shipping_address.state || ''}` : 'Tamil Nadu',
         address: row.shipping_address ? `${row.shipping_address.street || ''}, ${row.shipping_address.city || ''} - ${row.shipping_address.pincode || ''}` : '',
         timeline: [
-          { title: 'Order Confirmed', time: new Date(row.created_at).toLocaleDateString('en-GB'), done: true },
-          { title: 'Handcrafted at Tenkasi Rural Unit', time: 'In Progress', done: true },
+          { title: 'Payment Authorized & Order Received', time: new Date(row.created_at).toLocaleDateString('en-GB'), done: true },
+          { title: 'Processing & Handcrafting at Tenkasi Rural Unit', time: 'In Progress', done: true },
           { title: 'Dispatched via Courier', time: realAwb ? `AWB: ${realAwb}` : 'Updated soon', done: !!realAwb },
-          { title: row.order_status || 'Out for Delivery', time: 'Estimated 2-3 Days', done: row.order_status === 'Delivered' },
+          { title: currentStatus || 'Out for Delivery', time: 'Estimated 2-3 Days', done: currentStatus === 'Delivered' },
         ],
       }
     })
@@ -552,6 +619,8 @@ export const adminService = {
       if (num && !isDemoOrder(lo)) {
         const rawAwb = lo.tracking_awb || lo.awb || lo.tracking_number || ''
         const realAwb = isRealAwb(rawAwb) ? rawAwb.trim() : ''
+        const rawLoStatus = lo.order_status || lo.status || 'Processing'
+        const currentLoStatus = (rawLoStatus === 'Confirmed' || rawLoStatus === 'Order Confirmed') ? 'Processing' : rawLoStatus
         orderMap.set(num, {
           order_number: num,
           customer_name: lo.customer_name || lo.shipping_address?.recipient || lo.recipient || 'Customer',
@@ -565,7 +634,8 @@ export const adminService = {
           shipping_address: lo.shipping_address || {},
           payment_method: lo.payment_method || 'Online Payment',
           payment_status: lo.payment_status || 'paid',
-          order_status: lo.order_status || lo.status || 'Confirmed',
+          order_status: currentLoStatus,
+          status: currentLoStatus,
           tracking_awb: realAwb,
           courier: lo.courier || lo.courier_partner || 'India Post Speed Post',
           courier_partner: lo.courier_partner || lo.courier || 'India Post Speed Post',
@@ -575,7 +645,7 @@ export const adminService = {
           audit_note: lo.audit_note || lo.auditNote || (lo.shipping_address && lo.shipping_address.audit_note) || '',
           razorpay_order_id: lo.razorpay_order_id || lo.razorpayOrderId || '',
           razorpay_payment_id: lo.razorpay_payment_id || lo.razorpayPaymentId || lo.payment_id || '',
-          user_id_number: lo.user_id_number || lo.user_id || '',
+          user_id_number: getNumericUserId(lo),
           created_at: lo.created_at || new Date().toISOString(),
         })
       }
@@ -588,10 +658,17 @@ export const adminService = {
         const sAddr = dbo.shipping_address || {}
         const rawAwb = dbo.tracking_awb || dbo.tracking_number || existing.tracking_awb || ''
         const realAwb = isRealAwb(rawAwb) ? rawAwb.trim() : ''
+        const rawDboStatus = dbo.order_status || dbo.status || existing.order_status || 'Processing'
+        const currentDboStatus = (rawDboStatus === 'Confirmed' || rawDboStatus === 'Order Confirmed') ? 'Processing' : rawDboStatus
         orderMap.set(num, {
           ...existing,
           ...dbo,
           order_number: num,
+          user_id_number: getNumericUserId(dbo || existing),
+          order_status: currentDboStatus,
+          status: currentDboStatus,
+          order_status: currentDboStatus,
+          status: currentDboStatus,
           tracking_awb: realAwb,
           tracking_number: realAwb,
           delivery_date: dbo.delivery_date || sAddr.delivery_date || existing.delivery_date || '',
@@ -716,7 +793,7 @@ export const adminService = {
             console.warn('Supabase delete by order_number warning:', error)
             try {
               await supabase.from('orders').delete().eq('order_number', cleanNum)
-            } catch {}
+            } catch { }
           }
         }
       } catch (err) {
@@ -756,7 +833,7 @@ export const adminService = {
               localStorage.setItem(key, JSON.stringify(filtered))
             }
           }
-        } catch {}
+        } catch { }
       })
 
       // Clean up customer order lists in registered users registry
@@ -774,7 +851,7 @@ export const adminService = {
             localStorage.setItem('thenee_registered_users', JSON.stringify(updatedUsers))
           }
         }
-      } catch {}
+      } catch { }
 
       // Fire events so both customer account page & admin portal update instantly
       window.dispatchEvent(new Event('storage'))
@@ -907,7 +984,7 @@ export const adminService = {
 
       customerMap.set(key, {
         id: p.id,
-        user_id_number: p.user_id_number || getNumericUserId(p),
+        user_id_number: getNumericUserId(p),
         name: p.full_name || p.name || 'Member Patron',
         phone: p.phone || '',
         email,
@@ -935,7 +1012,7 @@ export const adminService = {
       if (!customerMap.has(key)) {
         customerMap.set(key, {
           id: lr.id || `reg-${Date.now()}`,
-          user_id_number: lr.user_id_number || getNumericUserId(lr),
+          user_id_number: getNumericUserId(lr),
           name: lr.name || (email ? email.split('@')[0] : 'Member Patron'),
           phone: lr.phone || lr.contact || '',
           email,
@@ -951,7 +1028,9 @@ export const adminService = {
         })
       } else {
         const existing = customerMap.get(key)
-        if (!existing.user_id_number && lr.user_id_number) existing.user_id_number = lr.user_id_number
+        if (!existing.user_id_number || !/^\d{8}$/.test(String(existing.user_id_number).trim())) {
+          existing.user_id_number = getNumericUserId(lr || existing)
+        }
         if (!existing.phone && (lr.phone || lr.contact)) existing.phone = lr.phone || lr.contact
         if ((!existing.name || existing.name === 'Member Patron') && lr.name) existing.name = lr.name
       }
@@ -969,7 +1048,7 @@ export const adminService = {
         if (!customerMap.has(key)) {
           customerMap.set(key, {
             id: currentAuthUser.id || 'curr-session',
-            user_id_number: currentAuthUser.user_id_number || getNumericUserId(currentAuthUser),
+            user_id_number: getNumericUserId(currentAuthUser),
             name: currentAuthUser.name || 'Member Patron',
             phone: currentAuthUser.contact || currentAuthUser.phone || '',
             email,
@@ -985,8 +1064,8 @@ export const adminService = {
           })
         } else {
           const existing = customerMap.get(key)
-          if (!existing.user_id_number && currentAuthUser.user_id_number) {
-            existing.user_id_number = currentAuthUser.user_id_number
+          if (!existing.user_id_number || !/^\d{8}$/.test(String(existing.user_id_number).trim())) {
+            existing.user_id_number = getNumericUserId(currentAuthUser || existing)
           }
           if (!existing.phone && (currentAuthUser.contact || currentAuthUser.phone)) {
             existing.phone = currentAuthUser.contact || currentAuthUser.phone
@@ -1012,7 +1091,7 @@ export const adminService = {
       if (!customerMap.has(key)) {
         customerMap.set(key, {
           id: o.user_id || `cust-${Date.now()}`,
-          user_id_number: o.user_id_number || getNumericUserId(o.user_id || key),
+          user_id_number: getNumericUserId(o),
           name: o.customer_name || 'Guest Patron',
           phone: o.customer_phone || '',
           email,
@@ -1041,7 +1120,7 @@ export const adminService = {
     const result = Array.from(customerMap.values())
       .map((cust) => ({
         ...cust,
-        user_id_number: cust.user_id_number || getNumericUserId(cust),
+        user_id_number: getNumericUserId(cust),
         provider: cust.provider || 'email',
         role: cust.role || 'customer',
         createdAt: cust.createdAt || cust.joinedDate || new Date().toISOString(),
@@ -1199,7 +1278,7 @@ export const adminService = {
     ]
 
     const rows = customersList.map((c) => {
-      const uid = c.user_id_number || getNumericUserId(c)
+      const uid = getNumericUserId(c)
       const provider = resolveSignupProvider(c)
       const role = c.role || 'customer'
       const joined = c.createdAt ? new Date(c.createdAt).toLocaleDateString('en-GB') : 'Nov 2026'
@@ -1241,7 +1320,7 @@ export const adminService = {
 
     const rowsHtml = customersList
       .map((c, idx) => {
-        const uid = c.user_id_number || getNumericUserId(c)
+        const uid = getNumericUserId(c)
         const provider = resolveSignupProvider(c)
         const role = c.role || 'customer'
         const joined = c.createdAt ? new Date(c.createdAt).toLocaleDateString('en-GB') : 'Nov 2026'

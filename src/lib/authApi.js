@@ -246,7 +246,7 @@ export async function signInWithEmailPassword({ email, password }) {
         // Sync with local registry
         const existing = findUserByEmail(cleanEmail) || {}
         const passHash = await hashPassword(password)
-        const numericId = u.user_metadata?.user_id_number || existing.user_id_number || getNumericUserId(u.id || cleanEmail)
+        const numericId = getNumericUserId(u.user_metadata?.user_id_number || existing.user_id_number || u.id || cleanEmail)
         saveUserToRegistry({
           ...existing,
           id: u.id,
@@ -297,7 +297,7 @@ export async function signInWithEmailPassword({ email, password }) {
 
     const inputHash = await hashPassword(password)
     if (existingUser.passwordHash === inputHash) {
-      const numericId = existingUser.user_id_number || getNumericUserId(existingUser)
+      const numericId = getNumericUserId(existingUser)
       return {
         success: true,
         user: {
@@ -472,7 +472,7 @@ export async function updateUserProfile({ email, name, phone, password }) {
     hasPassword = true
   }
 
-  const numericId = user.user_id_number || getNumericUserId(user)
+  const numericId = getNumericUserId(user)
   const updated = {
     ...user,
     user_id_number: numericId,
