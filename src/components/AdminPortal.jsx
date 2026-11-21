@@ -272,6 +272,13 @@ const Icons = {
       <line x1="16.24" y1="7.76" x2="19.07" y2="4.93" />
     </svg>
   ),
+  upload: (props) => (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+      <polyline points="17 8 12 3 7 8" />
+      <line x1="12" y1="3" x2="12" y2="15" />
+    </svg>
+  ),
 }
 
 const TABS = [
@@ -2885,109 +2892,6 @@ const AdminPortal = ({ onBack }) => {
                         <span className={`coupon-status-tag ${c.isActive ? 'active' : 'inactive'}`}>
                           {c.isActive ? 'Active' : 'Disabled'}
                         </span>
-                      </div>
-
-                      {/* Orders Table */}
-                      <div className="admin-table-container">
-                        {filteredOrders.length === 0 ? (
-                          <div className="admin-empty-state">No matching orders found.</div>
-                        ) : (
-                          <table className="admin-data-table">
-                            <thead>
-                              <tr>
-                                <th>Order ID</th>
-                                <th>Date</th>
-                                <th>Customer</th>
-                                <th>Items</th>
-                                <th>Amount</th>
-                                <th>Status</th>
-                                <th>Courier / AWB</th>
-                                <th>Actions</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {filteredOrders.map((o) => {
-                                const itemsCount = (o.items || []).reduce((sum, it) => sum + (it.quantity || 1), 0)
-                                return (
-                                  <tr key={o.id}>
-                                    <td className="cell-order-id">
-                                      <strong
-                                        className="order-num-clickable"
-                                        onClick={() => handleOpenManageOrder(o)}
-                                        style={{ cursor: 'pointer', color: '#123223', textDecoration: 'underline' }}
-                                        title="Manage & Fulfill Order"
-                                      >
-                                        {o.order_number || o.id.slice(0, 8)}
-                                      </strong>
-                                      <span className="cell-payment-tag">{o.payment_method || 'COD'}</span>
-                                    </td>
-                                    <td>{o.created_at ? new Date(o.created_at).toLocaleDateString('en-IN') : '—'}</td>
-                                    <td>
-                                      <div className="cell-customer">
-                                        <strong>{o.customer_name || 'Guest'}</strong>
-                                        <span className="order-uid-tag">ID: {o.user_id_number || getNumericUserId(o.user_id || o.customer_email || o.customer_phone)}</span>
-                                        <span>{o.customer_phone || '—'}</span>
-                                        <small>{o.shipping_city || o.shipping_state || 'India'}</small>
-                                      </div>
-                                    </td>
-                                    <td>
-                                      <span className="cell-items-pill">{itemsCount} Items</span>
-                                    </td>
-                                    <td className="cell-amount">₹{o.total_amount}</td>
-                                    <td>
-                                      <span className={`status-pill status-${(o.order_status || 'confirmed').toLowerCase()}`}>
-                                        {o.order_status || 'Confirmed'}
-                                      </span>
-                                    </td>
-                                    <td>
-                                      {isRealAwb(o.tracking_number || o.tracking_awb) ? (
-                                        <div className="cell-courier-info">
-                                          <strong>{o.courier_partner || o.courier || 'India Post Speed Post'}</strong>
-                                          <span className="awb-num">{o.tracking_number || o.tracking_awb}</span>
-                                        </div>
-                                      ) : (
-                                        <span className="cell-no-awb" style={{ color: '#854D0E', background: '#FEF9C3', padding: '3px 8px', borderRadius: '4px', fontSize: '0.78rem', fontWeight: 600 }}>
-                                          Updated soon
-                                        </span>
-                                      )}
-                                    </td>
-                                    <td>
-                                      <div className="row-action-btns">
-                                        <button
-                                          type="button"
-                                          className="btn-tbl-action fulfill"
-                                          onClick={() => handleOpenManageOrder(o)}
-                                          title="Manage & Fulfill Consignment"
-                                        >
-                                          <Icons.truck />
-                                          <span>Fulfill</span>
-                                        </button>
-                                        <button
-                                          type="button"
-                                          className="btn-tbl-action invoice"
-                                          onClick={() => handlePrintInvoice(o)}
-                                          title="Print Packing Slip & Invoice"
-                                        >
-                                          <Icons.fileText />
-                                          <span>Invoice</span>
-                                        </button>
-                                        <button
-                                          type="button"
-                                          className="btn-tbl-action delete"
-                                          onClick={() => setOrderToDelete(o)}
-                                          title="Permanently Delete Order"
-                                        >
-                                          <Icons.trash />
-                                          <span>Delete</span>
-                                        </button>
-                                      </div>
-                                    </td>
-                                  </tr>
-                                )
-                              })}
-                            </tbody>
-                          </table>
-                        )}
                       </div>
 
                       <p className="coupon-desc">{c.description || 'Valid on all Kadayam village products'}</p>
