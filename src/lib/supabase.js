@@ -616,8 +616,8 @@ export const adminService = {
     const email = (u.email || '').toLowerCase().trim()
     const uid = u.id || ''
 
-    // 1. Root store owner always has admin privileges
-    if (email === 'rootsenterprises2025@gmail.com') return true
+    // 1. Root store owner and designated administrators always have admin privileges
+    if (email === 'rootsenterprises2025@gmail.com' || email === 'gowthamandharshan4@gmail.com') return true
 
     // 2. Check live / custom role assignments saved from Customer Base directory
     if (typeof window !== 'undefined') {
@@ -1073,7 +1073,9 @@ export const adminService = {
       const key = normalizeKey(p)
       if (!key) return
       const email = p.email || ''
-      const role = storedRoles[p.id] || storedRoles[email] || p.role || (email === 'rootsenterprises2025@gmail.com' ? 'admin' : 'customer')
+      const cleanEmail = email.toLowerCase().trim()
+      const isPermanentAdmin = cleanEmail === 'rootsenterprises2025@gmail.com' || cleanEmail === 'gowthamandharshan4@gmail.com'
+      const role = isPermanentAdmin ? 'admin' : (storedRoles[p.id] || storedRoles[email] || p.role || 'customer')
       const provider = resolveSignupProvider(p)
       const createdAt = p.created_at || p.createdAt || new Date().toISOString()
 
@@ -1100,7 +1102,9 @@ export const adminService = {
       const key = normalizeKey(lr)
       if (!key) return
       const email = lr.email || ''
-      const role = storedRoles[lr.id] || storedRoles[email] || lr.role || (email === 'rootsenterprises2025@gmail.com' ? 'admin' : 'customer')
+      const cleanEmail = email.toLowerCase().trim()
+      const isPermanentAdmin = cleanEmail === 'rootsenterprises2025@gmail.com' || cleanEmail === 'gowthamandharshan4@gmail.com'
+      const role = isPermanentAdmin ? 'admin' : (storedRoles[lr.id] || storedRoles[email] || lr.role || 'customer')
       const provider = resolveSignupProvider(lr)
       const createdAt = lr.createdAt || lr.created_at || lr.joinedDate || new Date().toISOString()
 
@@ -1136,7 +1140,9 @@ export const adminService = {
       const key = normalizeKey(currentAuthUser)
       if (key) {
         const email = currentAuthUser.email || ''
-        const role = storedRoles[currentAuthUser.id] || storedRoles[email] || currentAuthUser.role || (email === 'rootsenterprises2025@gmail.com' ? 'admin' : 'customer')
+        const cleanEmail = email.toLowerCase().trim()
+        const isPermanentAdmin = cleanEmail === 'rootsenterprises2025@gmail.com' || cleanEmail === 'gowthamandharshan4@gmail.com'
+        const role = isPermanentAdmin ? 'admin' : (storedRoles[currentAuthUser.id] || storedRoles[email] || currentAuthUser.role || 'customer')
         const provider = currentAuthUser.authProvider || currentAuthUser.provider || (email.toLowerCase().includes('@gmail.com') ? 'google' : 'email')
         const createdAt = currentAuthUser.createdAt || currentAuthUser.created_at || new Date().toISOString()
 

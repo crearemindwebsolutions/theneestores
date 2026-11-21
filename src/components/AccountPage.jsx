@@ -327,7 +327,10 @@ const AccountPage = ({ onBack, onLogout, initialTab = 'hub' }) => {
     currentUser &&
     (currentUser.role === 'admin' ||
      adminService.isAdmin(currentUser) ||
-     (currentUser.email && currentUser.email.toLowerCase().trim() === 'rootsenterprises2025@gmail.com'))
+     (currentUser.email && (
+       currentUser.email.toLowerCase().trim() === 'rootsenterprises2025@gmail.com' ||
+       currentUser.email.toLowerCase().trim() === 'gowthamandharshan4@gmail.com'
+     )))
   )
 
   // When activeTab is set to admin, automatically navigate to the direct full Admin Workstation

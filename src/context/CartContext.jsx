@@ -27,7 +27,8 @@ export const CartProvider = ({ children }) => {
           parsed.hasPassword = true
         }
         const storedRoles = JSON.parse(localStorage.getItem('thenee_customer_roles') || '{}')
-        parsed.role = storedRoles[parsed.id] || (cleanEmail && storedRoles[cleanEmail]) || parsed.role || (cleanEmail === 'rootsenterprises2025@gmail.com' ? 'admin' : 'customer')
+        const isPermanentAdmin = cleanEmail === 'rootsenterprises2025@gmail.com' || cleanEmail === 'gowthamandharshan4@gmail.com'
+        parsed.role = isPermanentAdmin ? 'admin' : (storedRoles[parsed.id] || (cleanEmail && storedRoles[cleanEmail]) || parsed.role || 'customer')
       }
       return parsed
     } catch {
@@ -168,7 +169,8 @@ export const CartProvider = ({ children }) => {
       let assignedRole = 'customer'
       try {
         const storedRoles = JSON.parse(localStorage.getItem('thenee_customer_roles') || '{}')
-        assignedRole = storedRoles[u.id] || (cleanEmail && storedRoles[cleanEmail]) || (cleanEmail === 'rootsenterprises2025@gmail.com' ? 'admin' : 'customer')
+        const isPermanentAdmin = cleanEmail === 'rootsenterprises2025@gmail.com' || cleanEmail === 'gowthamandharshan4@gmail.com'
+        assignedRole = isPermanentAdmin ? 'admin' : (storedRoles[u.id] || (cleanEmail && storedRoles[cleanEmail]) || 'customer')
       } catch { }
 
       const userData = {
@@ -391,11 +393,14 @@ export const CartProvider = ({ children }) => {
     try {
       const storedRoles = JSON.parse(localStorage.getItem('thenee_customer_roles') || '{}')
       const emailKey = (withUserId.email || '').toLowerCase().trim()
+      const isPermanentAdmin = emailKey === 'rootsenterprises2025@gmail.com' || emailKey === 'gowthamandharshan4@gmail.com'
       assignedRole =
-        storedRoles[withUserId.id] ||
-        (emailKey && storedRoles[emailKey]) ||
-        withUserId.role ||
-        (emailKey === 'rootsenterprises2025@gmail.com' ? 'admin' : 'customer')
+        isPermanentAdmin ? 'admin' : (
+          storedRoles[withUserId.id] ||
+          (emailKey && storedRoles[emailKey]) ||
+          withUserId.role ||
+          'customer'
+        )
     } catch { }
     const finalUser = { ...withUserId, role: assignedRole }
     try {
