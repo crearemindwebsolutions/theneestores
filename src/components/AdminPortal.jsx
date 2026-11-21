@@ -1227,7 +1227,8 @@ const AdminPortal = ({ onBack }) => {
       }
       const img = new Image()
       img.onload = () => {
-        const maxDim = 1200
+        // High quality web compression - max dimension 800px, 0.82 JPEG/PNG
+        const maxDim = 800
         let { width, height } = img
         if (width > maxDim || height > maxDim) {
           if (width > height) {
@@ -1237,30 +1238,36 @@ const AdminPortal = ({ onBack }) => {
             width = Math.round((width * maxDim) / height)
             height = maxDim
           }
+        }
+        try {
           const canvas = document.createElement('canvas')
-          canvas.width = width
-          canvas.height = height
+          canvas.width = Math.max(1, width)
+          canvas.height = Math.max(1, height)
           const ctx = canvas.getContext('2d')
           ctx.drawImage(img, 0, 0, width, height)
-          const optimized = canvas.toDataURL('image/jpeg', 0.88)
+          const isPng = file.type === 'image/png'
+          const optimized = canvas.toDataURL(isPng ? 'image/png' : 'image/jpeg', 0.82)
           setEditingProduct((prev) => ({
             ...prev,
             cardImage: optimized,
             image: optimized,
             bottle: optimized,
             image_url: optimized,
+            poster: optimized,
           }))
-        } else {
+          showToast('Image uploaded and preview updated!')
+        } catch {
           setEditingProduct((prev) => ({
             ...prev,
             cardImage: dataUrl,
             image: dataUrl,
             bottle: dataUrl,
             image_url: dataUrl,
+            poster: dataUrl,
           }))
+          showToast('Image uploaded!')
         }
         setIsUploadingProductImage(false)
-        showToast('Image uploaded and updated for this product!')
       }
       img.onerror = () => {
         setEditingProduct((prev) => ({
@@ -1269,6 +1276,7 @@ const AdminPortal = ({ onBack }) => {
           image: dataUrl,
           bottle: dataUrl,
           image_url: dataUrl,
+          poster: dataUrl,
         }))
         setIsUploadingProductImage(false)
         showToast('Image uploaded!')
@@ -1332,29 +1340,45 @@ const AdminPortal = ({ onBack }) => {
       image: '',
       bottle: '',
       image_url: '',
+      poster: '',
     }))
     showToast('Product image removed.')
   }
 
   const handleSaveProduct = (e) => {
-    e.preventDefault()
-    if (!editingProduct || !editingProduct.name) return
-    const activeImg = editingProduct.cardImage || editingProduct.image || editingProduct.bottle || ''
-    const finalProduct = {
-      ...editingProduct,
-      cardImage: activeImg,
-      image: activeImg,
-      bottle: activeImg,
-      image_url: activeImg,
+    if (e && e.preventDefault) e.preventDefault()
+    if (!editingProduct || !editingProduct.name) {
+      showToast('Please enter a product name.')
+      return
     }
-    if (finalProduct.category === 'podi') {
-      cmsService.savePodi(finalProduct)
-    } else {
-      cmsService.saveProduct(finalProduct)
+    try {
+      const activeImg = editingProduct.cardImage || editingProduct.image || editingProduct.bottle || editingProduct.image_url || ''
+      const finalProduct = {
+        ...editingProduct,
+        cardImage: activeImg,
+        image: activeImg,
+        bottle: editingProduct.bottle || activeImg,
+        image_url: activeImg,
+        poster: activeImg,
+      }
+
+      // Check if this item belongs to individualPodis or main products catalog
+      const isPodiItem = cmsService.getPodis().some((p) => p.id === finalProduct.id) ||
+        (finalProduct.category === 'podi' && !cmsService.getProducts().some((p) => p.id === finalProduct.id))
+
+      if (isPodiItem) {
+        cmsService.savePodi(finalProduct)
+      } else {
+        cmsService.saveProduct(finalProduct)
+      }
+
+      setIsProductModalOpen(false)
+      showToast(`Product "${finalProduct.name}" saved and live on storefront!`)
+      loadStoreData()
+    } catch (err) {
+      console.error('Save product error:', err)
+      showToast('Error saving product: ' + (err.message || 'Please check input fields'))
     }
-    setIsProductModalOpen(false)
-    showToast(`Product "${finalProduct.name}" saved and live on storefront!`)
-    loadStoreData()
   }
 
   const handleDeleteProduct = (id, isPodi = false) => {
@@ -5008,7 +5032,7 @@ const AdminPortal = ({ onBack }) => {
 
                 {/* Interactive Image Manager (Upload, Edit, Download, Delete) */}
                 {(() => {
-                  const currentProductImg = editingProduct.cardImage || editingProduct.image || editingProduct.bottle || ''
+                  const currentProductImg = editingProduct.cardImage || editingProduct.image || editingProduct.bottle || editingProduct.image_url || ''
                   return (
                     <div className="admin-input-group prod-image-manager-group">
                       <div className="prod-image-header-row">
@@ -5053,7 +5077,7 @@ const AdminPortal = ({ onBack }) => {
                             <div className="prod-image-meta-info">
                               <h4 className="prod-image-name">{editingProduct.name || 'Herbal Product'} Primary Packaging</h4>
                               <p className="prod-image-meta-desc">
-                                Live catalog image. Click &quot;Edit / Replace Image&quot; to upload a new photo, &quot;Download Image&quot; to save locally, or &quot;Delete Image&quot; to remove.
+                                Live catalog image. Click &quot;Upload New Photo&quot; to upload a new file, or edit the direct image link below.
                               </p>
                             </div>
 
@@ -5066,7 +5090,7 @@ const AdminPortal = ({ onBack }) => {
                                 title="Upload a new photo to replace this image"
                               >
                                 <Icons.edit width="14" height="14" />
-                                <span>{isUploadingProductImage ? 'Uploading...' : 'Edit / Replace Image'}</span>
+                                <span>{isUploadingProductImage ? 'Uploading...' : 'Upload New Photo'}</span>
                               </button>
 
                               <button
@@ -5133,6 +5157,42 @@ const AdminPortal = ({ onBack }) => {
                           </button>
                         </div>
                       )}
+
+                      {/* Direct image path or URL input */}
+                      <div className="prod-image-url-box" style={{ marginTop: '12px', background: '#f8faf9', padding: '10px 14px', borderRadius: '8px', border: '1px solid #e2ece6' }}>
+                        <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 600, color: '#274C37', marginBottom: '6px' }}>
+                          Direct Image Path or Web URL
+                        </label>
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                          <input
+                            type="text"
+                            placeholder="e.g. /images/custom_thenee/herbal-tea-product.jpg or https://..."
+                            value={currentProductImg}
+                            onChange={(e) => {
+                              const val = e.target.value
+                              setEditingProduct((prev) => ({
+                                ...prev,
+                                cardImage: val,
+                                image: val,
+                                bottle: prev.bottle || val,
+                                image_url: val,
+                                poster: val,
+                              }))
+                            }}
+                            style={{ flex: 1, padding: '7px 12px', fontSize: '0.82rem', borderRadius: '6px', border: '1px solid #ccd8d2', background: '#fff' }}
+                          />
+                          <button
+                            type="button"
+                            className="btn-prod-img-action edit"
+                            onClick={() => productImageInputRef.current?.click()}
+                            disabled={isUploadingProductImage}
+                            style={{ padding: '7px 14px', whiteSpace: 'nowrap', borderRadius: '6px' }}
+                          >
+                            <Icons.upload width="14" height="14" />
+                            <span>Browse Computer</span>
+                          </button>
+                        </div>
+                      </div>
                     </div>
                   )
                 })()}
@@ -5166,7 +5226,7 @@ const AdminPortal = ({ onBack }) => {
 
                 <div className="modal-actions-row">
                   <button type="button" className="btn-modal-cancel" onClick={() => setIsProductModalOpen(false)}>Cancel</button>
-                  <button type="submit" className="admin-action-btn primary">Save Product & Sync Live</button>
+                  <button type="submit" className="admin-action-btn primary" onClick={handleSaveProduct}>Save Product & Sync Live</button>
                 </div>
               </form>
             </div>

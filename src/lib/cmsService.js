@@ -7,6 +7,17 @@
 import { products as defaultProducts, individualPodis as defaultPodis, brandInfo as defaultBrandInfo } from '../data/products'
 import { adminService, supabase } from './supabase'
 
+function safeSupabaseQuery(builder) {
+  if (!builder) return
+  try {
+    Promise.resolve(builder).catch((err) => {
+      console.warn('Supabase CMS sync notice:', err?.message || err)
+    })
+  } catch (err) {
+    console.warn('Supabase CMS execution notice:', err)
+  }
+}
+
 const STORAGE_KEYS = {
   PRODUCTS: 'thenee_cms_products',
   PODIS: 'thenee_cms_podis',
@@ -161,7 +172,17 @@ export const cmsService = {
 
   saveProducts(productsList) {
     if (typeof window === 'undefined') return
-    localStorage.setItem(STORAGE_KEYS.PRODUCTS, JSON.stringify(productsList))
+    try {
+      localStorage.setItem(STORAGE_KEYS.PRODUCTS, JSON.stringify(productsList))
+    } catch (e) {
+      console.warn('Storage quota notice when saving products:', e)
+    }
+    try {
+      if (Array.isArray(defaultProducts)) {
+        defaultProducts.length = 0
+        defaultProducts.push(...productsList)
+      }
+    } catch { }
     this.notifyUpdate()
   },
 
@@ -175,24 +196,26 @@ export const cmsService = {
     }
     this.saveProducts(list)
     if (supabase) {
-      supabase.from('products').upsert({
-        id: updatedProduct.id,
-        name: updatedProduct.name,
-        category: updatedProduct.category,
-        category_label: updatedProduct.categoryLabel || updatedProduct.category,
-        price: updatedProduct.price,
-        original_price: updatedProduct.originalPrice || null,
-        volume: updatedProduct.volume || '',
-        badge: updatedProduct.badge || '',
-        tagline: updatedProduct.tagline || '',
-        description: updatedProduct.description || '',
-        ingredients: updatedProduct.ingredients || '',
-        in_stock: updatedProduct.inStock !== false,
-        stock_count: updatedProduct.stockCount || 50,
-        card_image: updatedProduct.cardImage || updatedProduct.image || '',
-        key_benefits: updatedProduct.keyBenefits || [],
-        updated_at: new Date().toISOString(),
-      }).catch(() => {})
+      safeSupabaseQuery(
+        supabase.from('products').upsert({
+          id: updatedProduct.id,
+          name: updatedProduct.name,
+          category: updatedProduct.category,
+          category_label: updatedProduct.categoryLabel || updatedProduct.category,
+          price: updatedProduct.price,
+          original_price: updatedProduct.originalPrice || null,
+          volume: updatedProduct.volume || '',
+          badge: updatedProduct.badge || '',
+          tagline: updatedProduct.tagline || '',
+          description: updatedProduct.description || '',
+          ingredients: updatedProduct.ingredients || '',
+          in_stock: updatedProduct.inStock !== false,
+          stock_count: updatedProduct.stockCount || 50,
+          card_image: updatedProduct.cardImage || updatedProduct.image || '',
+          key_benefits: updatedProduct.keyBenefits || [],
+          updated_at: new Date().toISOString(),
+        })
+      )
     }
   },
 
@@ -200,7 +223,7 @@ export const cmsService = {
     const list = this.getProducts().filter((p) => p.id !== id)
     this.saveProducts(list)
     if (supabase) {
-      supabase.from('products').delete().eq('id', id).catch(() => {})
+      safeSupabaseQuery(supabase.from('products').delete().eq('id', id))
     }
   },
 
@@ -220,7 +243,17 @@ export const cmsService = {
 
   savePodis(podisList) {
     if (typeof window === 'undefined') return
-    localStorage.setItem(STORAGE_KEYS.PODIS, JSON.stringify(podisList))
+    try {
+      localStorage.setItem(STORAGE_KEYS.PODIS, JSON.stringify(podisList))
+    } catch (e) {
+      console.warn('Storage quota notice when saving podis:', e)
+    }
+    try {
+      if (Array.isArray(defaultPodis)) {
+        defaultPodis.length = 0
+        defaultPodis.push(...podisList)
+      }
+    } catch { }
     this.notifyUpdate()
   },
 
@@ -234,24 +267,26 @@ export const cmsService = {
     }
     this.savePodis(list)
     if (supabase) {
-      supabase.from('products').upsert({
-        id: updatedPodi.id,
-        name: updatedPodi.name,
-        category: 'podi',
-        category_label: 'Traditional Food Podi',
-        price: updatedPodi.price,
-        original_price: updatedPodi.originalPrice || null,
-        volume: updatedPodi.volume || '',
-        badge: updatedPodi.badge || '',
-        tagline: updatedPodi.tagline || '',
-        description: updatedPodi.description || '',
-        ingredients: updatedPodi.ingredients || '',
-        in_stock: updatedPodi.inStock !== false,
-        stock_count: updatedPodi.stockCount || 50,
-        card_image: updatedPodi.cardImage || updatedPodi.image || '',
-        key_benefits: updatedPodi.keyBenefits || [],
-        updated_at: new Date().toISOString(),
-      }).catch(() => {})
+      safeSupabaseQuery(
+        supabase.from('products').upsert({
+          id: updatedPodi.id,
+          name: updatedPodi.name,
+          category: 'podi',
+          category_label: 'Traditional Food Podi',
+          price: updatedPodi.price,
+          original_price: updatedPodi.originalPrice || null,
+          volume: updatedPodi.volume || '',
+          badge: updatedPodi.badge || '',
+          tagline: updatedPodi.tagline || '',
+          description: updatedPodi.description || '',
+          ingredients: updatedPodi.ingredients || '',
+          in_stock: updatedPodi.inStock !== false,
+          stock_count: updatedPodi.stockCount || 50,
+          card_image: updatedPodi.cardImage || updatedPodi.image || '',
+          key_benefits: updatedPodi.keyBenefits || [],
+          updated_at: new Date().toISOString(),
+        })
+      )
     }
   },
 
@@ -259,7 +294,7 @@ export const cmsService = {
     const list = this.getPodis().filter((p) => p.id !== id)
     this.savePodis(list)
     if (supabase) {
-      supabase.from('products').delete().eq('id', id).catch(() => {})
+      safeSupabaseQuery(supabase.from('products').delete().eq('id', id))
     }
   },
 
@@ -301,18 +336,20 @@ export const cmsService = {
     }
     this.saveCoupons(list)
     if (supabase) {
-      supabase.from('coupons').upsert({
-        code: coupon.code.toUpperCase(),
-        discount_type: coupon.discountType || 'flat',
-        discount_value: coupon.discountValue,
-        min_order: coupon.minOrder || 0,
-        max_discount: coupon.maxDiscount || null,
-        is_active: coupon.isActive !== false,
-        description: coupon.description || '',
-        usage_count: coupon.usageCount || 0,
-        expiry_date: coupon.expiryDate || '2026-12-31',
-        updated_at: new Date().toISOString(),
-      }).catch(() => {})
+      safeSupabaseQuery(
+        supabase.from('coupons').upsert({
+          code: coupon.code.toUpperCase(),
+          discount_type: coupon.discountType || 'flat',
+          discount_value: coupon.discountValue,
+          min_order: coupon.minOrder || 0,
+          max_discount: coupon.maxDiscount || null,
+          is_active: coupon.isActive !== false,
+          description: coupon.description || '',
+          usage_count: coupon.usageCount || 0,
+          expiry_date: coupon.expiryDate || '2026-12-31',
+          updated_at: new Date().toISOString(),
+        })
+      )
     }
   },
 
@@ -320,7 +357,7 @@ export const cmsService = {
     const list = this.getCoupons().filter((c) => c.code.toUpperCase() !== code.toUpperCase())
     this.saveCoupons(list)
     if (supabase) {
-      supabase.from('coupons').delete().eq('code', code.toUpperCase()).catch(() => {})
+      safeSupabaseQuery(supabase.from('coupons').delete().eq('code', code.toUpperCase()))
     }
   },
 
@@ -345,11 +382,13 @@ export const cmsService = {
     localStorage.setItem(STORAGE_KEYS.SITE_CONTENT, JSON.stringify(updated))
     this.notifyUpdate()
     if (supabase) {
-      supabase.from('site_content').upsert({
-        key: 'main',
-        content: updated,
-        updated_at: new Date().toISOString(),
-      }).catch(() => {})
+      safeSupabaseQuery(
+        supabase.from('site_content').upsert({
+          key: 'main',
+          content: updated,
+          updated_at: new Date().toISOString(),
+        })
+      )
     }
   },
 
@@ -383,14 +422,16 @@ export const cmsService = {
     }
     this.saveReviews(list)
     if (supabase) {
-      supabase.from('reviews').upsert({
-        product_id: review.productName || 'Thenee Herbal Tea',
-        user_name: review.name,
-        rating: review.rating || 5,
-        comment: review.text,
-        verified: review.isApproved !== false,
-        created_at: review.date ? new Date(review.date).toISOString() : new Date().toISOString(),
-      }).catch(() => {})
+      safeSupabaseQuery(
+        supabase.from('reviews').upsert({
+          product_id: review.productName || 'Thenee Herbal Tea',
+          user_name: review.name,
+          rating: review.rating || 5,
+          comment: review.text,
+          verified: review.isApproved !== false,
+          created_at: review.date ? new Date(review.date).toISOString() : new Date().toISOString(),
+        })
+      )
     }
   },
 
@@ -398,7 +439,7 @@ export const cmsService = {
     const list = this.getReviews().filter((r) => r.id !== id)
     this.saveReviews(list)
     if (supabase) {
-      supabase.from('reviews').delete().eq('id', id).catch(() => {})
+      safeSupabaseQuery(supabase.from('reviews').delete().eq('id', id))
     }
   },
 
@@ -435,11 +476,13 @@ export const cmsService = {
     localStorage.setItem(STORAGE_KEYS.STORE_SETTINGS, JSON.stringify(updated))
     this.notifyUpdate()
     if (supabase) {
-      supabase.from('store_settings').upsert({
-        key: 'main',
-        settings: updated,
-        updated_at: new Date().toISOString(),
-      }).catch(() => {})
+      safeSupabaseQuery(
+        supabase.from('store_settings').upsert({
+          key: 'main',
+          settings: updated,
+          updated_at: new Date().toISOString(),
+        })
+      )
     }
   },
 
