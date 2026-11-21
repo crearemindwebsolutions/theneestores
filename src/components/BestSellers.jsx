@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { products, individualPodis } from '../data/products'
+import { cmsService } from '../lib/cmsService'
 import { useCart } from '../context/CartContext'
 import useReveal from '../lib/useReveal'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
@@ -13,8 +13,23 @@ const CATEGORIES = [
 ]
 
 const BestSellers = () => {
+  const [productList, setProductList] = useState(() => cmsService.getProducts())
+  const [podisList, setPodisList] = useState(() => cmsService.getPodis())
   const [activeCategory, setActiveCategory] = useState('all')
   const { addToCart, setSelectedProduct, openCart } = useCart()
+
+  useEffect(() => {
+    const handleCmsUpdate = () => {
+      setProductList([...cmsService.getProducts()])
+      setPodisList([...cmsService.getPodis()])
+    }
+    window.addEventListener('thenee_cms_updated', handleCmsUpdate)
+    window.addEventListener('storage', handleCmsUpdate)
+    return () => {
+      window.removeEventListener('thenee_cms_updated', handleCmsUpdate)
+      window.removeEventListener('storage', handleCmsUpdate)
+    }
+  }, [])
 
   useEffect(() => {
     ScrollTrigger.refresh()
@@ -28,8 +43,8 @@ const BestSellers = () => {
   // Filter products
   const filteredProducts =
     activeCategory === 'all'
-      ? products
-      : products.filter((p) => p.category === activeCategory)
+      ? productList
+      : productList.filter((p) => p.category === activeCategory)
 
   return (
     <section className="bestsellers" id="catalog" ref={sectionRef}>
@@ -63,7 +78,7 @@ const BestSellers = () => {
               title="Click for full benefits & ingredients"
             >
               <img
-                src={p.bottle}
+                src={p.cardImage || p.image || p.bottle}
                 alt={p.name}
                 className="bs-card-img"
                 data-perfume-id={p.id}
@@ -113,7 +128,7 @@ const BestSellers = () => {
       </div>
 
       <div className="bestsellers-grid">
-        {individualPodis.map((podi) => (
+        {podisList.map((podi) => (
           <div className="bs-card" key={podi.id}>
             <div
               className="bs-card-media"
@@ -121,7 +136,7 @@ const BestSellers = () => {
               title="Click for full benefits & ingredients"
             >
               <img
-                src={podi.bottle || podi.image}
+                src={podi.cardImage || podi.image || podi.bottle}
                 alt={podi.name}
                 className="bs-card-img"
               />

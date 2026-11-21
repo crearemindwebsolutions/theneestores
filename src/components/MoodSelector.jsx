@@ -6,6 +6,7 @@ import {
   FaPause,
 } from 'react-icons/fa'
 import { products, individualPodis } from '../data/products'
+import { cmsService } from '../lib/cmsService'
 import { useCart } from '../context/CartContext'
 import './MoodSelector.css'
 
@@ -65,21 +66,47 @@ const MoodSelector = () => {
   const [activeIndex, setActiveIndex] = useState(0)
   const [isAutoPlaying, setIsAutoPlaying] = useState(true)
   const [isInView, setIsInView] = useState(false)
+  const [cmsRevision, setCmsRevision] = useState(0)
   const sectionRef = useRef(null)
   const isInteracting = useRef(false)
   const touchStartX = useRef(0)
   const touchStartY = useRef(0)
   const { setSelectedProduct } = useCart()
 
+  useEffect(() => {
+    const handleCmsUpdate = () => {
+      setCmsRevision((prev) => prev + 1)
+    }
+    window.addEventListener('thenee_cms_updated', handleCmsUpdate)
+    window.addEventListener('storage', handleCmsUpdate)
+    return () => {
+      window.removeEventListener('thenee_cms_updated', handleCmsUpdate)
+      window.removeEventListener('storage', handleCmsUpdate)
+    }
+  }, [])
+
   const total = SHOWCASE_ITEMS.length
 
   const getMatchedProduct = useCallback((item) => {
+    const fromCms = cmsService.getProducts().find((p) => p.id === item.id) ||
+      cmsService.getPodis().find((p) => p.id === item.id)
+    if (fromCms) return fromCms
+
     return (
       products.find((p) => p.id === item.id) ||
       individualPodis.find((p) => p.id === item.id) ||
       item
     )
-  }, [])
+  }, [cmsRevision])
+
+  const getShowcaseImage = useCallback((item) => {
+    const p = cmsService.getProducts().find((x) => x.id === item.id) ||
+      cmsService.getPodis().find((x) => x.id === item.id)
+    if (p) {
+      return p.cardImage || p.image || p.bottle || item.packagingImage
+    }
+    return item.packagingImage
+  }, [cmsRevision])
 
   const handlePrev = useCallback(() => {
     setActiveIndex((prev) => (prev - 1 + total) % total)
@@ -258,7 +285,7 @@ const MoodSelector = () => {
 
                   {/* Pure Product Image */}
                   <img
-                    src={item.packagingImage}
+                    src={getShowcaseImage(item)}
                     alt={item.name}
                     className="depth-product-img"
                     loading={isActive ? 'eager' : 'lazy'}

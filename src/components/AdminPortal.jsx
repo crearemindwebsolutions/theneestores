@@ -1364,7 +1364,7 @@ const AdminPortal = ({ onBack }) => {
         ...editingProduct,
         cardImage: activeImg,
         image: activeImg,
-        bottle: editingProduct.bottle || activeImg,
+        bottle: activeImg,
         image_url: activeImg,
         poster: activeImg,
       }
@@ -5078,7 +5078,7 @@ const AdminPortal = ({ onBack }) => {
                                 ...prev,
                                 cardImage: val,
                                 image: val,
-                                bottle: prev.bottle || val,
+                                bottle: val,
                                 image_url: val,
                                 poster: val,
                               }))

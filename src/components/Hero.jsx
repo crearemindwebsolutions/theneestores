@@ -1,8 +1,9 @@
-import { useLayoutEffect, useRef, useState } from 'react'
+import { useLayoutEffect, useRef, useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
-import { products, brandInfo } from '../data/products'
+import { brandInfo } from '../data/products'
+import { cmsService } from '../lib/cmsService'
 import { useCart } from '../context/CartContext'
 import './Hero.css'
 
@@ -14,13 +15,27 @@ if (typeof ScrollTrigger !== 'undefined' && ScrollTrigger.config) {
 const BG_TRANSITION = { duration: 0.6, ease: 'easeInOut' }
 
 const Hero = ({ onOpenAccount }) => {
+  const [productList, setProductList] = useState(() => cmsService.getProducts())
   const [index, setIndex] = useState(0)
   const heroRef = useRef(null)
   const touchStartX = useRef(null)
   const touchStartY = useRef(null)
   const touchStartTime = useRef(0)
-  const len = products.length
-  const current = products[index]
+
+  useEffect(() => {
+    const handleCmsUpdate = () => {
+      setProductList([...cmsService.getProducts()])
+    }
+    window.addEventListener('thenee_cms_updated', handleCmsUpdate)
+    window.addEventListener('storage', handleCmsUpdate)
+    return () => {
+      window.removeEventListener('thenee_cms_updated', handleCmsUpdate)
+      window.removeEventListener('storage', handleCmsUpdate)
+    }
+  }, [])
+
+  const len = productList.length || 1
+  const current = productList[index] || productList[0] || {}
   const { addToCart, setSelectedProduct, openCart } = useCart()
 
   const prev = () => setIndex((index - 1 + len) % len)
@@ -160,14 +175,14 @@ const Hero = ({ onOpenAccount }) => {
                 aria-label="Product image carousel - swipe left or right"
               >
                 <div className="hero-visual-bottle-layer">
-                  {products.map((p, i) => (
+                  {productList.map((p, i) => (
                     <div
                       key={p.id}
                       className={`hero-bottle-wrap hero-bottle-wrap--${p.id}`}
                       style={{ display: i === index ? 'flex' : 'none' }}
                     >
                       <motion.img
-                        src={p.bottle}
+                        src={p.cardImage || p.image || p.bottle}
                         alt={p.name}
                         className={`hero-bottle-img hero-bottle-img--${p.id}`}
                         initial={{ opacity: 0, scale: 0.95 }}

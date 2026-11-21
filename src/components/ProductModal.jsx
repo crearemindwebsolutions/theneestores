@@ -117,7 +117,7 @@ const ProductModal = () => {
             <span className="pmodal-badge-clean">100% Organic & Chemical-Free</span>
             <div className="pmodal-media-bg">
               <ImageWithSkeleton
-                src={selectedProduct.bottle || selectedProduct.cardImage || selectedProduct.image}
+                src={selectedProduct.cardImage || selectedProduct.image || selectedProduct.bottle}
                 alt={selectedProduct.name}
                 className="pmodal-img"
                 skeletonBorderRadius="12px"

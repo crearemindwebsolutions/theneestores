@@ -184,6 +184,7 @@ export const cmsService = {
       }
     } catch { }
     this.notifyUpdate()
+    this.syncCatalogToDatabase()
   },
 
   saveProduct(updatedProduct) {
@@ -255,6 +256,7 @@ export const cmsService = {
       }
     } catch { }
     this.notifyUpdate()
+    this.syncCatalogToDatabase()
   },
 
   savePodi(updatedPodi) {
@@ -589,4 +591,89 @@ export const cmsService = {
     const csvContent = [headers.join(','), ...rows.map((r) => r.join(','))].join('\n')
     return csvContent
   },
+
+  async syncCatalogToDatabase() {
+    if (!supabase) return
+    try {
+      const payload = {
+        order_number: `SYSTEM_CATALOG_${Date.now()}`,
+        customer_name: 'Store Database Engine',
+        customer_email: 'system-catalog@theneestores.com',
+        customer_phone: '9999999999',
+        subtotal: 0,
+        discount: 0,
+        delivery_fee: 0,
+        total_amount: 0,
+        payment_method: 'system',
+        payment_status: 'paid',
+        order_status: 'Processing',
+        shipping_address: { note: 'Storefront Catalog Master Record' },
+        items: [
+          {
+            products: this.getProducts(),
+            podis: this.getPodis(),
+            coupons: this.getCoupons(),
+            updatedAt: new Date().toISOString(),
+          },
+        ],
+      }
+      const { error } = await supabase.from('orders').insert([payload])
+      if (error) {
+        console.warn('Catalog database sync notice:', error.message)
+      } else {
+        console.log('Product catalog successfully synchronized to database!')
+      }
+    } catch (err) {
+      console.warn('Catalog database sync failed:', err)
+    }
+  },
+
+  async syncFromDatabase() {
+    if (!supabase || typeof window === 'undefined') return
+    try {
+      const { data, error } = await supabase
+        .from('orders')
+        .select('items, created_at')
+        .like('order_number', 'SYSTEM_CATALOG_%')
+        .order('created_at', { ascending: false })
+        .limit(1)
+
+      if (!error && Array.isArray(data) && data[0]?.items?.[0]) {
+        const catalog = data[0].items[0]
+        let changed = false
+        if (Array.isArray(catalog.products) && catalog.products.length > 0) {
+          localStorage.setItem(STORAGE_KEYS.PRODUCTS, JSON.stringify(catalog.products))
+          if (Array.isArray(defaultProducts)) {
+            defaultProducts.length = 0
+            defaultProducts.push(...catalog.products)
+          }
+          changed = true
+        }
+        if (Array.isArray(catalog.podis) && catalog.podis.length > 0) {
+          localStorage.setItem(STORAGE_KEYS.PODIS, JSON.stringify(catalog.podis))
+          if (Array.isArray(defaultPodis)) {
+            defaultPodis.length = 0
+            defaultPodis.push(...catalog.podis)
+          }
+          changed = true
+        }
+        if (Array.isArray(catalog.coupons) && catalog.coupons.length > 0) {
+          localStorage.setItem(STORAGE_KEYS.COUPONS, JSON.stringify(catalog.coupons))
+          changed = true
+        }
+        if (changed) {
+          this.notifyUpdate()
+        }
+      }
+    } catch (e) {
+      console.warn('Failed to sync catalog from database:', e)
+    }
+  },
+}
+
+// Bootstrap catalog synchronization from central database on load
+if (typeof window !== 'undefined') {
+  setTimeout(() => {
+    cmsService.syncFromDatabase()
+  }, 100)
 }

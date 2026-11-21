@@ -226,6 +226,16 @@ export const isDemoOrder = (ord) => {
   if (!ord) return true
   const idStr = String(ord.id || '')
   const numStr = String(ord.order_number || ord.order_id || '')
+  const emailStr = String(ord.customer_email || ord.email || '').toLowerCase().trim()
+  if (
+    numStr.startsWith('SYSTEM_') ||
+    numStr === 'SYSTEM_STORE_CATALOG' ||
+    emailStr === 'system-catalog@theneestores.com' ||
+    ord.order_status === 'System_Sync' ||
+    ord.status === 'System_Sync'
+  ) {
+    return true
+  }
   if (idStr.startsWith('ord-231373') || idStr.startsWith('ord-769297') || idStr.startsWith('ord-785305') || idStr.startsWith('ord-')) return true
   if (numStr === 'JSRT-2026-231373' || numStr === 'JSRT-2026-769297' || numStr === 'JSRT-2026-785305' || numStr.startsWith('JSRT-') || numStr.includes('TEST') || numStr.includes('PROBE')) return true
   const str = JSON.stringify(ord)
