@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Component } from 'react'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import useLenis from './lib/useLenis'
 import Loader from './components/Loader'
@@ -31,6 +31,7 @@ import AdminPortal from './components/AdminPortal'
 import { CartProvider, useCart } from './context/CartContext'
 import { analyticsService } from './lib/analyticsService'
 import { migrateLegacyDataIfNeeded } from './lib/userScope'
+import { productService, initProductRealtimeSync } from './lib/productService'
 
 const parseRouteFromHash = () => {
   if (typeof window !== 'undefined') {
@@ -147,6 +148,8 @@ const AppContent = () => {
 
   useEffect(() => {
     migrateLegacyDataIfNeeded()
+    productService.syncFromDatabase()
+    initProductRealtimeSync()
   }, [])
 
   useEffect(() => {
@@ -349,11 +352,49 @@ const AppContent = () => {
   )
 }
 
+class ErrorBoundary extends Component {
+  constructor(props) {
+    super(props)
+    this.state = { hasError: false, error: null }
+  }
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error }
+  }
+  componentDidCatch(error, errorInfo) {
+    console.error('App render error captured by ErrorBoundary:', error, errorInfo)
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '30px', textAlign: 'center', background: '#F8FAF7', fontFamily: 'sans-serif' }}>
+          <h2 style={{ color: '#1B3524', marginBottom: '12px' }}>THENEE Herbal Stores</h2>
+          <p style={{ color: '#556B5C', maxWidth: '480px', marginBottom: '24px', lineHeight: '1.6' }}>
+            We encountered a temporary interface hiccup. Click below to refresh your session.
+          </p>
+          <button
+            type="button"
+            onClick={() => {
+              window.location.hash = 'home'
+              window.location.reload()
+            }}
+            style={{ background: '#274C37', color: '#fff', border: 'none', padding: '12px 28px', borderRadius: '8px', fontWeight: 600, cursor: 'pointer' }}
+          >
+            Reload Storefront
+          </button>
+        </div>
+      )
+    }
+    return this.props.children
+  }
+}
+
 function App() {
   return (
-    <CartProvider>
-      <AppContent />
-    </CartProvider>
+    <ErrorBoundary>
+      <CartProvider>
+        <AppContent />
+      </CartProvider>
+    </ErrorBoundary>
   )
 }
 

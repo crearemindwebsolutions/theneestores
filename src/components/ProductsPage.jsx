@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import Navbar from './Navbar'
 import OfferMarquee from './OfferMarquee'
 import Footer from './Footer'
-import { cmsService } from '../lib/cmsService'
+import { useProducts } from '../lib/useProducts'
 import { useCart } from '../context/CartContext'
 import { SkeletonProductCard, ImageWithSkeleton } from './Skeleton'
 import './PagesShared.css'
@@ -16,24 +16,10 @@ const CATEGORIES = [
 ]
 
 const ProductsPage = ({ onOpenAccount }) => {
-  const [productList, setProductList] = useState(() => cmsService.getProducts())
-  const [podisList, setPodisList] = useState(() => cmsService.getPodis())
+  const { products: productList, podis: podisList, getProductImage } = useProducts()
   const [activeCategory, setActiveCategory] = useState('all')
   const [searchQuery, setSearchQuery] = useState('')
   const { addToCart, setSelectedProduct, openCart } = useCart()
-
-  useEffect(() => {
-    const handleCmsUpdate = () => {
-      setProductList([...cmsService.getProducts()])
-      setPodisList([...cmsService.getPodis()])
-    }
-    window.addEventListener('thenee_cms_updated', handleCmsUpdate)
-    window.addEventListener('storage', handleCmsUpdate)
-    return () => {
-      window.removeEventListener('thenee_cms_updated', handleCmsUpdate)
-      window.removeEventListener('storage', handleCmsUpdate)
-    }
-  }, [])
 
   // Combine products
   const allCatalog = [
@@ -129,7 +115,7 @@ const ProductsPage = ({ onOpenAccount }) => {
                   title="Click for full benefits & ingredients"
                 >
                   <ImageWithSkeleton
-                    src={item.cardImage || item.image || item.bottle}
+                    src={getProductImage(item)}
                     alt={item.name}
                     className="prod-card-img"
                     skeletonBorderRadius="12px"

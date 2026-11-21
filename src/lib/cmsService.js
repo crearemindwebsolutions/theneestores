@@ -6,6 +6,9 @@
 
 import { products as defaultProducts, individualPodis as defaultPodis, brandInfo as defaultBrandInfo } from '../data/products'
 import { adminService, supabase } from './supabase'
+import { productService, getProductImage, getProductBottle } from './productService'
+
+export { productService, getProductImage, getProductBottle }
 
 function safeSupabaseQuery(builder) {
   if (!builder) return
@@ -157,166 +160,47 @@ export const cmsService = {
   },
 
   // --------------------------------------------------------------------------
-  // PRODUCTS MANAGEMENT
+  // PRODUCTS & PODIS MANAGEMENT (Unified through productService)
   // --------------------------------------------------------------------------
   getProducts() {
-    if (typeof window === 'undefined') return defaultProducts
-    try {
-      const stored = localStorage.getItem(STORAGE_KEYS.PRODUCTS)
-      if (stored) return JSON.parse(stored)
-    } catch (e) {
-      console.warn('Failed to parse stored products:', e)
-    }
-    return defaultProducts
+    return productService.getProducts()
   },
 
   saveProducts(productsList) {
-    if (typeof window === 'undefined') return
-    try {
-      localStorage.setItem(STORAGE_KEYS.PRODUCTS, JSON.stringify(productsList))
-    } catch (e) {
-      console.warn('Storage quota notice when saving products:', e)
+    if (Array.isArray(productsList)) {
+      productsList.forEach((p) => productService.saveProduct(p))
     }
-    try {
-      if (Array.isArray(defaultProducts)) {
-        defaultProducts.length = 0
-        defaultProducts.push(...productsList)
-      }
-    } catch { }
-    this.notifyUpdate()
-    this.syncCatalogToDatabase()
   },
 
   async saveProduct(updatedProduct) {
-    const list = this.getProducts()
-    const idx = list.findIndex((p) => p.id === updatedProduct.id)
-    if (idx >= 0) {
-      list[idx] = { ...list[idx], ...updatedProduct }
-    } else {
-      list.push(updatedProduct)
-    }
-    this.saveProducts(list)
-    if (supabase) {
-      try {
-        const activeImg = updatedProduct.cardImage || updatedProduct.image || updatedProduct.bottle || ''
-        const { error } = await supabase.from('products').upsert({
-          id: updatedProduct.id,
-          name: updatedProduct.name || 'Herbal Product',
-          category: updatedProduct.category || 'tea',
-          category_label: updatedProduct.categoryLabel || updatedProduct.category || 'Botanical Teas',
-          price: Number(updatedProduct.price) || 0,
-          original_price: updatedProduct.originalPrice ? Number(updatedProduct.originalPrice) : null,
-          volume: updatedProduct.volume || '',
-          badge: updatedProduct.badge || '',
-          tagline: updatedProduct.tagline || '',
-          description: updatedProduct.description || '',
-          ingredients: updatedProduct.ingredients || '',
-          in_stock: updatedProduct.inStock !== false,
-          stock_count: Number(updatedProduct.stockCount) || 50,
-          card_image: activeImg,
-          bottle: activeImg,
-          image: activeImg,
-          key_benefits: Array.isArray(updatedProduct.keyBenefits) ? updatedProduct.keyBenefits : [],
-          updated_at: new Date().toISOString(),
-        }, { onConflict: 'id' })
-        if (error) console.warn('Supabase product upsert notice:', error.message)
-      } catch (err) {
-        console.warn('Supabase product save notice:', err)
-      }
-    }
+    return await productService.saveProduct(updatedProduct)
   },
 
   deleteProduct(id) {
-    const list = this.getProducts().filter((p) => p.id !== id)
-    this.saveProducts(list)
-    if (supabase) {
-      safeSupabaseQuery(supabase.from('products').delete().eq('id', id))
-    }
+    productService.deleteProduct(id)
   },
 
-  // --------------------------------------------------------------------------
-  // PODIS MANAGEMENT
-  // --------------------------------------------------------------------------
   getPodis() {
-    if (typeof window === 'undefined') return defaultPodis
-    try {
-      const stored = localStorage.getItem(STORAGE_KEYS.PODIS)
-      if (stored) return JSON.parse(stored)
-    } catch (e) {
-      console.warn('Failed to parse stored podis:', e)
-    }
-    return defaultPodis
+    return productService.getPodis()
   },
 
   savePodis(podisList) {
-    if (typeof window === 'undefined') return
-    try {
-      localStorage.setItem(STORAGE_KEYS.PODIS, JSON.stringify(podisList))
-    } catch (e) {
-      console.warn('Storage quota notice when saving podis:', e)
+    if (Array.isArray(podisList)) {
+      podisList.forEach((p) => productService.saveProduct(p))
     }
-    try {
-      if (Array.isArray(defaultPodis)) {
-        defaultPodis.length = 0
-        defaultPodis.push(...podisList)
-      }
-    } catch { }
-    this.notifyUpdate()
-    this.syncCatalogToDatabase()
   },
 
   async savePodi(updatedPodi) {
-    const list = this.getPodis()
-    const idx = list.findIndex((p) => p.id === updatedPodi.id)
-    if (idx >= 0) {
-      list[idx] = { ...list[idx], ...updatedPodi }
-    } else {
-      list.push(updatedPodi)
-    }
-    this.savePodis(list)
-    if (supabase) {
-      try {
-        const activeImg = updatedPodi.cardImage || updatedPodi.image || updatedPodi.bottle || ''
-        const { error } = await supabase.from('products').upsert({
-          id: updatedPodi.id,
-          name: updatedPodi.name || 'Traditional Podi',
-          category: 'podi',
-          category_label: 'Traditional Food Podi',
-          price: Number(updatedPodi.price) || 0,
-          original_price: updatedPodi.originalPrice ? Number(updatedPodi.originalPrice) : null,
-          volume: updatedPodi.volume || '100g Pouch',
-          badge: updatedPodi.badge || '',
-          tagline: updatedPodi.tagline || '',
-          description: updatedPodi.description || '',
-          ingredients: updatedPodi.ingredients || '',
-          in_stock: updatedPodi.inStock !== false,
-          stock_count: Number(updatedPodi.stockCount) || 50,
-          card_image: activeImg,
-          bottle: activeImg,
-          image: activeImg,
-          key_benefits: Array.isArray(updatedPodi.keyBenefits) ? updatedPodi.keyBenefits : [],
-          updated_at: new Date().toISOString(),
-        }, { onConflict: 'id' })
-        if (error) console.warn('Supabase podi upsert notice:', error.message)
-      } catch (err) {
-        console.warn('Supabase podi save notice:', err)
-      }
-    }
+    return await productService.saveProduct(updatedPodi)
   },
 
   deletePodi(id) {
-    const list = this.getPodis().filter((p) => p.id !== id)
-    this.savePodis(list)
-    if (supabase) {
-      safeSupabaseQuery(supabase.from('products').delete().eq('id', id))
-    }
+    productService.deleteProduct(id)
   },
 
   // Reset entire catalog to initial pristine defaults
-  resetCatalogDefaults() {
-    if (typeof window === 'undefined') return
-    localStorage.removeItem(STORAGE_KEYS.PRODUCTS)
-    localStorage.removeItem(STORAGE_KEYS.PODIS)
+  async resetCatalogDefaults() {
+    await productService.resetToDefaults()
     this.notifyUpdate()
   },
 
@@ -604,133 +488,14 @@ export const cmsService = {
     return csvContent
   },
 
-  async syncCatalogToDatabase() {
-    if (!supabase) return
-    try {
-      const payload = {
-        order_number: `SYSTEM_CATALOG_${Date.now()}`,
-        customer_name: 'Store Database Engine',
-        customer_email: 'system-catalog@theneestores.com',
-        customer_phone: '9999999999',
-        subtotal: 0,
-        discount: 0,
-        delivery_fee: 0,
-        total_amount: 0,
-        payment_method: 'system',
-        payment_status: 'paid',
-        order_status: 'Processing',
-        shipping_address: { note: 'Storefront Catalog Master Record' },
-        items: [
-          {
-            products: this.getProducts(),
-            podis: this.getPodis(),
-            coupons: this.getCoupons(),
-            updatedAt: new Date().toISOString(),
-          },
-        ],
-      }
-      const { error } = await supabase.from('orders').insert([payload])
-      if (error) {
-        console.warn('Catalog database sync notice:', error.message)
-      } else {
-        console.log('Product catalog successfully synchronized to database!')
-      }
-    } catch (err) {
-      console.warn('Catalog database sync failed:', err)
-    }
-  },
-
   async syncFromDatabase() {
-    if (!supabase || typeof window === 'undefined') return
-
-    // 1. First priority: Check direct public.products table in Supabase
-    try {
-      const { data: dbProducts, error: prodErr } = await supabase
-        .from('products')
-        .select('*')
-
-      if (!prodErr && Array.isArray(dbProducts) && dbProducts.length > 0) {
-        const formatted = dbProducts.map((p) => ({
-          ...p,
-          categoryLabel: p.category_label || p.categoryLabel,
-          originalPrice: p.original_price != null ? p.original_price : p.originalPrice,
-          inStock: p.in_stock !== false,
-          stockCount: p.stock_count != null ? p.stock_count : (p.stockCount || 50),
-          cardImage: p.card_image || p.image || p.bottle || p.cardImage,
-          bottle: p.bottle || p.card_image || p.image,
-          image: p.image || p.card_image || p.bottle,
-          keyBenefits: p.key_benefits || p.keyBenefits || [],
-          howToUse: p.how_to_use || p.howToUse || [],
-        }))
-
-        const podiIds = new Set(['garlic-podi', 'curry-leaves-podi', 'moringa-podi', 'sesame-podi'])
-        const mainProds = formatted.filter((p) => !podiIds.has(p.id))
-        const podiProds = formatted.filter((p) => podiIds.has(p.id))
-
-        if (mainProds.length > 0) {
-          localStorage.setItem(STORAGE_KEYS.PRODUCTS, JSON.stringify(mainProds))
-          if (Array.isArray(defaultProducts)) {
-            defaultProducts.length = 0
-            defaultProducts.push(...mainProds)
-          }
-        }
-        if (podiProds.length > 0) {
-          localStorage.setItem(STORAGE_KEYS.PODIS, JSON.stringify(podiProds))
-          if (Array.isArray(defaultPodis)) {
-            defaultPodis.length = 0
-            defaultPodis.push(...podiProds)
-          }
-        }
-        this.notifyUpdate()
-        return
-      }
-    } catch { }
-
-    // 2. Secondary fallback: Snapshot stored in orders ledger table
-    try {
-      const { data, error } = await supabase
-        .from('orders')
-        .select('items, created_at')
-        .like('order_number', 'SYSTEM_CATALOG_%')
-        .order('created_at', { ascending: false })
-        .limit(1)
-
-      if (!error && Array.isArray(data) && data[0]?.items?.[0]) {
-        const catalog = data[0].items[0]
-        let changed = false
-        if (Array.isArray(catalog.products) && catalog.products.length > 0) {
-          localStorage.setItem(STORAGE_KEYS.PRODUCTS, JSON.stringify(catalog.products))
-          if (Array.isArray(defaultProducts)) {
-            defaultProducts.length = 0
-            defaultProducts.push(...catalog.products)
-          }
-          changed = true
-        }
-        if (Array.isArray(catalog.podis) && catalog.podis.length > 0) {
-          localStorage.setItem(STORAGE_KEYS.PODIS, JSON.stringify(catalog.podis))
-          if (Array.isArray(defaultPodis)) {
-            defaultPodis.length = 0
-            defaultPodis.push(...catalog.podis)
-          }
-          changed = true
-        }
-        if (Array.isArray(catalog.coupons) && catalog.coupons.length > 0) {
-          localStorage.setItem(STORAGE_KEYS.COUPONS, JSON.stringify(catalog.coupons))
-          changed = true
-        }
-        if (changed) {
-          this.notifyUpdate()
-        }
-      }
-    } catch (e) {
-      console.warn('Failed to sync catalog from database:', e)
-    }
+    await productService.syncFromDatabase()
   },
 }
 
 // Bootstrap catalog synchronization from central database on load
 if (typeof window !== 'undefined') {
   setTimeout(() => {
-    cmsService.syncFromDatabase()
+    productService.syncFromDatabase()
   }, 100)
 }

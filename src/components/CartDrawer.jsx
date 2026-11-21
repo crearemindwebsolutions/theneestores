@@ -186,7 +186,7 @@ const CartDrawer = () => {
                   <div className="cart-item-card-left">
                     <div className="cart-item-img-box">
                       <ImageWithSkeleton
-                        src={item.cardImage}
+                        src={item.cardImage || item.image || item.bottle || '/images/custom_thenee/herbal-tea-product.jpg'}
                         alt={item.name}
                         className="cart-item-card-img"
                         skeletonBorderRadius="8px"

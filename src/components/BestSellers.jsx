@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { cmsService } from '../lib/cmsService'
+import { useProducts } from '../lib/useProducts'
 import { useCart } from '../context/CartContext'
 import useReveal from '../lib/useReveal'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
@@ -13,23 +13,9 @@ const CATEGORIES = [
 ]
 
 const BestSellers = () => {
-  const [productList, setProductList] = useState(() => cmsService.getProducts())
-  const [podisList, setPodisList] = useState(() => cmsService.getPodis())
+  const { products: productList, podis: podisList, getProductImage } = useProducts()
   const [activeCategory, setActiveCategory] = useState('all')
   const { addToCart, setSelectedProduct, openCart } = useCart()
-
-  useEffect(() => {
-    const handleCmsUpdate = () => {
-      setProductList([...cmsService.getProducts()])
-      setPodisList([...cmsService.getPodis()])
-    }
-    window.addEventListener('thenee_cms_updated', handleCmsUpdate)
-    window.addEventListener('storage', handleCmsUpdate)
-    return () => {
-      window.removeEventListener('thenee_cms_updated', handleCmsUpdate)
-      window.removeEventListener('storage', handleCmsUpdate)
-    }
-  }, [])
 
   useEffect(() => {
     ScrollTrigger.refresh()
@@ -78,7 +64,7 @@ const BestSellers = () => {
               title="Click for full benefits & ingredients"
             >
               <img
-                src={p.cardImage || p.image || p.bottle}
+                src={getProductImage(p)}
                 alt={p.name}
                 className="bs-card-img"
                 data-perfume-id={p.id}

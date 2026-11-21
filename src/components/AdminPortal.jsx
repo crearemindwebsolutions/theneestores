@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useRef } from 'react'
 import { cmsService } from '../lib/cmsService'
+import { productService, getProductImage, getProductBottle } from '../lib/productService'
 import { adminService, profileService, mediaService, resolveSignupProvider, databaseService, purgeLegacyDemoOrders, isRealAwb, isSupabaseConfigured, supabase } from '../lib/supabase'
 import { getNumericUserId } from '../lib/userIdHelper'
 import {
@@ -1235,8 +1236,8 @@ const AdminPortal = ({ onBack }) => {
       }
       const img = new Image()
       img.onload = () => {
-        // High quality web compression - max dimension 800px, 0.82 JPEG/PNG
-        const maxDim = 800
+        // High quality web compression - max dimension 500px, WebP/JPEG 0.80
+        const maxDim = 500
         let { width, height } = img
         if (width > maxDim || height > maxDim) {
           if (width > height) {
@@ -1253,12 +1254,20 @@ const AdminPortal = ({ onBack }) => {
           canvas.height = Math.max(1, height)
           const ctx = canvas.getContext('2d')
           ctx.drawImage(img, 0, 0, width, height)
-          const isPng = file.type === 'image/png'
-          const optimized = canvas.toDataURL(isPng ? 'image/png' : 'image/jpeg', 0.82)
+          let optimized = ''
+          try {
+            optimized = canvas.toDataURL('image/webp', 0.80)
+            if (!optimized || !optimized.startsWith('data:image/webp')) {
+              optimized = canvas.toDataURL('image/jpeg', 0.80)
+            }
+          } catch {
+            optimized = canvas.toDataURL('image/jpeg', 0.80)
+          }
           setEditingProduct((prev) => ({
             ...prev,
             cardImage: optimized,
             image: optimized,
+            card_image: optimized,
             bottle: optimized,
             image_url: optimized,
             poster: optimized,
@@ -1269,6 +1278,7 @@ const AdminPortal = ({ onBack }) => {
             ...prev,
             cardImage: dataUrl,
             image: dataUrl,
+            card_image: dataUrl,
             bottle: dataUrl,
             image_url: dataUrl,
             poster: dataUrl,
@@ -1282,6 +1292,7 @@ const AdminPortal = ({ onBack }) => {
           ...prev,
           cardImage: dataUrl,
           image: dataUrl,
+          card_image: dataUrl,
           bottle: dataUrl,
           image_url: dataUrl,
           poster: dataUrl,
@@ -1346,6 +1357,7 @@ const AdminPortal = ({ onBack }) => {
       ...prev,
       cardImage: '',
       image: '',
+      card_image: '',
       bottle: '',
       image_url: '',
       poster: '',
@@ -1355,56 +1367,53 @@ const AdminPortal = ({ onBack }) => {
 
   const handleSaveProduct = async (e) => {
     if (e && e.preventDefault) e.preventDefault()
-    if (!editingProduct || !editingProduct.name) {
+    if (!editingProduct || !editingProduct.name || !editingProduct.name.trim()) {
       showToast('Please enter a product name.')
       return
     }
     try {
       const activeImg = editingProduct.cardImage || editingProduct.image || editingProduct.bottle || editingProduct.image_url || ''
+      const isPodi = editingProduct.category === 'podi' || (editingProduct.id && editingProduct.id.includes('podi'))
+      const cleanPrice = Number(editingProduct.price) > 0 ? Number(editingProduct.price) : (isPodi ? 180 : 299)
+
       const finalProduct = {
         ...editingProduct,
+        name: editingProduct.name.trim(),
+        price: cleanPrice,
         cardImage: activeImg,
         image: activeImg,
+        card_image: activeImg,
         bottle: activeImg,
         image_url: activeImg,
         poster: activeImg,
       }
 
-      // Check if this item belongs to individualPodis or main products catalog
-      const isPodiItem = cmsService.getPodis().some((p) => p.id === finalProduct.id) ||
-        (finalProduct.category === 'podi' && !cmsService.getProducts().some((p) => p.id === finalProduct.id))
-
-      if (isPodiItem) {
-        await cmsService.savePodi(finalProduct)
-      } else {
-        await cmsService.saveProduct(finalProduct)
-      }
+      await productService.saveProduct(finalProduct)
 
       setIsProductModalOpen(false)
-      showToast(`Product "${finalProduct.name}" saved and live on storefront!`)
-      await loadStoreData()
+      setProducts([...productService.getProducts()])
+      setPodis([...productService.getPodis()])
+      showToast(`Product "${finalProduct.name}" saved & live synced!`)
     } catch (err) {
       console.error('Save product error:', err)
       showToast('Error saving product: ' + (err.message || 'Please check input fields'))
     }
   }
 
-  const handleDeleteProduct = (id, isPodi = false) => {
+  const handleDeleteProduct = async (id, isPodi = false) => {
     if (!window.confirm('Are you sure you want to delete this product from the live catalog?')) return
-    if (isPodi) {
-      cmsService.deletePodi(id)
-    } else {
-      cmsService.deleteProduct(id)
-    }
+    await productService.deleteProduct(id)
+    setProducts([...productService.getProducts()])
+    setPodis([...productService.getPodis()])
     showToast('Product removed from catalog.')
-    loadStoreData()
   }
 
-  const handleResetCatalog = () => {
+  const handleResetCatalog = async () => {
     if (!window.confirm('Reset catalog back to initial factory botanical formulations? Custom added products will be cleared.')) return
-    cmsService.resetCatalogDefaults()
+    await productService.resetToDefaults()
+    setProducts([...productService.getProducts()])
+    setPodis([...productService.getPodis()])
     showToast('Catalog reset to initial authentic botanical formulas.')
-    loadStoreData()
   }
 
   // --------------------------------------------------------------------------
@@ -4864,12 +4873,13 @@ const AdminPortal = ({ onBack }) => {
                   <div className="admin-input-group">
                     <label>Category</label>
                     <select
-                      value={editingProduct.category}
+                      value={editingProduct.category || 'tea'}
                       onChange={(e) => setEditingProduct({ ...editingProduct, category: e.target.value })}
                     >
                       <option value="tea">Botanical Tea</option>
                       <option value="superfood">Superfood Powder</option>
                       <option value="podi">Traditional Food Podi</option>
+                      <option value="combo">Traditional Podis Combo / Set</option>
                     </select>
                   </div>
                 </div>
@@ -4879,8 +4889,13 @@ const AdminPortal = ({ onBack }) => {
                     <label>Selling Price (₹) *</label>
                     <input
                       type="number"
-                      value={editingProduct.price}
-                      onChange={(e) => setEditingProduct({ ...editingProduct, price: Number(e.target.value) })}
+                      min="1"
+                      value={editingProduct.price !== undefined && editingProduct.price !== '' ? editingProduct.price : ''}
+                      placeholder="e.g. 299"
+                      onChange={(e) => {
+                        const val = e.target.value === '' ? '' : Number(e.target.value)
+                        setEditingProduct({ ...editingProduct, price: val })
+                      }}
                       required
                     />
                   </div>
@@ -5079,6 +5094,7 @@ const AdminPortal = ({ onBack }) => {
                                 ...prev,
                                 cardImage: val,
                                 image: val,
+                                card_image: val,
                                 bottle: val,
                                 image_url: val,
                                 poster: val,

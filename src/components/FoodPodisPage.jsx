@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import Navbar from './Navbar'
 import OfferMarquee from './OfferMarquee'
 import Footer from './Footer'
-import { cmsService } from '../lib/cmsService'
+import { useProducts } from '../lib/useProducts'
 import { useCart } from '../context/CartContext'
 import { ImageWithSkeleton } from './Skeleton'
 import './PagesShared.css'
@@ -16,22 +16,8 @@ const RICE_PAIRING_STEPS = [
 ]
 
 const FoodPodisPage = ({ onOpenAccount }) => {
-  const [productList, setProductList] = useState(() => cmsService.getProducts())
-  const [podisList, setPodisList] = useState(() => cmsService.getPodis())
+  const { products: productList, podis: podisList, getProductImage } = useProducts()
   const { addToCart, setSelectedProduct, openCart } = useCart()
-
-  useEffect(() => {
-    const handleCmsUpdate = () => {
-      setProductList([...cmsService.getProducts()])
-      setPodisList([...cmsService.getPodis()])
-    }
-    window.addEventListener('thenee_cms_updated', handleCmsUpdate)
-    window.addEventListener('storage', handleCmsUpdate)
-    return () => {
-      window.removeEventListener('thenee_cms_updated', handleCmsUpdate)
-      window.removeEventListener('storage', handleCmsUpdate)
-    }
-  }, [])
 
   // Value Combo from main products list
   const podiCombo = productList.find((p) => p.id === 'food-podis' || p.id === 'food-podis-collection')
@@ -99,7 +85,7 @@ const FoodPodisPage = ({ onOpenAccount }) => {
 
             <div className="combo-right">
               <ImageWithSkeleton
-                src={podiCombo.cardImage || podiCombo.image || podiCombo.bottle}
+                src={getProductImage(podiCombo)}
                 alt={podiCombo.name}
                 className="combo-img"
                 skeletonBorderRadius="16px"
@@ -124,7 +110,7 @@ const FoodPodisPage = ({ onOpenAccount }) => {
                 title="Click for full benefits & ingredients"
               >
                 <ImageWithSkeleton
-                  src={podi.cardImage || podi.image || podi.bottle}
+                  src={getProductImage(podi)}
                   alt={podi.name}
                   className="podi-img"
                   skeletonBorderRadius="12px"

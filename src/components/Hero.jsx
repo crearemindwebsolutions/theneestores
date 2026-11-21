@@ -3,7 +3,7 @@ import { motion } from 'framer-motion'
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { brandInfo } from '../data/products'
-import { cmsService } from '../lib/cmsService'
+import { useProducts } from '../lib/useProducts'
 import { useCart } from '../context/CartContext'
 import './Hero.css'
 
@@ -15,24 +15,8 @@ if (typeof ScrollTrigger !== 'undefined' && ScrollTrigger.config) {
 const BG_TRANSITION = { duration: 0.6, ease: 'easeInOut' }
 
 const Hero = ({ onOpenAccount }) => {
-  const [productList, setProductList] = useState(() => cmsService.getProducts())
+  const { products: productList, getProductImage } = useProducts()
   const [index, setIndex] = useState(0)
-  const heroRef = useRef(null)
-  const touchStartX = useRef(null)
-  const touchStartY = useRef(null)
-  const touchStartTime = useRef(0)
-
-  useEffect(() => {
-    const handleCmsUpdate = () => {
-      setProductList([...cmsService.getProducts()])
-    }
-    window.addEventListener('thenee_cms_updated', handleCmsUpdate)
-    window.addEventListener('storage', handleCmsUpdate)
-    return () => {
-      window.removeEventListener('thenee_cms_updated', handleCmsUpdate)
-      window.removeEventListener('storage', handleCmsUpdate)
-    }
-  }, [])
 
   const len = productList.length || 1
   const current = productList[index] || productList[0] || {}
@@ -182,7 +166,7 @@ const Hero = ({ onOpenAccount }) => {
                       style={{ display: i === index ? 'flex' : 'none' }}
                     >
                       <motion.img
-                        src={p.cardImage || p.image || p.bottle}
+                        src={getProductImage(p)}
                         alt={p.name}
                         className={`hero-bottle-img hero-bottle-img--${p.id}`}
                         initial={{ opacity: 0, scale: 0.95 }}

@@ -6,6 +6,7 @@ import {
   FaPause,
 } from 'react-icons/fa'
 import { products, individualPodis } from '../data/products'
+import { productService, getProductImage, getProductBottle } from '../lib/productService'
 import { cmsService } from '../lib/cmsService'
 import { useCart } from '../context/CartContext'
 import './MoodSelector.css'
@@ -77,9 +78,11 @@ const MoodSelector = () => {
     const handleCmsUpdate = () => {
       setCmsRevision((prev) => prev + 1)
     }
+    window.addEventListener('thenee_products_updated', handleCmsUpdate)
     window.addEventListener('thenee_cms_updated', handleCmsUpdate)
     window.addEventListener('storage', handleCmsUpdate)
     return () => {
+      window.removeEventListener('thenee_products_updated', handleCmsUpdate)
       window.removeEventListener('thenee_cms_updated', handleCmsUpdate)
       window.removeEventListener('storage', handleCmsUpdate)
     }
@@ -88,9 +91,9 @@ const MoodSelector = () => {
   const total = SHOWCASE_ITEMS.length
 
   const getMatchedProduct = useCallback((item) => {
-    const fromCms = cmsService.getProducts().find((p) => p.id === item.id) ||
-      cmsService.getPodis().find((p) => p.id === item.id)
-    if (fromCms) return fromCms
+    const fromService = productService.getProducts().find((p) => p.id === item.id) ||
+      productService.getPodis().find((p) => p.id === item.id)
+    if (fromService) return fromService
 
     return (
       products.find((p) => p.id === item.id) ||
@@ -100,10 +103,10 @@ const MoodSelector = () => {
   }, [cmsRevision])
 
   const getShowcaseImage = useCallback((item) => {
-    const p = cmsService.getProducts().find((x) => x.id === item.id) ||
-      cmsService.getPodis().find((x) => x.id === item.id)
+    const p = productService.getProducts().find((x) => x.id === item.id) ||
+      productService.getPodis().find((x) => x.id === item.id)
     if (p) {
-      return p.cardImage || p.image || p.bottle || item.packagingImage
+      return getProductImage(p) || item.packagingImage
     }
     return item.packagingImage
   }, [cmsRevision])

@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useCart } from '../context/CartContext'
 import { brandInfo } from '../data/products'
 import { ImageWithSkeleton } from './Skeleton'
+import { getProductImage } from '../lib/productService'
 import './ProductModal.css'
 
 const ProductModal = () => {
@@ -117,7 +118,7 @@ const ProductModal = () => {
             <span className="pmodal-badge-clean">100% Organic & Chemical-Free</span>
             <div className="pmodal-media-bg">
               <ImageWithSkeleton
-                src={selectedProduct.cardImage || selectedProduct.image || selectedProduct.bottle}
+                src={getProductImage(selectedProduct)}
                 alt={selectedProduct.name}
                 className="pmodal-img"
                 skeletonBorderRadius="12px"
