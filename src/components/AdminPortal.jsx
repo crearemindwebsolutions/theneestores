@@ -594,6 +594,7 @@ const AdminPortal = ({ onBack }) => {
       if (custRes.data) setCustomers(custRes.data)
       if (mediaRes.data) setMediaItems(mediaRes.data)
       if (telemRes) setTelemetry(telemRes)
+      await cmsService.syncFromDatabase()
       setProducts(cmsService.getProducts())
       setPodis(cmsService.getPodis())
       setCoupons(cmsService.getCoupons())
@@ -1352,7 +1353,7 @@ const AdminPortal = ({ onBack }) => {
     showToast('Product image removed.')
   }
 
-  const handleSaveProduct = (e) => {
+  const handleSaveProduct = async (e) => {
     if (e && e.preventDefault) e.preventDefault()
     if (!editingProduct || !editingProduct.name) {
       showToast('Please enter a product name.')
@@ -1374,14 +1375,14 @@ const AdminPortal = ({ onBack }) => {
         (finalProduct.category === 'podi' && !cmsService.getProducts().some((p) => p.id === finalProduct.id))
 
       if (isPodiItem) {
-        cmsService.savePodi(finalProduct)
+        await cmsService.savePodi(finalProduct)
       } else {
-        cmsService.saveProduct(finalProduct)
+        await cmsService.saveProduct(finalProduct)
       }
 
       setIsProductModalOpen(false)
       showToast(`Product "${finalProduct.name}" saved and live on storefront!`)
-      loadStoreData()
+      await loadStoreData()
     } catch (err) {
       console.error('Save product error:', err)
       showToast('Error saving product: ' + (err.message || 'Please check input fields'))

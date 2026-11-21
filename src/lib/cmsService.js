@@ -187,7 +187,7 @@ export const cmsService = {
     this.syncCatalogToDatabase()
   },
 
-  saveProduct(updatedProduct) {
+  async saveProduct(updatedProduct) {
     const list = this.getProducts()
     const idx = list.findIndex((p) => p.id === updatedProduct.id)
     if (idx >= 0) {
@@ -197,26 +197,32 @@ export const cmsService = {
     }
     this.saveProducts(list)
     if (supabase) {
-      safeSupabaseQuery(
-        supabase.from('products').upsert({
+      try {
+        const activeImg = updatedProduct.cardImage || updatedProduct.image || updatedProduct.bottle || ''
+        const { error } = await supabase.from('products').upsert({
           id: updatedProduct.id,
-          name: updatedProduct.name,
-          category: updatedProduct.category,
-          category_label: updatedProduct.categoryLabel || updatedProduct.category,
-          price: updatedProduct.price,
-          original_price: updatedProduct.originalPrice || null,
+          name: updatedProduct.name || 'Herbal Product',
+          category: updatedProduct.category || 'tea',
+          category_label: updatedProduct.categoryLabel || updatedProduct.category || 'Botanical Teas',
+          price: Number(updatedProduct.price) || 0,
+          original_price: updatedProduct.originalPrice ? Number(updatedProduct.originalPrice) : null,
           volume: updatedProduct.volume || '',
           badge: updatedProduct.badge || '',
           tagline: updatedProduct.tagline || '',
           description: updatedProduct.description || '',
           ingredients: updatedProduct.ingredients || '',
           in_stock: updatedProduct.inStock !== false,
-          stock_count: updatedProduct.stockCount || 50,
-          card_image: updatedProduct.cardImage || updatedProduct.image || '',
-          key_benefits: updatedProduct.keyBenefits || [],
+          stock_count: Number(updatedProduct.stockCount) || 50,
+          card_image: activeImg,
+          bottle: activeImg,
+          image: activeImg,
+          key_benefits: Array.isArray(updatedProduct.keyBenefits) ? updatedProduct.keyBenefits : [],
           updated_at: new Date().toISOString(),
-        })
-      )
+        }, { onConflict: 'id' })
+        if (error) console.warn('Supabase product upsert notice:', error.message)
+      } catch (err) {
+        console.warn('Supabase product save notice:', err)
+      }
     }
   },
 
@@ -259,7 +265,7 @@ export const cmsService = {
     this.syncCatalogToDatabase()
   },
 
-  savePodi(updatedPodi) {
+  async savePodi(updatedPodi) {
     const list = this.getPodis()
     const idx = list.findIndex((p) => p.id === updatedPodi.id)
     if (idx >= 0) {
@@ -269,26 +275,32 @@ export const cmsService = {
     }
     this.savePodis(list)
     if (supabase) {
-      safeSupabaseQuery(
-        supabase.from('products').upsert({
+      try {
+        const activeImg = updatedPodi.cardImage || updatedPodi.image || updatedPodi.bottle || ''
+        const { error } = await supabase.from('products').upsert({
           id: updatedPodi.id,
-          name: updatedPodi.name,
+          name: updatedPodi.name || 'Traditional Podi',
           category: 'podi',
           category_label: 'Traditional Food Podi',
-          price: updatedPodi.price,
-          original_price: updatedPodi.originalPrice || null,
-          volume: updatedPodi.volume || '',
+          price: Number(updatedPodi.price) || 0,
+          original_price: updatedPodi.originalPrice ? Number(updatedPodi.originalPrice) : null,
+          volume: updatedPodi.volume || '100g Pouch',
           badge: updatedPodi.badge || '',
           tagline: updatedPodi.tagline || '',
           description: updatedPodi.description || '',
           ingredients: updatedPodi.ingredients || '',
           in_stock: updatedPodi.inStock !== false,
-          stock_count: updatedPodi.stockCount || 50,
-          card_image: updatedPodi.cardImage || updatedPodi.image || '',
-          key_benefits: updatedPodi.keyBenefits || [],
+          stock_count: Number(updatedPodi.stockCount) || 50,
+          card_image: activeImg,
+          bottle: activeImg,
+          image: activeImg,
+          key_benefits: Array.isArray(updatedPodi.keyBenefits) ? updatedPodi.keyBenefits : [],
           updated_at: new Date().toISOString(),
-        })
-      )
+        }, { onConflict: 'id' })
+        if (error) console.warn('Supabase podi upsert notice:', error.message)
+      } catch (err) {
+        console.warn('Supabase podi save notice:', err)
+      }
     }
   },
 
@@ -630,6 +642,51 @@ export const cmsService = {
 
   async syncFromDatabase() {
     if (!supabase || typeof window === 'undefined') return
+
+    // 1. First priority: Check direct public.products table in Supabase
+    try {
+      const { data: dbProducts, error: prodErr } = await supabase
+        .from('products')
+        .select('*')
+
+      if (!prodErr && Array.isArray(dbProducts) && dbProducts.length > 0) {
+        const formatted = dbProducts.map((p) => ({
+          ...p,
+          categoryLabel: p.category_label || p.categoryLabel,
+          originalPrice: p.original_price != null ? p.original_price : p.originalPrice,
+          inStock: p.in_stock !== false,
+          stockCount: p.stock_count != null ? p.stock_count : (p.stockCount || 50),
+          cardImage: p.card_image || p.image || p.bottle || p.cardImage,
+          bottle: p.bottle || p.card_image || p.image,
+          image: p.image || p.card_image || p.bottle,
+          keyBenefits: p.key_benefits || p.keyBenefits || [],
+          howToUse: p.how_to_use || p.howToUse || [],
+        }))
+
+        const podiIds = new Set(['garlic-podi', 'curry-leaves-podi', 'moringa-podi', 'sesame-podi'])
+        const mainProds = formatted.filter((p) => !podiIds.has(p.id))
+        const podiProds = formatted.filter((p) => podiIds.has(p.id))
+
+        if (mainProds.length > 0) {
+          localStorage.setItem(STORAGE_KEYS.PRODUCTS, JSON.stringify(mainProds))
+          if (Array.isArray(defaultProducts)) {
+            defaultProducts.length = 0
+            defaultProducts.push(...mainProds)
+          }
+        }
+        if (podiProds.length > 0) {
+          localStorage.setItem(STORAGE_KEYS.PODIS, JSON.stringify(podiProds))
+          if (Array.isArray(defaultPodis)) {
+            defaultPodis.length = 0
+            defaultPodis.push(...podiProds)
+          }
+        }
+        this.notifyUpdate()
+        return
+      }
+    } catch { }
+
+    // 2. Secondary fallback: Snapshot stored in orders ledger table
     try {
       const { data, error } = await supabase
         .from('orders')

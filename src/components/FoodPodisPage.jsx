@@ -1,7 +1,8 @@
+import { useState, useEffect } from 'react'
 import Navbar from './Navbar'
 import OfferMarquee from './OfferMarquee'
 import Footer from './Footer'
-import { individualPodis, products } from '../data/products'
+import { cmsService } from '../lib/cmsService'
 import { useCart } from '../context/CartContext'
 import { ImageWithSkeleton } from './Skeleton'
 import './PagesShared.css'
@@ -15,10 +16,25 @@ const RICE_PAIRING_STEPS = [
 ]
 
 const FoodPodisPage = ({ onOpenAccount }) => {
+  const [productList, setProductList] = useState(() => cmsService.getProducts())
+  const [podisList, setPodisList] = useState(() => cmsService.getPodis())
   const { addToCart, setSelectedProduct, openCart } = useCart()
 
+  useEffect(() => {
+    const handleCmsUpdate = () => {
+      setProductList([...cmsService.getProducts()])
+      setPodisList([...cmsService.getPodis()])
+    }
+    window.addEventListener('thenee_cms_updated', handleCmsUpdate)
+    window.addEventListener('storage', handleCmsUpdate)
+    return () => {
+      window.removeEventListener('thenee_cms_updated', handleCmsUpdate)
+      window.removeEventListener('storage', handleCmsUpdate)
+    }
+  }, [])
+
   // Value Combo from main products list
-  const podiCombo = products.find((p) => p.id === 'food-podis')
+  const podiCombo = productList.find((p) => p.id === 'food-podis' || p.id === 'food-podis-collection')
 
   return (
     <div className="page-wrapper food-podis-page">
@@ -83,7 +99,7 @@ const FoodPodisPage = ({ onOpenAccount }) => {
 
             <div className="combo-right">
               <ImageWithSkeleton
-                src={podiCombo.bottle}
+                src={podiCombo.cardImage || podiCombo.image || podiCombo.bottle}
                 alt={podiCombo.name}
                 className="combo-img"
                 skeletonBorderRadius="16px"
@@ -100,7 +116,7 @@ const FoodPodisPage = ({ onOpenAccount }) => {
 
         {/* 4 Individual Podis Grid - Clean & Minimal */}
         <div className="podis-cards-grid">
-          {individualPodis.map((podi) => (
+          {podisList.map((podi) => (
             <div className="podi-card" key={podi.id}>
               <div
                 className="podi-media"
@@ -108,7 +124,7 @@ const FoodPodisPage = ({ onOpenAccount }) => {
                 title="Click for full benefits & ingredients"
               >
                 <ImageWithSkeleton
-                  src={podi.image || podi.bottle}
+                  src={podi.cardImage || podi.image || podi.bottle}
                   alt={podi.name}
                   className="podi-img"
                   skeletonBorderRadius="12px"

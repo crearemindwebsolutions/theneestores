@@ -1,8 +1,8 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Navbar from './Navbar'
 import OfferMarquee from './OfferMarquee'
 import Footer from './Footer'
-import { products, individualPodis } from '../data/products'
+import { cmsService } from '../lib/cmsService'
 import { useCart } from '../context/CartContext'
 import { ImageWithSkeleton } from './Skeleton'
 import './PagesShared.css'
@@ -109,13 +109,28 @@ const renderGoalIcon = (id, size = 24) => {
 }
 
 const HealthGoalsPage = ({ onOpenAccount }) => {
+  const [productList, setProductList] = useState(() => cmsService.getProducts())
+  const [podisList, setPodisList] = useState(() => cmsService.getPodis())
   const [selectedGoalId, setSelectedGoalId] = useState('sugar')
   const { addToCart, setSelectedProduct, openCart } = useCart()
+
+  useEffect(() => {
+    const handleCmsUpdate = () => {
+      setProductList([...cmsService.getProducts()])
+      setPodisList([...cmsService.getPodis()])
+    }
+    window.addEventListener('thenee_cms_updated', handleCmsUpdate)
+    window.addEventListener('storage', handleCmsUpdate)
+    return () => {
+      window.removeEventListener('thenee_cms_updated', handleCmsUpdate)
+      window.removeEventListener('storage', handleCmsUpdate)
+    }
+  }, [])
 
   const currentGoal = HEALTH_GOALS.find((g) => g.id === selectedGoalId) || HEALTH_GOALS[0]
 
   // Find matching items from all products + podis
-  const allItems = [...products, ...individualPodis]
+  const allItems = [...productList, ...podisList]
   const matchedProducts = currentGoal.recommendedIds
     .map((id) => allItems.find((p) => p.id === id || p.id.includes(id)))
     .filter(Boolean)
@@ -209,7 +224,7 @@ const HealthGoalsPage = ({ onOpenAccount }) => {
                     title="Click for full benefits & ingredients"
                   >
                     <ImageWithSkeleton
-                      src={item.bottle || item.image}
+                      src={item.cardImage || item.image || item.bottle}
                       alt={item.name}
                       className="matched-img"
                       skeletonBorderRadius="12px"
