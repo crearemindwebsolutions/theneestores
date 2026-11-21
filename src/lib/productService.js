@@ -4,7 +4,7 @@
 // Synchronizes dynamically across Supabase Cloud, localStorage, and React DOM
 // =============================================================================
 
-import { supabase, isSupabaseConfigured } from './supabase.js'
+import { supabase, isSupabaseConfigured } from './supabase'
 
 export const DEFAULT_PRICE_MAP = {
   'herbal-tea': 299,

@@ -17,6 +17,10 @@ const BG_TRANSITION = { duration: 0.6, ease: 'easeInOut' }
 const Hero = ({ onOpenAccount }) => {
   const { products: productList, getProductImage } = useProducts()
   const [index, setIndex] = useState(0)
+  const heroRef = useRef(null)
+  const touchStartX = useRef(null)
+  const touchStartY = useRef(null)
+  const touchStartTime = useRef(0)
 
   const len = productList.length || 1
   const current = productList[index] || productList[0] || {}
